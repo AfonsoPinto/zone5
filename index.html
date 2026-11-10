@@ -611,6 +611,7 @@ function authHtml(){
   </section>`:`<section class="card"><div class="small">Esta é a pré-visualização: as contas, o grupo e o Google Calendar ficam ativos no site final. Podes experimentar o resto da app já.</div></section>`}
   <button class="ghost" data-act="demo">Experimentar sem conta</button>
   ${langSeg()}
+  <div class="tiny muted" style="text-align:center"><a href="privacy.html" style="color:inherit">${L('Política de privacidade','Privacy policy')}</a></div>
   <div class="tiny muted" style="text-align:center">No modo experiência os dados ficam só neste dispositivo.</div>`;
 }
 async function authGo(){
@@ -910,6 +911,7 @@ function ajustesHtml(){
   <section class="card"><h3>Idioma · Language</h3>${langSeg()}</section>
   <section class="card"><h3>Conta</h3><div class="small muted">${mode==='cloud'?`Sessão iniciada como ${esc(user.email)} · nome no grupo: ${esc(myName())}`:'Modo experiência: os dados estão só neste dispositivo.'}</div>
     ${mode==='cloud'?`<label for="myNm">Nome no grupo<input id="myNm" value="${esc(myName())}"></label><div class="btns"><button id="saveNm">Guardar nome</button><button class="ghost" data-act="logout">Terminar sessão</button></div>`:`${sb?'<button class="primary" data-act="logout">Criar conta e guardar o plano</button>':''}`}</section>
+  <div class="tiny muted" style="text-align:center"><a href="privacy.html" style="color:inherit">${L('Política de privacidade','Privacy policy')}</a></div>
   <section class="card"><h3>Apagar tudo</h3><div class="small muted">Remove o plano e todos os registos.</div><button id="reset" class="ghost" style="color:var(--bad);border-color:var(--bad)">Apagar plano e registos</button></section>`;
 }
 

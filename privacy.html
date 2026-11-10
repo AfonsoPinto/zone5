@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zone5 · Privacy policy</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#eef1f4;--surface:#fff;--ink:#14202b;--muted:#5b6b7a;--line:#d6dde4;--accent:#c8402a;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0f151b;--surface:#17202a;--ink:#e8edf2;--muted:#93a3b2;--line:#283541;--accent:#ff6a4d;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:680px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:30px;margin:0 0 4px}h2{font-size:20px;margin:28px 0 6px}
+.muted{color:var(--muted)}a{color:var(--accent)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px 20px 16px;margin-top:20px}
+ul{padding-left:20px}
+</style>
+</head>
+<body>
+<main>
+<h1>Zone5 privacy policy</h1>
+<p class="muted">Last updated: 10 November 2026 · <a href="#pt">Versão em português</a></p>
+
+<section>
+<h2>What Zone5 is</h2>
+<p>Zone5 is a free, non-commercial running plan app built for a group of friends. It has no ads and no tracking, and it does not sell or share data with anyone.</p>
+
+<h2>Data we store</h2>
+<ul>
+<li><b>Account:</b> your email address, a password (stored hashed by our database provider) and the display name you choose.</li>
+<li><b>Training:</b> your goal, race date, paces, training plan and the runs you log (distance, time, effort, heart rate and splits if your GPX file contains them). GPS points are used to calculate these numbers and are not stored.</li>
+<li><b>Groups:</b> if you join a group, its members see your display name and a weekly summary: kilometres run and plan workouts done. Nobody else sees your plan or your runs.</li>
+</ul>
+<p>Data is stored with Supabase (database hosted in Europe, Zurich) and protected so that each person can only read and write their own data.</p>
+
+<h2>Google Calendar</h2>
+<p>If you choose to connect Google Calendar, Zone5 asks only for permission to create a secondary calendar called "Zone5 · training" and manage the events in it (<code>calendar.app.created</code>). Zone5 cannot see, change or delete your other calendars or events. The access token stays in your browser and is never sent to our database.</p>
+<p>Zone5's use of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+
+<h2>Deleting your data</h2>
+<p>In the app, <i>Settings → Delete everything</i> removes your plan and logs. You can delete the Zone5 calendar from <i>Settings → Google Calendar</i>, and revoke Google access at any time at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>. To delete your account entirely, open an issue at <a href="https://github.com/AfonsoPinto/zone5/issues">github.com/AfonsoPinto/zone5/issues</a> or ask the group organiser.</p>
+</section>
+
+<section id="pt" lang="pt-PT">
+<h2>Política de privacidade (português)</h2>
+<p>A Zone5 é uma app de planos de corrida gratuita e sem fins comerciais, feita para um grupo de amigos. Não tem anúncios nem rastreamento, e não vende nem partilha dados com ninguém.</p>
+<p><b>O que guardamos:</b> o teu email, a palavra-passe (guardada cifrada pelo fornecedor da base de dados) e o nome que escolheres. Também guardamos o objetivo, os ritmos, o plano e as corridas que registas. Os pontos de GPS servem para calcular estes valores e não ficam guardados. Num grupo, os membros veem apenas o teu nome e um resumo semanal (km e treinos feitos). Os dados ficam no Supabase, alojado na Europa (Zurique), e cada pessoa só tem acesso aos seus.</p>
+<p><b>Google Calendar:</b> se o ligares, a Zone5 só pede permissão para criar o calendário "Zone5 · treinos" e gerir os eventos dentro dele. Não vê nem altera os teus outros calendários. O token de acesso fica no teu navegador. O uso de dados das APIs da Google segue a <a href="https://developers.google.com/terms/api-services-user-data-policy">Política de Dados do Utilizador dos Serviços de API da Google</a>, incluindo os requisitos de Uso Limitado.</p>
+<p><b>Apagar os dados:</b> em <i>Ajustes → Apagar tudo</i>. Podes revogar o acesso da Google em <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>. Para apagar a conta, abre um pedido em <a href="https://github.com/AfonsoPinto/zone5/issues">github.com/AfonsoPinto/zone5/issues</a> ou fala com o organizador do grupo.</p>
+</section>
+<p class="muted"><a href="./">← Back to Zone5</a></p>
+</main>
+</body>
+</html>
