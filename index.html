@@ -30,6 +30,7 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
 body{padding-bottom:110px;background:radial-gradient(120% 60% at 100% 0%,rgba(255,90,60,.10),transparent 60%),var(--bg);background-attachment:fixed}
 h1,h2,h3{font-family:var(--display);font-stretch:112%;font-weight:800;margin:0;text-wrap:balance;letter-spacing:-.01em;line-height:1.08}
@@ -82,7 +83,7 @@ button:disabled{opacity:.45;cursor:default}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
 .btns>*{flex:1 1 auto}
 label{font-size:14px;font-weight:700;display:flex;flex-direction:column;gap:6px}
-input,select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--soft);color:var(--ink);min-height:48px;width:100%}
+input,select,textarea{font:inherit;font-size:16px;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--soft);color:var(--ink);min-height:48px;width:100%}
 input[type=range]{accent-color:var(--accent);min-height:0}
 input[type=checkbox]{accent-color:var(--accent)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
