@@ -291,7 +291,21 @@ const RACES=[
  {id:'miutmarathon27',name:'MIUT Marathon',city:'Madeira',cc:'PT',date:'2027-04-24',km:40,terrain:'trail'},
  {id:'madrid27',name:'Maratón de Madrid',city:'Madrid',cc:'ES',date:'2027-04-25',km:42.195,terrain:'hilly'}
 ];
-const raceById=id=>RACES.find(r=>r.id===id);
+let EXTRA_RACES=[];
+const allRaces=()=>{const seen=new Set(RACES.map(r=>r.name.toLowerCase()+r.date));return RACES.concat(EXTRA_RACES.filter(r=>!seen.has(r.name.toLowerCase()+r.date))).sort((a,b)=>a.date<b.date?-1:1);};
+const raceById=id=>allRaces().find(r=>r.id===id);
+/* dias escolhidos → [dia, tipo]; o duro principal 2+ dias depois do longo, o segundo longe do primeiro e nunca na véspera do longo */
+function slotsFor(p,days){
+  const L=p.longDay??6;
+  if(!Array.isArray(p.runDays)||p.runDays.length<3){const shift=(L-6+7)%7;return TEMPL[days].map(([d,k])=>[(d+shift)%7,k]);}
+  const D=[...new Set(p.runDays)].sort((a,b)=>a-b);if(!D.includes(L))D.push(L);
+  const others=D.filter(d=>d!==L),gap=d=>(d-L+7)%7,dist=(a,b)=>Math.min((a-b+7)%7,(b-a+7)%7);
+  const byGap=[...others].sort((a,b)=>gap(a)-gap(b));
+  const q1=byGap.find(d=>gap(d)>=2&&gap(d)!==6)??byGap.find(d=>gap(d)!==6)??byGap[0];
+  let q2=null;
+  if(D.length>=4){const c=others.filter(d=>d!==q1&&dist(d,q1)>=2&&gap(d)>=2&&gap(d)!==6);q2=c.sort((a,b)=>Math.abs(gap(b)-gap(q1))-Math.abs(gap(a)-gap(q1)))[0]??null;}
+  return D.map(d=>[d,d===L?'L':d===q1?'Q1':d===q2?'Q2':'E']);
+}
 
 function mkHills(o){const sc=o.scale||1;const wu=r05(clamp(o.vol*0.06,1.5,3)),cd=r05(clamp(o.vol*0.05,1,2.5));const n=Math.round(clamp(o.vol*0.25*sc,6,10));
   return{type:'Q',title:'Subidas',steps:[{t:`${nf(wu)} km aquecimento`,km:wu,z:'E'},{t:`${n} × 60 s a subir forte`,reps:n,repSec:60,repKm:0.22,restKm:0.2,rest:'descer a trote',z:'H'},{t:`${nf(cd)} km retorno à calma`,km:cd,z:'E'}],focus:{z:'H',repSec:60}};}
@@ -312,8 +326,9 @@ function genStart(p,todayS,vdot){
   const weeks=[];
   for(let i=0;i<prog.length;i++){
     const ws=addDays(mon0,i*7);const [r,wk,n]=prog[i];let list=[];
-    TEMPL[3].forEach(([d0],j)=>{
-      const d=(d0+shift)%7,date=addDays(ws,d);
+    const sdays=(Array.isArray(p.runDays)&&p.runDays.length>=3?slotsFor(p,p.runDays.length).map(x=>x[0]):TEMPL[3].map(([d0])=>(d0+shift)%7)).sort((a,b)=>(a-(p.longDay??6)+6)%7-(b-(p.longDay??6)+6)%7).slice(-3);
+    sdays.forEach((d,j)=>{
+      const date=addDays(ws,d);
       const warm={t:'5 min a andar',sec:300,km:0,z:'W'},cool={t:'5 min a andar',sec:300,km:0,z:'W'};
       let w;
       if(i===prog.length-1&&j===2)w={type:'E',title:'Desafio final: 30 min sem parar',steps:[warm,{t:'30 min a correr',sec:1800,km:Math.round(1800/eP*10)/10,z:'E'},cool],focus:{z:'E'},final:true};
@@ -333,7 +348,7 @@ function genPlan(p,todayS,vdot){
   const gt=p.goalType||'race';
   if(gt==='start')return genStart(p,todayS,vdot);
   const goal=gt==='race'?p.goal:'10k';
-  const g=GOALS[goal],days=clamp(p.days|0,3,6);
+  const g=GOALS[goal],days=clamp(Array.isArray(p.runDays)&&p.runDays.length>=3?p.runDays.length:p.days|0,3,7);
   const raceKm=p.raceKm||g.km,raceLabel=p.raceName||g.label;
   const terrain=gt==='race'?(p.terrain||'flat'):'flat';
   const mon0=mondayOf(todayS);
@@ -341,7 +356,7 @@ function genPlan(p,todayS,vdot){
   let N=hasRace?Math.floor(daysBetween(mon0,mondayOf(p.raceDate))/7)+1:gt==='back'?6:gt==='maintain'?12:({'5k':8,'10k':10,'meia':12,'maratona':16})[goal];
   N=clamp(N,1,30);
   const lvl={ini:14,int:24,ava:38}[p.level]||24;
-  const dayF={3:0.85,4:1,5:1.15,6:1.3}[days];
+  const dayF={3:0.85,4:1,5:1.15,6:1.3,7:1.4}[days];
   const goalF={'5k':0.9,'10k':1,'meia':1.1,'maratona':1.3}[goal]*(raceKm>43?1.1:1);
   let startVol=lvl*dayF*goalF;
   if(gt==='back')startVol*=0.6;
@@ -371,7 +386,7 @@ function genPlan(p,todayS,vdot){
     if(gt==='maintain'){const c=Math.floor(i/4)%3;k1=[ 'fartlek','intervals','cruise'][c];k2=rec?null:['tempo','cruise','tempo'][c];if(p.level==='ini'&&k1==='intervals')k1='fartlek';}
     const hillWeek=(phase==='build'||phase==='peak')&&!rec&&(terrain==='hilly'||terrain==='trail'||(terrain==='rolling'&&i%2===0));
     if(hillWeek){if(k2)k2='hills';else if(i%2===0)k1='hills';}
-    const slots=TEMPL[days].map(([d,k])=>[(d+shift)%7,k]);
+    const slots=slotsFor(p,days);
     const ws_=[];
     let qKm=0;const qs={};
     const o={vol,goal,level:p.level,scale:rec?0.75:1};
