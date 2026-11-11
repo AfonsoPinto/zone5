@@ -666,6 +666,8 @@ Object.assign(EN_EXACT,{"Qual é o teu objetivo?": "What is your goal?", "O que 
 Object.assign(EN_EXACT,{'Bem-vindo de volta':'Welcome back','O teu plano de corrida adaptativo':'Your adaptive running plan','tens um convite para um grupo':'you have a group invite','Ainda não tens conta?':"Don't have an account?",'Já tens conta?':'Already have an account?','Criar conta':'Create account'});
 Object.assign(EN_EXACT,{"Não posso fazer este treino": "I can't do this workout", "Não posso fazer": "I can't do it", "Escolhe o que se passa e eu ajusto o plano.": "Tell me what's going on and I'll adjust the plan.", "Mudar de dia": "Change day", "Faço noutro dia desta semana.": "I'll do it another day this week.", "Só tenho pouco tempo": "Short on time", "Estou cansado": "I'm tired", "Salto este e alivio o próximo treino duro.": "Skip this one and ease the next hard session.", "Estou doente": "I'm ill", "Salto este e os próximos 3 dias ficam leves.": "Skip this one and keep the next 3 days easy.", "Tenho dores": "I'm in pain", "Salto este e os próximos 5 dias ficam leves e curtos.": "Skip this one and keep the next 5 days easy and short.", "Não dá mesmo": "Just can't", "Salto este treino e sigo com o plano.": "Skip this workout and carry on with the plan.", "Afinal vou fazer": "I'll do it after all", "Treino reposto": "Workout restored", "Treino encurtado": "Workout shortened", "Treino saltado.": "Workout skipped.", "Saltado. Descansa bem.": "Skipped. Get some rest.", "Saltado. Os próximos 3 dias ficaram leves. Com febre, não corras.": "Skipped. The next 3 days are now easy. Don't run with a fever.", "Saltado. Os próximos 5 dias ficaram leves e curtos. Se a dor continuar ou piorar ao correr, para e fala com um fisioterapeuta.": "Skipped. The next 5 days are now easy and short. If the pain persists or gets worse when running, stop and see a physio."});
 Object.assign(EN_EXACT,{'Não posso fazer este treino ›':"Can't do this workout ›"});
+Object.assign(EN_EXACT,{"Passar para outro dia?": "Move to another day?", "Não, saltar": "No, skip it", "Proponho outro dia livre desta semana, ou salto.": "I'll suggest a free day this week, or skip it.", "A próxima semana ficou mais leve.": "Next week is now lighter."});
+EN_RX.push([/^(.+) é um treino importante\. (.+) está livre\.$/,(m,a,b)=>`${tr(a)} is a key session. ${b} is free.`],[/^Passar para (.+)$/,'Move to $1'],[/^Falhaste mais de metade dos treinos da semana de (.+)\. A semana de (.+) ficou mais leve \(−20% e sem treinos duros\) para retomares com calma\.$/,'You missed more than half of the workouts in the week of $1. The week of $2 is now lighter (−20%, no hard sessions) so you can ease back in.'],[/^(.+) A próxima semana ficou mais leve\.$/,(m,a)=>tr(a)+' Next week is now lighter.']);
 EN_RX.push([/^Troco por (.+) km fáceis\.$/,'Swap for $1 easy km.'],[/^Saltado\. O próximo treino duro \((.+)\) passou a fácil\.$/,'Skipped. The next hard session ($1) is now easy.'],[/^(.+): treino trocado por (.+) km fáceis por falta de tempo\.$/,'$1: workout swapped for $2 easy km (short on time).'],[/^(.+): (.+) saltado \((cansaço|doença|dores|impedimento)\)\.(?: Ajustei (\d+) treinos? a seguir\.)?$/,(m,d,t,r,n)=>`${d}: ${tr(t)} skipped (${{'cansaço':'tired','doença':'ill','dores':'pain','impedimento':"couldn't make it"}[r]}).${n?` Adjusted ${n} upcoming workout${n>1?'s':''}.`:''}`]);
 EN_RX.push([/^(\d) treinos por semana\.$/,'$1 runs a week.'],[/^Passo (\d+) \/ (\d+)$/,'Step $1 / $2']);
 EN_RX.push(
@@ -744,7 +746,7 @@ async function boot(){
   }
   if(!mode&&localStorage.getItem('zone5.mode')==='demo'){mode='demo';st=readLocal();setSync('local');}
   if(!mode)setSync('off');
-  if(st&&st.profile){checkFatigue();loadWeather();}
+  if(st&&st.profile){checkFatigue();if(lightenAfter({date:addDays(mondayOf(TODAY),-1)}))persist();loadWeather();}
   render();
   setTimeout(maybeAutoSync,3000);
 }
@@ -1556,14 +1558,25 @@ function openCant(id){
     <button type="button" class="opt" data-act="cant-skip" data-id="${id}" data-v="tired"><span class="ic">😮‍💨</span><span><b>Estou cansado</b><span class="small muted">Salto este e alivio o próximo treino duro.</span></span></button>
     <button type="button" class="opt" data-act="cant-skip" data-id="${id}" data-v="sick"><span class="ic">🤒</span><span><b>Estou doente</b><span class="small muted">Salto este e os próximos 3 dias ficam leves.</span></span></button>
     <button type="button" class="opt" data-act="cant-skip" data-id="${id}" data-v="pain"><span class="ic">🩹</span><span><b>Tenho dores</b><span class="small muted">Salto este e os próximos 5 dias ficam leves e curtos.</span></span></button>
-    <button type="button" class="opt" data-act="cant-skip" data-id="${id}" data-v="other"><span class="ic">🚫</span><span><b>Não dá mesmo</b><span class="small muted">Salto este treino e sigo com o plano.</span></span></button>
+    <button type="button" class="opt" data-act="cant-skip" data-id="${id}" data-v="other"><span class="ic">🚫</span><span><b>Não dá mesmo</b><span class="small muted">${w.type==='Q'||w.type==='L'?'Proponho outro dia livre desta semana, ou salto.':'Salto este treino e sigo com o plano.'}</span></span></button>
   </div>`);
 }
 const cantKm=w=>Math.max(3,Math.round(w.km*0.5*2)/2);
 function easyfy(w,f,why){if(w.type==='F'||w.race||logFor(w))return false;const km=Math.max(3,Math.round(w.km*f*2)/2);const e=mkEasy(km,false);w.orig=w.orig||{type:w.type,title:w.title,steps:w.steps,focus:w.focus,km:w.km};Object.assign(w,{type:'E',title:e.title,steps:e.steps,focus:e.focus,km});if(why)w.note=why;return true;}
 function cantShort(id){const w=allW().find(x=>x.id===id);const km=cantKm(w);easyfy(w,km/w.km);addNote(`${fmtDate(w.date)}: treino trocado por ${nf(km)} km fáceis por falta de tempo.`,'down');persist();closeSheet();render();toast('Treino encurtado');}
-function cantSkip(id,why){
-  const w=allW().find(x=>x.id===id);st.skipped=st.skipped||[];if(!st.skipped.includes(id))st.skipped.push(id);
+function freeDayFor(w){
+  const wk=weekOf(w.date);if(!wk)return null;
+  const hard=d=>wk.workouts.some(x=>x.id!==w.id&&x.date===d&&(x.type==='Q'||x.type==='L'||x.race)&&!st.skipped?.includes(x.id));
+  const free=d=>!wk.workouts.some(x=>x.id!==w.id&&x.date===d&&x.type!=='F'&&!st.skipped?.includes(x.id));
+  const c=Array.from({length:7},(_,i)=>addDays(wk.start,i)).filter(d=>d>w.date&&d>TODAY&&free(d));
+  return c.find(d=>!hard(addDays(d,-1))&&!hard(addDays(d,1)))||c[0]||null;
+}
+function cantSkip(id,why,force){
+  const w=allW().find(x=>x.id===id);
+  if(why==='other'&&!force&&(w.type==='Q'||w.type==='L')){const d=freeDayFor(w);if(d){openSheet(`<div class="row between"><h2>Passar para outro dia?</h2><button class="link" data-act="close">Fechar</button></div>
+    <div class="small muted">${esc(w.title)} é um treino importante. ${DOW[dow(d)]} ${fmtDate(d)} está livre.</div>
+    <button class="primary" data-act="move-to" data-id="${w.id}" data-d="${d}">Passar para ${DOW[dow(d)]} ${fmtDate(d)}</button>
+    <button class="ghost" data-act="cant-skip-final" data-id="${w.id}">Não, saltar</button>`);return;}}st.skipped=st.skipped||[];if(!st.skipped.includes(id))st.skipped.push(id);
   const after=allW().filter(x=>x.date>w.date&&!logFor(x)&&!st.skipped.includes(x.id));
   let n=0,msg='';
   if(why==='tired'){const q=after.find(x=>(x.type==='Q'||x.type==='L')&&daysBetween(w.date,x.date)<=4);if(q&&easyfy(q,q.type==='L'?0.75:0.8))n=1;msg=n?`Saltado. O próximo treino duro (${DOW[dow(q.date)]}) passou a fácil.`:'Saltado. Descansa bem.';}
@@ -1571,7 +1584,23 @@ function cantSkip(id,why){
     msg=why==='sick'?'Saltado. Os próximos 3 dias ficaram leves. Com febre, não corras.':'Saltado. Os próximos 5 dias ficaram leves e curtos. Se a dor continuar ou piorar ao correr, para e fala com um fisioterapeuta.';}
   else msg='Treino saltado.';
   addNote(`${fmtDate(w.date)}: ${w.title} saltado (${{tired:'cansaço',sick:'doença',pain:'dores',other:'impedimento'}[why]}).${n?` Ajustei ${n} treino${n>1?'s':''} a seguir.`:''}`,'down');
+  const lw=lightenAfter(w);if(lw)msg+=' '+lw;
   persist();closeSheet();render();toast(msg);
+}
+function lightenAfter(w){
+  const wk=weekOf(w.date);if(!wk)return'';
+  st.lightened=st.lightened||[];if(st.lightened.includes(wk.start))return'';
+  const runs=wk.workouts.filter(x=>x.type!=='F'&&!x.race);if(runs.length<2)return'';
+  const lost=runs.filter(x=>!logFor(x)&&(st.skipped?.includes(x.id)||x.date<TODAY)).length;
+  if(lost*2<=runs.length)return'';
+  const nx=st.plan.weeks.find(x=>x.start===addDays(wk.start,7));if(!nx||nx.workouts.some(x=>x.race))return'';
+  for(const x of nx.workouts){if(logFor(x)||x.type==='F')continue;
+    if(x.type==='Q')easyfy(x,0.8);
+    else{const km=Math.max(3,Math.round(x.km*0.8*2)/2);x.orig=x.orig||{type:x.type,title:x.title,steps:x.steps,focus:x.focus,km:x.km};
+      if(x.type==='L')Object.assign(x,{title:'Longo',steps:[{t:`${nf(km)} km fácil`,km,z:'E'}],focus:{z:'E'},km});else Object.assign(x,mkEasy(km,false),{km});}}
+  st.lightened.push(wk.start);
+  addNote(`Falhaste mais de metade dos treinos da semana de ${fmtDate(wk.start)}. A semana de ${fmtDate(nx.start)} ficou mais leve (−20% e sem treinos duros) para retomares com calma.`,'down');
+  return'A próxima semana ficou mais leve.';
 }
 function unskip(id){st.skipped=(st.skipped||[]).filter(x=>x!==id);persist();render();toast('Treino reposto');}
 function openMove(id){
@@ -1731,6 +1760,7 @@ document.addEventListener('click',e=>{
   else if(a==='cant')openCant(id);
   else if(a==='cant-short')cantShort(id);
   else if(a==='cant-skip')cantSkip(id,b.dataset.v);
+  else if(a==='cant-skip-final')cantSkip(id,'other',true);
   else if(a==='unskip')unskip(id);
   else if(a==='move-to')moveTo(id,b.dataset.d);
   else if(a==='guide')startGuide(id);
