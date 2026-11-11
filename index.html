@@ -117,6 +117,7 @@ details.wk[open]>summary{border-bottom:1px solid var(--line)}
 nav.tabs{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:5;display:flex;justify-content:center}
 nav.tabs .in{width:100%;max-width:560px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:6px;background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:999px;box-shadow:0 12px 30px -12px rgba(0,0,0,.7)}
 nav.tabs[hidden]{display:none}
+button.strava{background:#FC4C02;color:#fff;border:none;font-weight:800}
 .cantlink{align-self:flex-start;padding:2px 0;min-height:0;font-size:14px;width:auto}
 .authwrap{display:flex;flex-direction:column;gap:14px;min-height:calc(100dvh - 90px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
 .authhead{padding:10px 2px 2px}.authhead h1{margin:0 0 4px}
@@ -536,6 +537,8 @@ const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
   VAPID_PUBLIC_KEY:'BHSF01XkNo7MoI7v1pNK0S_tNK6or1mV3vGNMPT0ZGKyNAyZKFk57lZBqUqizq4mnky4j2WhEkilBB_CfBhObBg',
+  STRAVA_CLIENT_ID:'',
+  STRAVA_FN:'strava',
   GOOGLE_CLIENT_ID:'480647095768-na7q8pq7lomafssu9ooei6dmspi0d427.apps.googleusercontent.com'
 };
 
@@ -668,6 +671,7 @@ Object.assign(EN_EXACT,{"Não posso fazer este treino": "I can't do this workout
 Object.assign(EN_EXACT,{'Não posso fazer este treino ›':"Can't do this workout ›"});
 Object.assign(EN_EXACT,{"Passar para outro dia?": "Move to another day?", "Não, saltar": "No, skip it", "Proponho outro dia livre desta semana, ou salto.": "I'll suggest a free day this week, or skip it.", "A próxima semana ficou mais leve.": "Next week is now lighter."});
 EN_RX.push([/^(.+) é um treino importante\. (.+) está livre\.$/,(m,a,b)=>`${tr(a)} is a key session. ${b} is free.`],[/^Passar para (.+)$/,'Move to $1'],[/^Falhaste mais de metade dos treinos da semana de (.+)\. A semana de (.+) ficou mais leve \(−20% e sem treinos duros\) para retomares com calma\.$/,'You missed more than half of the workouts in the week of $1. The week of $2 is now lighter (−20%, no hard sessions) so you can ease back in.'],[/^(.+) A próxima semana ficou mais leve\.$/,(m,a)=>tr(a)+' Next week is now lighter.']);
+EN_RX.push([/^Strava: ritmos recalculados pelas corridas dos últimos 90 dias \(forma (.+) → (.+)\)\.$/,'Strava: paces recalculated from your last 90 days of runs (fitness $1 → $2).']);
 EN_RX.push([/^Troco por (.+) km fáceis\.$/,'Swap for $1 easy km.'],[/^Saltado\. O próximo treino duro \((.+)\) passou a fácil\.$/,'Skipped. The next hard session ($1) is now easy.'],[/^(.+): treino trocado por (.+) km fáceis por falta de tempo\.$/,'$1: workout swapped for $2 easy km (short on time).'],[/^(.+): (.+) saltado \((cansaço|doença|dores|impedimento)\)\.(?: Ajustei (\d+) treinos? a seguir\.)?$/,(m,d,t,r,n)=>`${d}: ${tr(t)} skipped (${{'cansaço':'tired','doença':'ill','dores':'pain','impedimento':"couldn't make it"}[r]}).${n?` Adjusted ${n} upcoming workout${n>1?'s':''}.`:''}`]);
 EN_RX.push([/^(\d) treinos por semana\.$/,'$1 runs a week.'],[/^Passo (\d+) \/ (\d+)$/,'Step $1 / $2']);
 EN_RX.push(
@@ -746,7 +750,8 @@ async function boot(){
   }
   if(!mode&&localStorage.getItem('zone5.mode')==='demo'){mode='demo';st=readLocal();setSync('local');}
   if(!mode)setSync('off');
-  if(st&&st.profile){checkFatigue();if(lightenAfter({date:addDays(mondayOf(TODAY),-1)}))persist();loadWeather();}
+  {const q=new URLSearchParams(location.search),sv=q.get('strava');if(sv){q.delete('strava');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:'')+location.hash);setTimeout(()=>toast(sv==='ok'?L('Strava ligado. A importar corridas…','Strava connected. Importing runs…'):sv==='scope'?L('Para ligar, autoriza o acesso às atividades.','To connect, allow access to your activities.'):sv==='cancel'?L('Ligação ao Strava cancelada.','Strava connection cancelled.'):L('Não foi possível ligar ao Strava.',"Couldn't connect to Strava.")),600);if(sv==='ok')localStorage.removeItem('zone5.svSync');}}
+  if(st&&st.profile){setTimeout(stravaTick,1500);checkFatigue();if(lightenAfter({date:addDays(mondayOf(TODAY),-1)}))persist();loadWeather();}
   render();
   setTimeout(maybeAutoSync,3000);
 }
@@ -838,7 +843,7 @@ function groupRacesHtml(){
 }
 
 /* ---------- Sapatilhas ---------- */
-const shoeKm=sh=>(sh.base||0)+st.logs.filter(l=>l.shoe===sh.id&&l.dist>0).reduce((a,l)=>a+l.dist,0);
+const shoeKm=sh=>sh.stravaKm!=null?sh.stravaKm+st.logs.filter(l=>l.shoe===sh.id&&l.dist>0&&!l.stravaId).reduce((a,l)=>a+l.dist,0):(sh.base||0)+st.logs.filter(l=>l.shoe===sh.id&&l.dist>0).reduce((a,l)=>a+l.dist,0);
 const activeShoes=()=>(st.shoes||[]).filter(x=>!x.retired);
 function shoeBar(km){const pct=Math.min(100,km/800*100);const col=km>=800?'var(--bad)':km>=600?'var(--warn)':'var(--good)';return `<div class="rbar"><div style="width:${pct}%;background:${col}"></div></div>`;}
 function shoesHtml(){
@@ -928,6 +933,108 @@ function remindHtml(){
   ${!CONFIG.VAPID_PUBLIC_KEY?`<div class="small" style="color:var(--warn)">${L('Em breve.','Coming soon.')}</div>`:mode!=='cloud'?`<div class="small muted">${L('Precisa de conta.','Needs an account.')}</div>`:isIOS&&!standalone?`<div class="small">${L('No iPhone, primeiro instala a app: no Safari, Partilhar → Adicionar ao ecrã principal. Depois abre-a pelo ícone e volta aqui.','On iPhone, install the app first: in Safari, Share → Add to Home Screen. Then open it from the icon and come back here.')}</div>`:
   `<label for="rmHour">${L('Hora','Time')}<select id="rmHour">${Array.from({length:17},(_,i)=>i+6).map(h=>`<option value="${h}" ${(r.hour??8)===h?'selected':''}>${String(h).padStart(2,'0')}:00</option>`).join('')}</select></label>
   <button class="${r.on?'ghost':'primary'}" data-act="${r.on?'rm-off':'rm-on'}">${r.on?L('Desligar lembretes','Turn off reminders'):L('Ligar lembretes','Turn on reminders')}</button>`}</section>`;
+}
+
+
+/* ---------- Strava ---------- */
+const stravaOn=()=>!!(CONFIG.STRAVA_CLIENT_ID&&mode==='cloud'&&sb);
+async function stravaCall(action,body){
+  const {data}=await sb.auth.getSession();const tok=data?.session?.access_token;if(!tok)throw new Error('sem sessão');
+  const r=await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/${CONFIG.STRAVA_FN||'strava'}?action=${action}`,{method:'POST',headers:{Authorization:'Bearer '+tok,apikey:CONFIG.SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify(body||{})});
+  if(!r.ok)throw new Error('strava '+r.status);return r.json();
+}
+let SV={link:null,loaded:false,busy:false};
+async function stravaLoadLink(){
+  if(!stravaOn())return;
+  try{const {data}=await sb.from('strava_link').select('athlete_name,shoes,last_sync').eq('user_id',user.id).maybeSingle();SV.link=data||null;SV.loaded=true;}catch(e){SV.loaded=true;}
+  if(SV.link&&st?.profile){
+    st.shoes=st.shoes||[];let ch=false;
+    for(const s of SV.link.shoes||[]){let sh=st.shoes.find(x=>x.stravaId===s.id);
+      if(!sh){sh={id:'sv'+String(s.id).replace(/\W/g,''),name:s.name,stravaId:s.id,base:0};st.shoes.push(sh);ch=true;}
+      if(sh.stravaKm!==s.km||!!sh.retired!==!!s.retired){sh.stravaKm=s.km;sh.retired=!!s.retired;ch=true;}}
+    if(!st.shoeDefault&&activeShoes()[0]){st.shoeDefault=activeShoes()[0].id;ch=true;}
+    if(ch)persist();
+  }
+}
+async function stravaTick(force){
+  if(!stravaOn()||SV.busy||!st?.profile)return;
+  if(!SV.loaded)await stravaLoadLink();
+  if(!SV.link)return;
+  const last=+(localStorage.getItem('zone5.svSync')||0);
+  SV.busy=true;
+  try{
+    if(force||Date.now()-last>10*60e3){try{await stravaCall('sync');localStorage.setItem('zone5.svSync',String(Date.now()));await stravaLoadLink();}catch(e){}}
+    await stravaPull();
+    if(tab==='ajustes'&&!$('#sheetBg').classList.contains('open'))render();
+  }finally{SV.busy=false;}
+}
+function stravaBest(a){const m={'1K':1,'5K':5,'10K':10},b={};for(const x of a.best||[])if(m[x.n])b[m[x.n]]=x.t;return b;}
+function stravaFast(a,w){
+  if(!w||!(w.type==='Q'||w.type==='R')||w.focus.z==='E'||w.focus.z==='H')return null;
+  const tp=target(pz(),w.focus.z);if(!tp)return null;
+  const pick=xs=>xs.filter(x=>x.d>=150&&x.t>0&&x.t/(x.d/1000)<=tp*1.08);
+  let f=pick((a.laps||[]).length>1?a.laps:[]);if(!f.length)f=pick(a.splits||[]);
+  if(!f.length)return null;const d=f.reduce((s,x)=>s+x.d,0),t=f.reduce((s,x)=>s+x.t,0);return Math.round(t/(d/1000));
+}
+async function stravaPull(){
+  let rows=[];
+  try{const {data}=await sb.from('strava_activities').select('id,start_date,data,backfill,deleted').eq('user_id',user.id).eq('processed',false).order('start_date').limit(200);rows=data||[];}catch(e){return;}
+  if(!rows.length)return;
+  const p0=st.plan.weeks[0].start;let added=0,fit=[];const done=[];
+  for(const r of rows){
+    const a=r.data||{},sid=Number(r.id);done.push(r.id);
+    if(r.deleted){const n=st.logs.length;st.logs=st.logs.filter(l=>l.stravaId!==sid);if(st.logs.length!==n)adapt();continue;}
+    if(st.logs.some(l=>l.stravaId===sid))continue;
+    const dist=(a.distance||0)/1000,time=a.moving_time||a.elapsed_time||0;if(dist<0.5||!time)continue;
+    if(r.start_date<p0||r.start_date>TODAY){if(dist>=3&&dist<=25)fit.push({v:vdotFrom(dist*1000,time),d:r.start_date});continue;}
+    const dup=st.logs.find(l=>!l.stravaId&&l.date===r.start_date&&Math.abs(l.dist-dist)/dist<0.12);
+    if(dup){dup.stravaId=sid;continue;}
+    let w=allW().find(x=>x.date===r.start_date&&x.type!=='F'&&!logFor(x)&&!st.skipped?.includes(x.id))||allW().find(x=>x.date===r.start_date&&x.type!=='F'&&!logFor(x));
+    if(w&&st.skipped?.includes(w.id))st.skipped=st.skipped.filter(x=>x!==w.id);
+    const log={date:r.start_date,dist:Math.round(dist*100)/100,time,avgHr:a.average_heartrate?Math.round(a.average_heartrate):null,
+      splits:(a.splits||[]).filter(s=>s.d>=950).map(s=>Math.round(s.t*1000/s.d)),fast:stravaFast(a,w),best:stravaBest(a),
+      source:'strava',stravaId:sid,stravaName:a.name||'',rpe:a.perceived_exertion?Math.round(a.perceived_exertion):null,elev:a.total_elevation_gain||0};
+    const sh=(st.shoes||[]).find(x=>a.gear_id&&x.stravaId===a.gear_id);if(sh)log.shoe=sh.id;else if(st.shoeDefault&&!(st.shoes||[]).find(x=>x.id===st.shoeDefault)?.stravaId)log.shoe=st.shoeDefault;
+    commitLog(log,w,true);added++;
+    if(st.strava?.writeback&&w)stravaDescribe(log,w);
+  }
+  if(fit.length>=2){fit.sort((x,y)=>y.v-x.v);const v=Math.round(fit[1].v*10)/10;if(v>st.vdot+1)st.stravaFit={v,n:fit.length,d:fit[1].d};}
+  persist();
+  try{await sb.from('strava_activities').update({processed:true}).in('id',done);}catch(e){}
+  render();
+  if(added)toast(added===1?L('1 corrida importada do Strava','1 run imported from Strava'):L(`${added} corridas importadas do Strava`,`${added} runs imported from Strava`));
+}
+function stravaDescribe(log,w){
+  const e=log.eval||{};const ok=e.cls==='up'?'✓':e.cls==='down'?'•':'✓';
+  const txt=`Zone5 · ${tr(w.title)} ${ok} ${fmtPace(log.time/log.dist)}/km${log.fast?` · ${LANG==='pt'?'partes rápidas':'fast parts'} ${fmtPace(log.fast)}/km`:''}`;
+  stravaCall('describe',{id:log.stravaId,text:txt}).catch(()=>{});
+}
+async function stravaConnect(){
+  try{const r=await stravaCall('start',{return_url:location.origin+location.pathname});if(r.url)location.href=r.url;else throw 0;}
+  catch(e){toast(L('Não foi possível ligar ao Strava agora.',"Couldn't connect to Strava right now."));}
+}
+async function stravaDisconnect(){
+  try{await stravaCall('disconnect');}catch(e){}
+  SV.link=null;st.strava={...(st.strava||{}),writeback:false};
+  for(const sh of st.shoes||[])if(sh.stravaId){sh.base=sh.stravaKm||0;delete sh.stravaId;delete sh.stravaKm;}
+  persist();render();toast(L('Strava desligado','Strava disconnected'));
+}
+function stravaHtml(){
+  if(!CONFIG.STRAVA_CLIENT_ID||mode!=='cloud')return'';
+  const l=SV.link;
+  return `<section class="card"><div class="row between"><h3>Strava</h3>${l?'<span class="pill st-done">'+L('Ligado','Connected')+'</span>':''}</div>
+  ${l?`<div class="small muted">${L('Conta','Account')}: <b>${esc(l.athlete_name||'')}</b>. ${L('As corridas novas entram sozinhas, associadas ao treino do dia.','New runs come in automatically, matched to the day’s workout.')}</div>
+    <label class="switch"><input type="checkbox" id="svWrite" ${st.strava?.writeback?'checked':''}><span>${L('Escrever o resultado na descrição da atividade no Strava','Add the result to the activity description on Strava')}</span></label>
+    <div class="btns"><button data-act="sv-sync">${L('Sincronizar agora','Sync now')}</button><button class="ghost" data-act="sv-off" style="color:var(--bad)">${L('Desligar','Disconnect')}</button></div>`
+  :`<div class="small muted">${L('Liga o Strava e cada corrida entra sozinha na Zone5, já analisada. Também importa as tuas sapatilhas e os últimos 90 dias para acertar os ritmos.','Connect Strava and every run lands in Zone5 automatically, already analysed. It also imports your shoes and the last 90 days to tune your paces.')}</div>
+    <button class="strava" data-act="sv-on">${L('Ligar ao Strava','Connect with Strava')}</button>`}</section>`;
+}
+function stravaCardsHtml(){
+  let out='';
+  if(st.stravaFit&&st.stravaFit.v>st.vdot+1){const P=paces(st.stravaFit.v,st.profile.goal||'10k');out+=`<section class="card suggest"><b>${L('O teu Strava mostra mais forma','Your Strava shows better fitness')}</b><div class="small">${L(`Nas tuas ${st.stravaFit.n} corridas dos últimos 90 dias há esforços que indicam ritmos mais rápidos (fácil a ${fmtPace(P.E[0])}/km).`,`Your ${st.stravaFit.n} runs from the last 90 days include efforts that point to faster paces (easy at ${fmtPace(P.E[0])}/km).`)}</div><div class="btns"><button class="primary" data-act="sv-fit">${L('Atualizar ritmos','Update paces')}</button><button class="ghost" data-act="sv-fit-no">${L('Agora não','Not now')}</button></div></section>`;}
+  const l=[...st.logs].reverse().find(x=>x.source==='strava'&&!x.rpe&&daysBetween(x.date,TODAY)<=3&&x.wid);
+  if(l){const w=allW().find(x=>x.id===l.wid);out+=`<section class="card"><div class="small muted">Strava · ${fmtDate(l.date)}</div><b>${L('Como correu','How did it go')}: ${esc(tr(w?.title||''))}?</b><div class="chips">${[[3,L('Fácil','Easy')],[5,L('Confortável','Comfortable')],[7,L('Duro','Hard')],[9,L('Muito duro','Very hard')]].map(([v,t])=>`<button class="chip" data-act="sv-rpe" data-id="${l.stravaId}" data-v="${v}">${t}</button>`).join('')}</div></section>`;}
+  return out;
 }
 
 /* ---------- Grupo ---------- */
@@ -1066,7 +1173,7 @@ function workoutCard(w,hero){
 }
 function logSummary(l){
   if(l.wtype==='F')return `<div class="note up">Sessão de força feita.</div>`;
-  return `<div class="note ${l.eval?.cls||'info'}"><div class="num"><b>${nf(Math.round(l.dist*100)/100)} km</b> · ${fmtTime(l.time)} · ${fmtPace(l.time/l.dist)}/km${l.avgHr?` · ${l.avgHr} bpm`:''} · esforço ${l.rpe}/10</div><div>${esc(l.eval?.msg||'')}</div></div>${l.ai?`<div class="note info"><span class="tiny muted">Treinador IA</span><br>${esc(l.ai)}</div>`:''}`;
+  return `<div class="note ${l.eval?.cls||'info'}"><div class="num"><b>${nf(Math.round(l.dist*100)/100)} km</b> · ${fmtTime(l.time)} · ${fmtPace(l.time/l.dist)}/km${l.avgHr?` · ${l.avgHr} bpm`:''} ${l.rpe?` · esforço ${l.rpe}/10`:''}${l.source==='strava'?' · Strava':''}</div><div>${esc(l.eval?.msg||'')}</div></div>${l.ai?`<div class="note info"><span class="tiny muted">Treinador IA</span><br>${esc(l.ai)}</div>`:''}`;
 }
 
 /* ---------- Adaptação ---------- */
@@ -1136,7 +1243,7 @@ function hojeHtml(){
   {const h=new Date().getHours();const nm=mode==='cloud'?myName():'';out+=`<div class="greet"><span class="eyebrow">${DOW[dow(TODAY)]} ${fmtDate(TODAY)}${days!==null&&days>=0?` · ${days} ${L('dias para a prova','days to race')}`:''}</span><h1>${h<12?L('Bom dia','Good morning'):h<20?L('Boa tarde','Good afternoon'):L('Boa noite','Good evening')}${nm?', '+esc(nm):''}</h1></div>`;}
   if(st.suggest){out+=`<section class="card suggest"><h3>Sugestão: aliviar a próxima semana</h3><div class="small">${esc(st.suggest.why)} Recomendo reduzir a semana de ${fmtDate(st.suggest.week)} em cerca de 20%.</div><div class="btns"><button class="primary" data-act="sugg-yes">Aplicar</button><button class="ghost" data-act="sugg-no">Ignorar</button></div></section>`;}
   if(st.gcal?.pending&&st.gcal?.last)out+=`<section class="card"><div class="row between"><span class="small">O plano mudou. O teu Google Calendar está por atualizar.</span><button data-act="gc-now">Atualizar</button></div></section>`;
-  out+=wxSuggestHtml()+shoeAlertHtml();
+  out+=stravaCardsHtml()+wxSuggestHtml()+shoeAlertHtml();
   out+=recapHtml();
   if(todayW&&!logFor(todayW)&&status(todayW)!=='skip')out+=workoutCard(todayW,true);
   else if(todayW){out+=workoutCard(todayW,false);if(next)out+=`<div class="eyebrow">Próximo treino</div>`+workoutCard(next,true);}
@@ -1222,6 +1329,7 @@ function ajustesHtml(){
     <div class="btns"><button id="ics">Exportar para o calendário (.ics)</button><button id="bkp">Descarregar cópia (.json)</button></div>
     <label class="btn" for="restore" style="flex-direction:row;justify-content:center;align-items:center">Restaurar a partir de cópia<input type="file" id="restore" accept=".json,application/json" style="display:none"></label>
     <div class="small muted" id="dlNote"></div></section>
+  ${stravaHtml()}
   ${remindHtml()}
   ${wxHtml()}
   ${shoesHtml()}
@@ -1429,6 +1537,7 @@ function icsText(){
 }
 function bindAjustes(){
   $('#gcTime').onchange=e=>{st.gcal=st.gcal||{};st.gcal.time=e.target.value;persist();};
+  {const sw=$('#svWrite');if(sw)sw.onchange=()=>{st.strava={...(st.strava||{}),writeback:sw.checked};persist();};}
   {const rh=$('#rmHour');if(rh)rh.onchange=e=>{st.remind={...(st.remind||{}),hour:+e.target.value};persist();pushSync();toast(L('Hora guardada','Time saved'));};}
   $('#gcAuto').onchange=e=>{st.gcal=st.gcal||{};st.gcal.auto=e.target.checked;persist();};
   $('#gcSync').onclick=()=>gcalSync(true);
@@ -1516,6 +1625,13 @@ function prepAnalysis(a){
     draft.gpx=a;draft.date=a.date;
   }
 }
+function commitLog(log,w){
+  if(w){log.wid=w.id;log.wtype=w.type;st.logs=st.logs.filter(l=>l.wid!==w.id);}else log.extra=true;
+  log.eval=evaluate(log,w,st.vdot,st.profile.goal,popt());
+  if(log.eval.newVdot){const o=st.vdot;st.vdot=Math.round(log.eval.newVdot*10)/10;st.vdotHist.push({d:log.date,v:st.vdot,why:w.title});addNote(`${w.title}: ${fmtTime(log.time)}. Ritmos recalculados (forma ${o.toFixed(1)} → ${st.vdot.toFixed(1)}).`,st.vdot>=o?'up':'down');}
+  st.logs.push(log);
+  adapt();
+}
 function saveLog(){
   const err=m=>{$('#logErr').textContent=m;};
   let log;
@@ -1534,11 +1650,7 @@ function saveLog(){
   log.rpe=draft.rpe||5;
   {const so=$('#mShoe');const v=so?so.value:st.shoeDefault;if(v)log.shoe=v;}
   const w=draft.wid?allW().find(x=>x.id===draft.wid):null;
-  if(w){log.wid=w.id;log.wtype=w.type;st.logs=st.logs.filter(l=>l.wid!==w.id);}else log.extra=true;
-  log.eval=evaluate(log,w,st.vdot,st.profile.goal,popt());
-  if(log.eval.newVdot){const o=st.vdot;st.vdot=Math.round(log.eval.newVdot*10)/10;st.vdotHist.push({d:log.date,v:st.vdot,why:w.title});addNote(`${w.title}: ${fmtTime(log.time)}. Ritmos recalculados (forma ${o.toFixed(1)} → ${st.vdot.toFixed(1)}).`,st.vdot>=o?'up':'down');}
-  st.logs.push(log);
-  adapt();
+  commitLog(log,w);
   persist();closeSheet();render();
   toast(tr(log.eval.msg).split(/(?<=[.!?])\s/)[0]);
 }
@@ -1777,6 +1889,12 @@ document.addEventListener('click',e=>{
   else if(a==='wx-here')wxHere();
   else if(a==='wx-off'){st.wxLoc=null;WX=null;try{localStorage.removeItem('zone5.wx');}catch(e){}persist();render();}
   else if(a==='rm-on')remindOn();
+  else if(a==='sv-on')stravaConnect();
+  else if(a==='sv-off')stravaDisconnect();
+  else if(a==='sv-sync'){toast(L('A sincronizar…','Syncing…'));stravaTick(true);}
+  else if(a==='sv-fit'){const o=st.vdot;st.vdot=st.stravaFit.v;st.vdotHist.push({d:TODAY,v:st.vdot,why:'Strava'});addNote(`Strava: ritmos recalculados pelas corridas dos últimos 90 dias (forma ${o.toFixed(1)} → ${st.vdot.toFixed(1)}).`,'up');st.stravaFit=null;persist();render();toast(L('Ritmos atualizados','Paces updated'));}
+  else if(a==='sv-fit-no'){st.stravaFit=null;persist();render();}
+  else if(a==='sv-rpe'){const l=st.logs.find(x=>x.stravaId===Number(id));if(l){l.rpe=Number(b.dataset.v);const w=allW().find(x=>x.id===l.wid);l.eval=evaluate(l,w,st.vdot,st.profile.goal,popt());if(l.rpe>=8)checkFatigue();persist();render();toast(tr(l.eval.msg).split(/(?<=[.!?])\s/)[0]);}}
   else if(a==='rm-off')remindOff();
   else if(a.startsWith('ob-'))obNav(a,b.dataset.v);
   else if(a==='newplan'){ob=null;$('#tabs').hidden=true;$('#app').innerHTML=onboardHtml();bindOnboard();window.scrollTo(0,0);}
@@ -1891,7 +2009,7 @@ async function gcalSync(manual,removeAll){
 document.documentElement.lang=LANG==='pt'?'pt-PT':'en';
 if(LANG==='en'){trNode(document.body);new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData')trNode(m.target);else m.addedNodes.forEach(trNode);}}).observe(document.body,{childList:true,subtree:true,characterData:true});}
 boot();
-document.addEventListener('visibilitychange',async()=>{if(document.hidden)return;if(mode==='cloud'&&!G&&!$('#sheetBg').classList.contains('open')){try{const {data}=await sb.from('user_state').select('state').eq('user_id',user.id).maybeSingle();if(data?.state&&(data.state.updated||0)>(st?.updated||0)){st=data.state;try{localStorage.setItem(lsKey(),JSON.stringify(st));}catch(e){}render();}}catch(e){}}if(localToday()!==TODAY&&st?.profile){checkFatigue();render();}});
+document.addEventListener('visibilitychange',async()=>{if(document.hidden)return;setTimeout(stravaTick,800);if(mode==='cloud'&&!G&&!$('#sheetBg').classList.contains('open')){try{const {data}=await sb.from('user_state').select('state').eq('user_id',user.id).maybeSingle();if(data?.state&&(data.state.updated||0)>(st?.updated||0)){st=data.state;try{localStorage.setItem(lsKey(),JSON.stringify(st));}catch(e){}render();}}catch(e){}}if(localToday()!==TODAY&&st?.profile){checkFatigue();render();}});
 window.addEventListener('offline',()=>{if(mode==='cloud')setSync('local');});
 window.addEventListener('online',()=>{if(mode==='cloud'&&st)persist();});
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude|anthropic/.test(location.hostname)){navigator.serviceWorker.register('sw.js').catch(()=>{});}
