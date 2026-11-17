@@ -59,6 +59,7 @@ function slim(a: Record<string, any>) {
     splits: (a.splits_metric ?? []).map((s: any) => ({ d: s.distance, t: s.moving_time, hr: s.average_heartrate ?? null })),
     laps: (a.laps ?? []).map((l: any) => ({ d: l.distance, t: l.moving_time })),
     best: (a.best_efforts ?? []).map((b: any) => ({ n: b.name, d: b.distance, t: b.moving_time })),
+    poly: a.map?.polyline ?? a.map?.summary_polyline ?? null,
     detailed: !!a.splits_metric,
   };
 }
