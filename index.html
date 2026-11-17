@@ -334,7 +334,7 @@ const RACES=[
  {id:'madrid27',name:'Maratón de Madrid',city:'Madrid',cc:'ES',date:'2027-04-25',km:42.195,terrain:'hilly'}
 ];
 let EXTRA_RACES=[];
-const allRaces=()=>{const seen=new Set(RACES.map(r=>r.name.toLowerCase()+r.date));return RACES.concat(EXTRA_RACES.filter(r=>!seen.has(r.name.toLowerCase()+r.date))).sort((a,b)=>a.date<b.date?-1:1);};
+const allRaces=()=>{const base=RACES.concat(JSON_RACES.filter(x=>!RACES.some(r=>r.id===x.id)));const seen=new Set(base.map(r=>r.name.toLowerCase()+r.date));return base.concat(EXTRA_RACES.filter(r=>!seen.has(r.name.toLowerCase()+r.date))).sort((a,b)=>a.date<b.date?-1:1);};
 const raceById=id=>allRaces().find(r=>r.id===id);
 function pickSpread(D,L,n){const cd=(a,b)=>{const d=Math.abs(a-b)%7;return Math.min(d,7-d);};const pick=[L];while(pick.length<n){let best=null,bd=-1;for(const d of D){if(pick.includes(d))continue;const m=Math.min(...pick.map(x=>cd(x,d)));if(m>bd){bd=m;best=d;}}if(best===null)break;pick.push(best);}return pick.sort((a,b)=>a-b);}
 /* dias escolhidos → [dia, tipo]; o duro principal 2+ dias depois do longo, o segundo longe do primeiro e nunca na véspera do longo */
@@ -484,43 +484,60 @@ function genPlan(p,todayS,vdot){
 
 /* ---------- HYROX ---------- */
 // Datas da época 26/27 ainda por confirmar oficialmente (calendários HYROX, nov 2026)
-const HX_RACES=[
-  {id:'hx-bilbao27',name:'HYROX Bilbao',city:'Bilbao',cc:'ES',date:'2027-02-06',tbc:true},
-  {id:'hx-madrid27',name:'HYROX Madrid',city:'Madrid',cc:'ES',date:'2027-03-20',tbc:true},
-  {id:'hx-malaga27',name:'HYROX Málaga',city:'Málaga',cc:'ES',date:'2027-04-17',tbc:true}];
+// A lista completa vem de races.json (atualizado todos os meses); estas ficam como reserva sem rede
+const slugify=t=>t.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+function hxFromJson(x){const city=x.name.replace(/^HYROX\s+/,'');let d=x.start;for(let i=0;i<7;i++){const c=addDays(x.start,i);if(c>x.end)break;if(dow(c)===5){d=c;break;}}
+  return{id:'hx-'+slugify(city)+x.start.slice(2,4),name:x.name,city,cc:x.cc,region:x.region,date:d,start:x.start,end:x.end,note:x.note||''};}
+let HX_RACES=[{name:'HYROX Bilbao',cc:'ES',region:'ib',start:'2027-02-06',end:'2027-02-07'},{name:'HYROX Madrid',cc:'ES',region:'ib',start:'2027-03-17',end:'2027-03-21'},{name:'HYROX Málaga',cc:'ES',region:'ib',start:'2027-04-14',end:'2027-04-18'}].map(hxFromJson);
+let JSON_RACES=[];
+async function loadRaceFile(){
+  try{const r=await fetch('races.json',{cache:'no-cache'});if(!r.ok)return;const j=await r.json();
+    if(Array.isArray(j.hyrox)&&j.hyrox.length)HX_RACES=j.hyrox.map(hxFromJson);
+    if(Array.isArray(j.running))JSON_RACES=j.running.filter(x=>x&&x.id&&x.name&&x.date&&x.km);
+    try{if(document.querySelector('.wiz'))obRerender();}catch(e){}
+  }catch(e){}
+}
 // Pesos oficiais 2025/26 (trenó incluído)
 const HX_DIV={ow:{l:'Open · Mulheres',push:102,pull:78,fc:16,sb:10,wb:4,wbn:75},om:{l:'Open · Homens',push:152,pull:103,fc:24,sb:20,wb:6,wbn:100},
   pw:{l:'Pro · Mulheres',push:152,pull:103,fc:24,sb:20,wb:6,wbn:100},pm:{l:'Pro · Homens',push:202,pull:153,fc:32,sb:30,wb:9,wbn:100}};
 const HX_ST=['ski','push','pull','bbj','row','fc','lunge','wb'];
+const HX_GEAR=[['ski','SkiErg'],['row','Remo'],['sled','Trenó'],['tread','Passadeira'],['wb','Bola de wall ball'],['kb','Kettlebells ou halteres'],['sb','Sandbag']];
+const HX_PRESET={full:['ski','row','sled','tread','wb','kb','sb'],gym:['row','tread','wb','kb'],home:['kb']};
+const hxGearOf=p=>Array.isArray(p?.hxGear)?p.hxGear:HX_PRESET[p?.hxEq||'gym']||HX_PRESET.gym;
 const HX_BASE={ski:270,push:200,pull:260,bbj:270,row:285,fc:120,lunge:270,wb:330}; // segundos, Open Homens, nível intermédio
 const HX_NAME={ski:'SkiErg',push:'Sled push',pull:'Sled pull',bbj:'Burpee broad jumps',row:'Row',fc:'Farmers carry',lunge:'Sandbag lunges',wb:'Wall balls'};
 const rnd=(x,s)=>Math.max(s,Math.round(x/s)*s);
-function hxStation(k,f,eq,div){
+const KB=[4,6,8,10,12,16,20,24,28,32],WB=[3,4,5,6,9];
+const near=(xs,v)=>xs.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);
+function hxStation(k,f,gear,div,wf){
+  if(typeof gear==='string')gear=HX_PRESET[gear]||HX_PRESET.gym;
+  wf=wf||1;const has=x=>gear.includes(x);
   const D=HX_DIV[div]||HX_DIV.om,sec=Math.max(30,Math.round(HX_BASE[k]*f*(div==='pm'||div==='pw'?1.1:1)));
   const o=(t,amt)=>({kind:'st',k,t,amt,sec,f});
+  const sled=w=>`${rnd(w*wf,5)} kg`,kb=w=>near(KB,w*wf);
   switch(k){
-    case'ski':return eq==='full'?o('SkiErg',`${rnd(1000*f,50)} m`):eq==='gym'?o('Remo (em vez de SkiErg)',`${rnd(1000*f,50)} m`):o('Burpees',`${rnd(40*f,5)} reps`);
-    case'push':return eq==='full'?o('Sled push',`${rnd(50*f,5)} m · ${D.push} kg`):eq==='gym'?o('Passadeira desligada a empurrar',`${Math.max(3,Math.round(8*f))} × 20 s`):o('Afundos a andar com peso',`${rnd(60*f,10)} m`);
-    case'pull':return eq==='full'?o('Sled pull',`${rnd(50*f,5)} m · ${D.pull} kg`):eq==='gym'?o('Remada com cabo pesada',`${Math.max(2,Math.round(5*f))} × 12`):o('Remada com halteres',`${Math.max(2,Math.round(5*f))} × 12`);
+    case'ski':return has('ski')?o('SkiErg',`${rnd(1000*f,50)} m`):has('row')?o('Remo (em vez de SkiErg)',`${rnd(1000*f,50)} m`):o('Burpees',`${rnd(40*f,5)} reps`);
+    case'push':return has('sled')?o('Sled push',`${rnd(50*f,5)} m · ${sled(D.push)}`):has('tread')?o('Passadeira desligada a empurrar',`${Math.max(3,Math.round(8*f))} × 20 s`):o(has('kb')?'Afundos a andar com peso':'Afundos a andar',`${rnd(60*f,10)} m`);
+    case'pull':return has('sled')?o('Sled pull',`${rnd(50*f,5)} m · ${sled(D.pull)}`):has('row')&&!has('kb')?o('Remo forte, braços',`${rnd(500*f,50)} m`):has('kb')?o('Remada com halteres',`${Math.max(2,Math.round(5*f))} × 12`):o('Remada com elástico ou mochila',`${Math.max(2,Math.round(5*f))} × 15`);
     case'bbj':return o('Burpee broad jumps',`${rnd(80*f,5)} m`);
-    case'row':return eq==='home'?o('Corrida forte',`${rnd(800*f,50)} m`):o('Row',`${rnd(1000*f,50)} m`);
-    case'fc':return eq==='home'?o('Farmers carry com halteres',`${rnd(200*f,10)} m`):o('Farmers carry',`${rnd(200*f,10)} m · 2 × ${D.fc} kg`);
-    case'lunge':return eq==='home'?o('Lunges com mochila pesada',`${rnd(100*f,5)} m`):o('Sandbag lunges',`${rnd(100*f,5)} m · ${D.sb} kg`);
-    case'wb':return eq==='home'?o('Thrusters com halteres',`${rnd(D.wbn*f,5)} reps`):o('Wall balls',`${rnd(D.wbn*f,5)} reps · ${D.wb} kg`);
+    case'row':return has('row')?o('Row',`${rnd(1000*f,50)} m`):has('ski')?o('SkiErg (em vez de remo)',`${rnd(1000*f,50)} m`):o('Corrida forte',`${rnd(800*f,50)} m`);
+    case'fc':return has('kb')?o('Farmers carry',`${rnd(200*f,10)} m · 2 × ${kb(D.fc)} kg`):o('Farmers carry com garrafões ou sacos',`${rnd(200*f,10)} m`);
+    case'lunge':return has('sb')?o('Sandbag lunges',`${rnd(100*f,5)} m · ${rnd(D.sb*wf,5)} kg`):has('kb')?o('Lunges com halteres',`${rnd(100*f,5)} m · ${kb(D.sb/2)} kg ${L('cada mão','each hand')}`):o('Lunges com mochila pesada',`${rnd(100*f,5)} m`);
+    case'wb':return has('wb')?o('Wall balls',`${rnd(D.wbn*f,5)} reps · ${near(WB,D.wb*wf)} kg`):has('kb')?o('Thrusters com halteres',`${rnd(D.wbn*f,5)} reps`):o('Agachamentos com salto',`${rnd(D.wbn*f*0.6,5)} reps`);
   }
 }
 const hxRun=km=>({kind:'run',km,z:'P'});
 const HX_WU={t:'Aquecimento: 8 min de remo ou corrida leve + mobilidade',z:'F',d:''};
 const HX_STR={A:{t:'Força: agachamento goblet 3 × 10, peso morto romeno 3 × 10, prancha 3 × 40 s',z:'F',d:''},B:{t:'Força: afundos búlgaros 3 × 8 por perna, remada 3 × 10, prancha lateral 3 × 30 s',z:'F',d:''}};
 function hxSeqKm(seq){return seq.reduce((a,x)=>a+(x.kind==='run'?x.km:0),0);}
-function mkHxStations(kind,f,rounds,eq,div){
+function mkHxStations(kind,f,rounds,eq,div,wf){
   const ks=kind==='A'?['ski','push','pull','bbj']:['row','fc','lunge','wb'];
-  const seq=[];for(let r=0;r<rounds;r++){for(const k of ks)seq.push(hxStation(k,f,eq,div));if(r<rounds-1)seq.push({kind:'rest',sec:120});}
+  const seq=[];for(let r=0;r<rounds;r++){for(const k of ks)seq.push(hxStation(k,f,eq,div,wf));if(r<rounds-1)seq.push({kind:'rest',sec:120});}
   const min=Math.round((10+seq.reduce((a,x)=>a+x.sec+(x.kind==='st'?30:0),0)/60+12)/5)*5;
   return{type:'F',hx:true,title:kind==='A'?'Estações A':'Estações B',min,steps:[HX_WU,{t:`${rounds} voltas`,z:'X',seq},HX_STR[kind]],focus:{z:'X'}};
 }
-function mkHxCompromised(rounds,f,eq,div,offset,title){
-  const seq=[];for(let r=0;r<rounds;r++){seq.push(hxRun(1));seq.push(hxStation(HX_ST[(offset+r)%8],f,eq,div));}
+function mkHxCompromised(rounds,f,eq,div,offset,title,wf){
+  const seq=[];for(let r=0;r<rounds;r++){seq.push(hxRun(1));seq.push(hxStation(HX_ST[(offset+r)%8],f,eq,div,wf));}
   const st=[{t:'1,5 km aquecimento',km:1.5,z:'E'},{t:`${rounds} × (1 km + estação)`,z:'P',seq,km:hxSeqKm(seq)},{t:'1 km retorno à calma',km:1,z:'E'}];
   return{type:'Q',hx:true,title:title||'Corrida comprometida',steps:st,focus:{z:'P',km:1,hx:true}};
 }
@@ -530,23 +547,24 @@ function mkHxRun(kind,n){
 }
 function genHyrox(p,todayS,vdot){
   const days=clamp(Array.isArray(p.runDays)&&p.runDays.length>=2?p.runDays.length:p.days|0,2,7);
-  const eq=p.hxEq||'gym',div=p.hxDiv||'om',mon0=mondayOf(todayS);
+  const eq=hxGearOf(p),div=p.hxDiv||'om',mon0=mondayOf(todayS),beg=p.level==='ini';
   const hasRace=p.raceDate&&p.raceDate>todayS;
   const N=clamp(hasRace?Math.floor(daysBetween(mon0,mondayOf(p.raceDate))/7)+1:12,1,30);
   const T=N>=6?1:0,TW=N-T,nb=Math.round(TW*0.35),nbu=Math.round(TW*0.35);
   const lv={ini:0,int:1,ava:2}[p.level]??1;
   const L0=[5,7,9][lv],L1=[9,12,14][lv];
   const slots=slotsFor(p,days);
-  const fullSimWeek=TW>=8?TW-3:-1,halfSimWeek=TW>=5?Math.max(nb+nbu,TW-5):-1;
+  const fullSimWeek=TW>=8&&(!beg||TW>=12)?TW-3:-1,halfSimWeek=TW>=5?Math.max(nb+nbu,TW-5):-1;
   const weeks=[];
   for(let i=0;i<N;i++){
     const ws=addDays(mon0,i*7),isLast=i===N-1;
     const phase=i>=TW?'taper':i<nb?'base':i<nb+nbu?'build':'peak';
     const rec=phase!=='taper'&&(i+1)%4===0&&i<TW-1;
     const prog=TW>1?Math.min(1,i/(TW-1)):1;
-    let f=phase==='base'?0.35+0.15*prog/0.35:phase==='build'?0.5+0.25*(prog-0.35)/0.35:phase==='peak'?0.8:0.5;f=clamp(f,0.3,1);if(rec)f*=0.8;f=Math.round(f*20)/20;
-    const xr=rec?2:phase==='peak'?2:3;
-    let cr=phase==='base'?3:phase==='build'?(i%2?5:4):6;if(rec)cr=3;if(phase==='taper')cr=3;
+    let f=phase==='base'?0.35+0.15*prog/0.35:phase==='build'?0.5+0.25*(prog-0.35)/0.35:phase==='peak'?0.8:0.5;f=clamp(f,0.3,1);if(beg)f*=0.8;if(rec)f*=0.8;f=Math.max(0.25,Math.round(f*20)/20);
+    const wf={ini:{base:0.6,build:0.8},int:{base:0.8,build:0.9},ava:{base:0.9,build:1}}[p.level||'int']?.[phase]||1;
+    const xr=rec||beg&&phase==='base'?2:phase==='peak'?2:3;
+    let cr=phase==='base'?3:phase==='build'?(i%2?5:4):6;if(beg)cr=Math.max(2,cr-1);if(rec)cr=Math.min(cr,3);if(phase==='taper')cr=3;
     const longKm=r05(clamp(L0+(L1-L0)*prog,4,16)*(rec?0.8:1));
     const list=[];let xCount=0;
     for(const [d,k] of slots){
@@ -554,12 +572,12 @@ function genHyrox(p,todayS,vdot){
       if(k==='L')w=phase==='taper'?mkEasy(r05(longKm*0.5),false):{type:'L',title:'Longo',steps:[{t:`${nf(longKm)} km fácil`,km:longKm,z:'E'}],focus:{z:'E'}};
       else if(k==='Q1'){
         if(i===fullSimWeek&&!rec)w=mkHxCompromised(8,1,eq,div,0,'Simulação HYROX completa');
-        else if(i===halfSimWeek&&!rec)w=mkHxCompromised(4,1,eq,div,i%2?4:0,'Simulação: meia HYROX');
-        else w=mkHxCompromised(cr,phase==='taper'?0.5:f,eq,div,(i*3)%8);
+        else if(i===halfSimWeek&&!rec)w=mkHxCompromised(4,beg?0.75:1,eq,div,i%2?4:0,'Simulação: meia HYROX',beg?0.9:1);
+        else w=mkHxCompromised(cr,phase==='taper'?0.5:f,eq,div,(i*3)%8,null,wf);
       }
       else if(k==='Q2')w=phase==='base'||i%2===0?mkHxRun('T',r05(clamp(3+3*prog,3,7))):mkHxRun('I',clamp(Math.round(4+4*prog),4,8));
       else{
-        if(days>=3&&xCount<(days>=6?2:1)&&phase!=='taper'){w=mkHxStations((i+xCount)%2?'B':'A',f,xr,eq,div);xCount++;}
+        if(days>=3&&xCount<(days>=6?2:1)&&phase!=='taper'){w=mkHxStations((i+xCount)%2?'B':'A',f,xr,eq,div,wf);xCount++;}
         else w=mkEasy(r05(clamp(longKm*0.6,3,8)),phase!=='taper'&&days>=5);
       }
       w={...w,id:`w${i}-${d}`,date};w.km=w.type==='F'?0:Math.round(stepsKm(w.steps)*10)/10;
@@ -569,7 +587,7 @@ function genHyrox(p,todayS,vdot){
     if(isLast&&hasRace){
       const rd=p.raceDate;
       L2=L2.filter(w=>w.date<addDays(rd,-1)&&!(w.type==='F'&&w.date>addDays(rd,-4)));
-      const full=mkHxCompromised(8,1,'full',div,0,`Prova: ${p.raceName||'HYROX'}`);
+      const full=mkHxCompromised(8,1,HX_PRESET.full,div,0,`Prova: ${p.raceName||'HYROX'}`);
       L2.push({...full,type:'F',hx:true,race:true,id:`w${i}-race`,date:rd,km:0,min:Math.round(hxPredict(vdot,p)/60),steps:full.steps.filter(s=>s.seq)});
     }
     L2=L2.filter(w=>w.date>=todayS).sort((a,b)=>a.date<b.date?-1:1);
@@ -810,6 +828,7 @@ Object.assign(EN_EXACT,{"Open · Mulheres": "Open · Women", "Open · Homens": "
 EN_RX.push([/^(\d+) voltas$/,'$1 rounds'],[/^(\d+) × \(1 km \+ estação\)$/,'$1 × (1 km + station)'],[/^Força: (.+)$/,(m,a)=>'Strength: '+a]);
 Object.assign(EN_EXACT,{"🌱 Começar a correr": "🌱 Start running", "🔁 Voltar a correr": "🔁 Get back to running", "⚡ Manter a forma": "⚡ Stay in shape"});
 EN_RX.push([/^(.+) km a limiar$/,'$1 km at threshold']);
+Object.assign(EN_EXACT,{"Remo": "Rower", "Trenó": "Sled", "Passadeira": "Treadmill", "Bola de wall ball": "Wall ball", "Kettlebells ou halteres": "Kettlebells or dumbbells", "Sandbag": "Sandbag", "Afundos a andar": "Walking lunges", "Remo forte, braços": "Hard row, arms focus", "Remada com elástico ou mochila": "Band or backpack row", "SkiErg (em vez de remo)": "SkiErg (instead of rowing)", "Farmers carry com garrafões ou sacos": "Farmers carry with water jugs or bags", "Lunges com halteres": "Dumbbell lunges", "Agachamentos com salto": "Jump squats", "qualificados": "qualifiers only"});
 EN_RX.push([/^Troco por (.+) km fáceis\.$/,'Swap for $1 easy km.'],[/^Saltado\. O próximo treino duro \((.+)\) passou a fácil\.$/,'Skipped. The next hard session ($1) is now easy.'],[/^(.+): treino trocado por (.+) km fáceis por falta de tempo\.$/,'$1: workout swapped for $2 easy km (short on time).'],[/^(.+): (.+) saltado \((cansaço|doença|dores|impedimento)\)\.(?: Ajustei (\d+) treinos? a seguir\.)?$/,(m,d,t,r,n)=>`${d}: ${tr(t)} skipped (${{'cansaço':'tired','doença':'ill','dores':'pain','impedimento':"couldn't make it"}[r]}).${n?` Adjusted ${n} upcoming workout${n>1?'s':''}.`:''}`]);
 EN_RX.push([/^(\d) treinos por semana\.$/,'$1 runs a week.'],[/^Passo (\d+) \/ (\d+)$/,'Step $1 / $2']);
 EN_RX.push(
@@ -881,6 +900,7 @@ async function loadCloud(){
   }catch(e){st=local;setSync('local');toast('Sem ligação: estás a ver a última cópia guardada neste dispositivo.');}
 }
 async function boot(){
+  loadRaceFile();
   if(sb){
     const {data}=await sb.auth.getSession();
     if(data?.session){user=data.session.user;mode='cloud';await loadCloud();loadSharedRaces();}
@@ -1292,7 +1312,7 @@ function workoutCard(w,hero){
   const s=status(w),l=logFor(w);
   const stPill=s==='done'?'<span class="pill st-done">Feito</span>':s==='miss'?'<span class="pill st-miss">Falhado</span>':s==='skip'?'<span class="pill">Saltado</span>':s==='today'?'<span class="pill st-next">Hoje</span>':'';
   const z=zOf(w),F=w.type==='F';
-  const why=WHY[w.title]||(w.type==='R'?'O dia de mostrar o trabalho feito. Começa controlado e acelera na segunda metade.':'');
+  const why=(w.hx&&st.profile.level==='ini'&&!w.race?L('Ainda estás a começar: foca-te na técnica, usa os pesos indicados (mais leves no início) e para quando a técnica falhar. ','You are just starting: focus on technique, use the suggested weights (lighter at first) and stop when your form breaks down. '):'')+(WHY[w.title]||(w.type==='R'?'O dia de mostrar o trabalho feito. Começa controlado e acelera na segunda metade.':''));
   const future=w.date>=TODAY&&!l;
   let btns='';
   if(l)btns=`<button class="ghost" data-act="dellog" data-id="${w.id}">Apagar registo</button>`;
@@ -1508,12 +1528,12 @@ function obDefaults(){
   const pr=st?.profile;
   if(pr){
     const rd=Array.isArray(pr.runDays)&&pr.runDays.length?pr.runDays:slotsFor(pr,clamp(pr.days||4,2,7)).map(x=>x[0]);
-    return{step:0,goalType:pr.goalType||'race',raceId:pr.raceId&&raceById(pr.raceId)?pr.raceId:(pr.raceName?'custom':null),customName:pr.raceName||'',customDate:pr.raceDate||'',customKm:pr.raceKm||GOALS[pr.goal||'10k'].km,terrain:pr.terrain||'flat',hasGoal:!!pr.goalTime,goalSec:pr.goalTime||0,refDist:pr.refDist||5,refSec:parseTime(pr.refTime)||0,noRef:!pr.refTime,runDays:[...rd].sort((a,b)=>a-b),longDay:pr.longDay??6,level:pr.level||'int',strength:pr.strength!==false,q:'',hxId:pr.goalType==='hyrox'?(HX_RACES.find(r=>r.id===pr.raceId)?pr.raceId:'custom'):null,hxName:pr.goalType==='hyrox'?pr.raceName||'':'',hxDate:pr.goalType==='hyrox'?pr.raceDate||'':'',hxDiv:pr.hxDiv||'om',hxDbl:!!pr.hxDoubles,hxEq:pr.hxEq||'gym'};
+    return{step:0,goalType:pr.goalType||'race',raceId:pr.raceId&&raceById(pr.raceId)?pr.raceId:(pr.raceName?'custom':null),customName:pr.raceName||'',customDate:pr.raceDate||'',customKm:pr.raceKm||GOALS[pr.goal||'10k'].km,terrain:pr.terrain||'flat',hasGoal:!!pr.goalTime,goalSec:pr.goalTime||0,refDist:pr.refDist||5,refSec:parseTime(pr.refTime)||0,noRef:!pr.refTime,runDays:[...rd].sort((a,b)=>a-b),longDay:pr.longDay??6,level:pr.level||'int',strength:pr.strength!==false,q:'',hxId:pr.goalType==='hyrox'?(HX_RACES.find(r=>r.id===pr.raceId)?pr.raceId:'custom'):null,hxName:pr.goalType==='hyrox'?pr.raceName||'':'',hxDate:pr.goalType==='hyrox'?pr.raceDate||'':'',hxDiv:pr.hxDiv||'om',hxDbl:!!pr.hxDoubles,hxEq:pr.hxEq||'gym',hxGear:[...hxGearOf(pr)],hxQ:'',hxReg:'ib',hxDay:pr.goalType==='hyrox'?pr.raceDate||'':''};
   }
-  return{step:0,goalType:null,raceId:null,customName:'',customDate:'',customKm:10,terrain:'flat',hasGoal:false,goalSec:0,refDist:5,refSec:1650,noRef:false,runDays:[1,3,6],longDay:6,level:'int',strength:true,q:'',hxId:null,hxName:'',hxDate:'',hxDiv:'om',hxDbl:false,hxEq:'gym'};
+  return{step:0,goalType:null,raceId:null,customName:'',customDate:'',customKm:10,terrain:'flat',hasGoal:false,goalSec:0,refDist:5,refSec:1650,noRef:false,runDays:[1,3,6],longDay:6,level:'int',strength:true,q:'',hxId:null,hxName:'',hxDate:'',hxDiv:'om',hxDbl:false,hxEq:'gym',hxGear:[...HX_PRESET.gym],hxQ:'',hxReg:'ib',hxDay:''};
 }
 const obSteps=()=>ob.goalType==='race'?['goal','race','fit','days','sum']:ob.goalType==='hyrox'?['goal','hx','fit','days','sum']:['goal','fit','days','sum'];
-const obHx=()=>ob.goalType!=='hyrox'?null:ob.hxId&&ob.hxId!=='custom'?HX_RACES.find(r=>r.id===ob.hxId)||null:ob.hxId==='custom'?{id:'custom',name:(ob.hxName||'').trim()||'HYROX',date:ob.hxDate||null}:null;
+const obHx=()=>ob.goalType!=='hyrox'?null:ob.hxId&&ob.hxId!=='custom'?(r=>r?{...r,date:ob.hxDay&&ob.hxDay>=r.start&&ob.hxDay<=r.end?ob.hxDay:r.date}:null)(HX_RACES.find(r=>r.id===ob.hxId)):ob.hxId==='custom'?{id:'custom',name:(ob.hxName||'').trim()||'HYROX',date:ob.hxDate||null}:null;
 function obRace(){
   if(ob.goalType!=='race')return null;
   if(ob.raceId&&ob.raceId!=='custom'){const r=raceById(ob.raceId);if(r)return{name:r.name,date:r.date,km:r.km,terrain:r.terrain,id:r.id,shared:!!r.shared};}
@@ -1559,15 +1579,24 @@ function onboardHtml(){
       ${ob.hasGoal?`${timePick('obGoalT',ob.goalSec||Math.round(predict(obVdot(),(obRace()?.km||10)*1000)/60)*60,true)}<div class="small" id="obGoalMsg"></div>`:''}</div>`:''}`;
   }
   if(cur==='hx'){
-    const card=r=>`<button type="button" class="race ${ob.hxId===r.id?'on':''}" data-act="ob-hx" data-v="${r.id}"><span class="rd"><b>${toD(r.date).getUTCDate()}</b><span>${MES[toD(r.date).getUTCMonth()]}</span></span><span class="ri"><b>${esc(r.name)}</b><span class="small muted">${esc(r.city)}${r.tbc?' · '+L('data a confirmar','date tbc'):''}</span></span></button>`;
+    const q=slugify(ob.hxQ||''),reg=ob.hxReg||'eu';
+    const list=HX_RACES.filter(r=>r.date>addDays(TODAY,13)&&(q?slugify(r.name+' '+r.cc).includes(q):reg==='all'?true:reg==='eu'?r.region!=='world':r.region===reg));
+    const sel=HX_RACES.find(r=>r.id===ob.hxId);
+    const card=r=>`<button type="button" class="race ${ob.hxId===r.id?'on':''}" data-act="ob-hx" data-v="${r.id}"><span class="rd"><b>${toD(r.date).getUTCDate()}</b><span>${MES[toD(r.date).getUTCMonth()]}</span></span><span class="ri"><b>${esc(r.name)}</b><span class="small muted">${esc(r.cc)} · ${fmtDate(r.start)}${r.end!==r.start?'–'+fmtDate(r.end):''}${r.note?' · '+esc(tr(r.note)):''}</span></span></button>`;
+    const gear=ob.hxGear||[];
     body=`<h2>${L('Que HYROX vais fazer?','Which HYROX are you doing?')}</h2>
-    <div class="races">${HX_RACES.filter(r=>r.date>addDays(TODAY,13)).map(card).join('')}
-    <button type="button" class="race ${ob.hxId==='custom'?'on':''}" data-act="ob-hx" data-v="custom"><span class="rd"><b>+</b></span><span class="ri"><b>${L('Outra prova HYROX','Another HYROX race')}</b><span class="small muted">${L('Escreve a cidade e a data','Enter the city and date')}</span></span></button></div>
+    <input id="hxQ" type="search" placeholder="${L('Procurar cidade ou país','Search city or country')}" value="${esc(ob.hxQ||'')}" autocomplete="off">
+    ${q?'':`<div class="chips">${[['ib',L('Portugal e Espanha','Portugal & Spain')],['eu',L('Europa','Europe')],['all',L('Todas','All')]].map(([v,l])=>chip('hxReg',v,l,String(reg===v))).join('')}</div>`}
+    <div class="races">${list.map(card).join('')||`<div class="small muted">${L('Ainda não há provas anunciadas aqui. Escolhe "Outra prova HYROX" e põe a data.','No races announced here yet. Pick "Another HYROX race" and enter the date.')}</div>`}
+    <button type="button" class="race ${ob.hxId==='custom'?'on':''}" data-act="ob-hx" data-v="custom"><span class="rd"><b>+</b></span><span class="ri"><b>${L('Outra prova HYROX','Another HYROX race')}</b><span class="small muted">${L('Por exemplo HYROX Lisboa, quando sair a data','E.g. HYROX Lisbon, once the date is out')}</span></span></button></div>
     ${ob.hxId==='custom'?`<div class="card" style="background:var(--soft);border:none"><label for="hxCName">${L('Nome','Name')}<input id="hxCName" value="${esc(ob.hxName)}" placeholder="HYROX Lisboa" autocomplete="off"></label><label for="hxCDate">${L('Data','Date')}<input type="date" id="hxCDate" value="${ob.hxDate||''}" min="${addDays(TODAY,14)}"></label></div>`:''}
+    ${sel&&sel.end!==sel.start?`<div class="card" style="background:var(--soft);border:none"><label for="hxDay">${L('O teu dia de prova','Your race day')}<input type="date" id="hxDay" value="${ob.hxDay&&ob.hxDay>=sel.start&&ob.hxDay<=sel.end?ob.hxDay:sel.date}" min="${sel.start}" max="${sel.end}"></label><div class="tiny muted">${L('O evento dura vários dias. Põe o dia da tua vaga, se já souberes.','The event runs over several days. Set your heat day if you know it.')}</div></div>`:''}
     <div class="small"><b>${L('Categoria','Division')}</b></div><div class="chips">${Object.entries(HX_DIV).map(([k,d])=>chip('hxDiv',k,d.l)).join('')}</div>
     <label class="switch"><input type="checkbox" id="hxDbl" ${ob.hxDbl?'checked':''}><span>${L('Vou em Doubles (dividimos as estações)','Doubles (we split the stations)')}</span></label>
-    <div class="small"><b>${L('Onde vais treinar as estações?','Where will you train the stations?')}</b></div>
-    <div class="opts">${[['full','🏟️',L('Ginásio HYROX','HYROX gym'),L('Com SkiErg, remo, trenó e wall balls.','With SkiErg, rower, sled and wall balls.')],['gym','🏋️',L('Ginásio comum','Regular gym'),L('Remo, halteres e kettlebells, sem trenó.','Rower, dumbbells and kettlebells, no sled.')],['home','🏠',L('Em casa','At home'),L('Só halteres ou kettlebell. Adapto as estações.','Just dumbbells or a kettlebell. I adapt the stations.')]].map(([v,ic,t,d])=>`<button type="button" class="opt" data-k="hxEq" data-v="${v}" aria-pressed="${ob.hxEq===v}"><span class="ic">${ic}</span><span><b>${t}</b><span class="small muted">${d}</span></span></button>`).join('')}</div>`;
+    <div class="small"><b>${L('O que tens no ginásio?','What does your gym have?')}</b></div>
+    <div class="chips">${[['full',L('Ginásio HYROX','HYROX gym')],['gym',L('Ginásio comum','Regular gym')],['home',L('Em casa','At home')]].map(([v,l])=>`<button type="button" class="chip ghost" data-act="ob-gearset" data-v="${v}">${l}</button>`).join('')}</div>
+    <div class="chips">${HX_GEAR.map(([k,l])=>`<button type="button" class="chip" data-act="ob-gear" data-v="${k}" aria-pressed="${gear.includes(k)}">${gear.includes(k)?'✓ ':''}${tr(l)}</button>`).join('')}</div>
+    <div class="tiny muted">${L('Toca para marcar o que existe. O que faltar, eu substituo por um exercício parecido.','Tap what is available. Whatever is missing, I swap for a similar exercise.')}</div>`;
   }
   if(cur==='fit'){
     const d=REFD.find(x=>x[0]===ob.refDist)?ob.refDist:5;
@@ -1622,11 +1651,13 @@ function obCollect(){
   if($('#hxCName'))ob.hxName=v('#hxCName');
   if($('#hxCDate'))ob.hxDate=v('#hxCDate');
   if($('#hxDbl'))ob.hxDbl=$('#hxDbl').checked;
+  if($('#hxQ'))ob.hxQ=v('#hxQ');
+  if($('#hxDay'))ob.hxDay=v('#hxDay');
 }
 function buildProfile(){
   const gt=ob.goalType,race=obRace();
   let rd=[...ob.runDays].sort((a,b)=>a-b);if(!rd.includes(ob.longDay))ob.longDay=rd[rd.length-1];
-  if(gt==='hyrox'){const h=obHx();return{goalType:'hyrox',goal:'10k',raceName:h?h.name:'HYROX',raceDate:h?h.date:null,raceKm:null,raceId:h?h.id:null,terrain:'flat',goalTime:null,hxDiv:ob.hxDiv,hxDoubles:!!ob.hxDbl,hxEq:ob.hxEq,
+  if(gt==='hyrox'){const h=obHx();return{goalType:'hyrox',goal:'10k',raceName:h?h.name:'HYROX',raceDate:h?h.date:null,raceKm:null,raceId:h?h.id:null,terrain:'flat',goalTime:null,hxDiv:ob.hxDiv,hxDoubles:!!ob.hxDbl,hxEq:ob.hxEq,hxGear:[...(ob.hxGear||[])],
     refDist:ob.noRef?null:ob.refDist,refTime:ob.noRef?'':fmtTime(ob.refSec),runDays:rd,days:rd.length,longDay:ob.longDay,level:ob.level,strength:false};}
   return{goalType:gt,goal:race?goalKeyFor(race.km):gt==='start'?'5k':'10k',raceName:race?race.name:null,raceDate:race?race.date:null,raceKm:race?race.km:null,raceId:race?race.id:null,terrain:race?race.terrain:'flat',goalTime:race&&ob.hasGoal&&ob.goalSec>0?ob.goalSec:null,
     refDist:ob.noRef?null:ob.refDist,refTime:ob.noRef?'':fmtTime(ob.refSec),runDays:rd,days:rd.length,longDay:ob.longDay,level:gt==='start'?'ini':ob.level,strength:ob.strength!==false};
@@ -1658,6 +1689,7 @@ function bindOnboard(){
     if(k==='refDist'&&!ob.noRef&&v0>20){ob.refSec=Math.round(predict(v0,ob.refDist*1000)/5)*5;$('#app').innerHTML=onboardHtml();bindOnboard();return;}
     if(k==='goalType'){ob.step=0;if(ob.goalType==='start'&&ob.runDays.length>3)ob.runDays=slotsFor({runDays:ob.runDays,longDay:ob.longDay},3).map(x=>x[0]);}
     obRerender();});
+  if($('#hxQ'))$('#hxQ').oninput=()=>{const pos=$('#hxQ').selectionStart;obRerender();const q=$('#hxQ');q.focus();try{q.setSelectionRange(pos,pos);}catch(e){}};
   if($('#obQ'))$('#obQ').oninput=()=>{const pos=$('#obQ').selectionStart;obRerender();const q=$('#obQ');q.focus();try{q.setSelectionRange(pos,pos);}catch(e){}};
   ['#obHasGoal','#obNoRef'].forEach(id=>{if($(id))$(id).onchange=obRerender;});
   document.querySelectorAll('.tpick select').forEach(x=>x.onchange=upd);
@@ -1667,7 +1699,9 @@ function bindOnboard(){
 function obNav(a,v){
   obCollect();
   const err=m=>{const e=$('#obErr');e.textContent=tr(m);};
-  if(a==='ob-hx'){ob.hxId=v;obRerender();return;}
+  if(a==='ob-hx'){ob.hxId=v;ob.hxDay='';obRerender();return;}
+  if(a==='ob-gear'){const g=new Set(ob.hxGear||[]);g.has(v)?g.delete(v):g.add(v);ob.hxGear=[...g];obRerender();return;}
+  if(a==='ob-gearset'){ob.hxGear=[...HX_PRESET[v]];ob.hxEq=v;obRerender();return;}
   if(a==='ob-race'){ob.raceId=v;if(v!=='custom'){const r=raceById(v);if(r&&ob.hasGoal&&!ob.goalSec)ob.goalSec=0;}obRerender();return;}
   if(a==='ob-day'){const d=Number(v);ob.runDays=ob.runDays.includes(d)?ob.runDays.filter(x=>x!==d):[...ob.runDays,d].sort((a,b)=>a-b);if(!ob.runDays.includes(ob.longDay)&&ob.runDays.length)ob.longDay=ob.runDays.includes(6)?6:ob.runDays.includes(5)?5:ob.runDays[ob.runDays.length-1];obRerender();return;}
   if(a==='ob-back'){ob.step=Math.max(0,ob.step-1);obRerender();window.scrollTo(0,0);return;}

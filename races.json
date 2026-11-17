@@ -1,0 +1,393 @@
+{
+ "updated": "2026-11-17",
+ "note": "Atualizado por uma tarefa agendada mensal. hyrox: start/end do fim de semana do evento; running: provas de corrida extra (mesmo formato de RACES no index.html).",
+ "hyrox": [
+  {
+   "name": "HYROX Poznań",
+   "cc": "PL",
+   "region": "eu",
+   "start": "2026-11-20",
+   "end": "2026-11-22"
+  },
+  {
+   "name": "HYROX Utrecht",
+   "cc": "NL",
+   "region": "eu",
+   "start": "2026-11-26",
+   "end": "2026-11-29"
+  },
+  {
+   "name": "HYROX Johannesburg",
+   "cc": "ZA",
+   "region": "world",
+   "start": "2026-11-27",
+   "end": "2026-11-29"
+  },
+  {
+   "name": "HYROX Milan",
+   "cc": "IT",
+   "region": "eu",
+   "start": "2026-12-05",
+   "end": "2026-12-06"
+  },
+  {
+   "name": "HYROX Frankfurt",
+   "cc": "DE",
+   "region": "eu",
+   "start": "2026-12-10",
+   "end": "2026-12-13"
+  },
+  {
+   "name": "HYROX Hong Kong",
+   "cc": "HK",
+   "region": "world",
+   "start": "2027-01-07",
+   "end": "2027-01-10"
+  },
+  {
+   "name": "HYROX Manchester",
+   "cc": "GB",
+   "region": "eu",
+   "start": "2027-01-20",
+   "end": "2027-01-31"
+  },
+  {
+   "name": "HYROX Osaka",
+   "cc": "JP",
+   "region": "world",
+   "start": "2027-01-21",
+   "end": "2027-01-24"
+  },
+  {
+   "name": "HYROX Auckland",
+   "cc": "NZ",
+   "region": "world",
+   "start": "2027-01-21",
+   "end": "2027-01-24"
+  },
+  {
+   "name": "HYROX Amsterdam",
+   "cc": "NL",
+   "region": "eu",
+   "start": "2027-01-22",
+   "end": "2027-01-31"
+  },
+  {
+   "name": "HYROX Beijing",
+   "cc": "CN",
+   "region": "world",
+   "start": "2027-01-22",
+   "end": "2027-01-24"
+  },
+  {
+   "name": "HYROX Verona",
+   "cc": "IT",
+   "region": "eu",
+   "start": "2027-01-28",
+   "end": "2027-01-31"
+  },
+  {
+   "name": "HYROX Toulouse",
+   "cc": "FR",
+   "region": "eu",
+   "start": "2027-02-03",
+   "end": "2027-02-07"
+  },
+  {
+   "name": "HYROX Bilbao",
+   "cc": "ES",
+   "region": "ib",
+   "start": "2027-02-06",
+   "end": "2027-02-07"
+  },
+  {
+   "name": "HYROX Chicago",
+   "cc": "US",
+   "region": "world",
+   "start": "2027-02-11",
+   "end": "2027-02-15"
+  },
+  {
+   "name": "HYROX Phoenix",
+   "cc": "US",
+   "region": "world",
+   "start": "2027-02-11",
+   "end": "2027-02-15"
+  },
+  {
+   "name": "HYROX Bangkok",
+   "cc": "TH",
+   "region": "world",
+   "start": "2027-02-11",
+   "end": "2027-02-14"
+  },
+  {
+   "name": "HYROX Basel",
+   "cc": "CH",
+   "region": "eu",
+   "start": "2027-02-12",
+   "end": "2027-02-14"
+  },
+  {
+   "name": "HYROX Katowice",
+   "cc": "PL",
+   "region": "eu",
+   "start": "2027-02-19",
+   "end": "2027-02-21"
+  },
+  {
+   "name": "HYROX Vienna",
+   "cc": "AT",
+   "region": "eu",
+   "start": "2027-02-19",
+   "end": "2027-02-21"
+  },
+  {
+   "name": "HYROX Cancun",
+   "cc": "MX",
+   "region": "world",
+   "start": "2027-02-19",
+   "end": "2027-02-21"
+  },
+  {
+   "name": "HYROX Mechelen",
+   "cc": "BE",
+   "region": "eu",
+   "start": "2027-03-03",
+   "end": "2027-03-07"
+  },
+  {
+   "name": "HYROX Glasgow",
+   "cc": "GB",
+   "region": "eu",
+   "start": "2027-03-10",
+   "end": "2027-03-14"
+  },
+  {
+   "name": "HYROX Las Vegas",
+   "cc": "US",
+   "region": "world",
+   "start": "2027-03-12",
+   "end": "2027-03-14"
+  },
+  {
+   "name": "HYROX Taipei",
+   "cc": "TW",
+   "region": "world",
+   "start": "2027-03-13",
+   "end": "2027-03-14"
+  },
+  {
+   "name": "HYROX Madrid",
+   "cc": "ES",
+   "region": "ib",
+   "start": "2027-03-17",
+   "end": "2027-03-21"
+  },
+  {
+   "name": "HYROX Guadalajara",
+   "cc": "MX",
+   "region": "world",
+   "start": "2027-03-19",
+   "end": "2027-03-21"
+  },
+  {
+   "name": "HYROX Buenos Aires",
+   "cc": "AR",
+   "region": "world",
+   "start": "2027-03-20",
+   "end": "2027-03-21"
+  },
+  {
+   "name": "HYROX Copenhagen",
+   "cc": "DK",
+   "region": "eu",
+   "start": "2027-03-25",
+   "end": "2027-03-28"
+  },
+  {
+   "name": "HYROX Miami Beach",
+   "cc": "US",
+   "region": "world",
+   "start": "2027-03-26",
+   "end": "2027-03-28"
+  },
+  {
+   "name": "HYROX Cape Town",
+   "cc": "ZA",
+   "region": "world",
+   "start": "2027-03-26",
+   "end": "2027-03-28"
+  },
+  {
+   "name": "HYROX Brisbane",
+   "cc": "AU",
+   "region": "world",
+   "start": "2027-03-31",
+   "end": "2027-04-04"
+  },
+  {
+   "name": "HYROX Rotterdam",
+   "cc": "NL",
+   "region": "eu",
+   "start": "2027-04-01",
+   "end": "2027-04-04"
+  },
+  {
+   "name": "HYROX Houston",
+   "cc": "US",
+   "region": "world",
+   "start": "2027-04-01",
+   "end": "2027-04-04"
+  },
+  {
+   "name": "HYROX Bari",
+   "cc": "IT",
+   "region": "eu",
+   "start": "2027-04-02",
+   "end": "2027-04-04"
+  },
+  {
+   "name": "HYROX Warsaw",
+   "cc": "PL",
+   "region": "eu",
+   "start": "2027-04-05",
+   "end": "2027-04-11"
+  },
+  {
+   "name": "HYROX Cologne",
+   "cc": "DE",
+   "region": "eu",
+   "start": "2027-04-08",
+   "end": "2027-04-11"
+  },
+  {
+   "name": "HYROX Paris",
+   "cc": "FR",
+   "region": "eu",
+   "start": "2027-04-08",
+   "end": "2027-04-12"
+  },
+  {
+   "name": "HYROX Málaga",
+   "cc": "ES",
+   "region": "ib",
+   "start": "2027-04-14",
+   "end": "2027-04-18"
+  },
+  {
+   "name": "HYROX Helsinki",
+   "cc": "FI",
+   "region": "eu",
+   "start": "2027-04-16",
+   "end": "2027-04-18"
+  },
+  {
+   "name": "HYROX Monterrey",
+   "cc": "MX",
+   "region": "world",
+   "start": "2027-04-16",
+   "end": "2027-04-18"
+  },
+  {
+   "name": "HYROX Nagoya",
+   "cc": "JP",
+   "region": "world",
+   "start": "2027-04-16",
+   "end": "2027-04-18"
+  },
+  {
+   "name": "HYROX Ottawa",
+   "cc": "CA",
+   "region": "world",
+   "start": "2027-04-21",
+   "end": "2027-04-25"
+  },
+  {
+   "name": "HYROX Atlanta",
+   "cc": "US",
+   "region": "world",
+   "start": "2027-04-23",
+   "end": "2027-04-25"
+  },
+  {
+   "name": "HYROX Krakow",
+   "cc": "PL",
+   "region": "eu",
+   "start": "2027-05-07",
+   "end": "2027-05-09"
+  },
+  {
+   "name": "HYROX São Paulo",
+   "cc": "BR",
+   "region": "world",
+   "start": "2027-05-08",
+   "end": "2027-05-09"
+  },
+  {
+   "name": "HYROX Bengaluru",
+   "cc": "IN",
+   "region": "world",
+   "start": "2027-05-12",
+   "end": "2027-05-16"
+  },
+  {
+   "name": "HYROX San Diego",
+   "cc": "US",
+   "region": "world",
+   "start": "2027-05-13",
+   "end": "2027-05-16"
+  },
+  {
+   "name": "HYROX Incheon",
+   "cc": "KR",
+   "region": "world",
+   "start": "2027-05-13",
+   "end": "2027-05-16"
+  },
+  {
+   "name": "HYROX Shanghai",
+   "cc": "CN",
+   "region": "world",
+   "start": "2027-05-14",
+   "end": "2027-05-16"
+  },
+  {
+   "name": "HYROX Cardiff",
+   "cc": "GB",
+   "region": "eu",
+   "start": "2027-05-20",
+   "end": "2027-05-29"
+  },
+  {
+   "name": "HYROX Portland",
+   "cc": "US",
+   "region": "world",
+   "start": "2027-05-21",
+   "end": "2027-05-23"
+  },
+  {
+   "name": "HYROX Rimini",
+   "cc": "IT",
+   "region": "eu",
+   "start": "2027-05-27",
+   "end": "2027-05-30"
+  },
+  {
+   "name": "HYROX Riga",
+   "cc": "LV",
+   "region": "eu",
+   "start": "2027-05-28",
+   "end": "2027-05-30"
+  },
+  {
+   "name": "HYROX World Championships",
+   "cc": "HK",
+   "region": "world",
+   "start": "2027-06-10",
+   "end": "2027-06-13",
+   "note": "qualificados"
+  }
+ ],
+ "running": []
+}
