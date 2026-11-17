@@ -152,6 +152,12 @@ details.setc>summary::-webkit-details-marker{display:none}details.setc>summary b
 details.setc>summary .chev{color:var(--muted);font-size:22px;transition:transform .15s}details.setc[open]>summary .chev{transform:rotate(90deg)}
 details.setc .setbody{display:flex;flex-direction:column;gap:12px;padding:0 16px 16px}
 .shbtn{align-self:flex-start}
+#app.vin{animation:vin .22s ease-out}@keyframes vin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.sheet-bg.open{animation:bgin .18s ease-out}.sheet-bg.open .sheet{animation:shin .26s cubic-bezier(.2,.9,.3,1)}
+@keyframes bgin{from{opacity:0}to{opacity:1}}@keyframes shin{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+button:active,.btn:active,.wrow:active,.race:active,.opt:active,.chip:active,.srow:active,details.setc>summary:active{transform:scale(.97);transition:transform .06s}
+details.setc[open] .setbody{animation:vin .18s ease-out}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 button.strava{background:#FC4C02;color:#fff;border:none;font-weight:800}
 .cantlink{align-self:flex-start;padding:2px 0;min-height:0;font-size:14px;width:auto}
 .authwrap{display:flex;flex-direction:column;gap:14px;min-height:calc(100dvh - 90px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
@@ -1082,7 +1088,7 @@ const SET_OPEN=new Set();
 const SET_META={'Os teus ritmos':['⏱️','train'],'Registar uma prova ou teste':['🏁','train'],'Refazer o plano':['🗓️','train'],
  'Google Calendar':['📅','link'],'Outros calendários e cópia de segurança':['💾','link'],'Strava':['🟠','link'],
  'Lembretes':['🔔','app'],'Meteorologia':['🌦️','app'],'Weather':['🌦️','app'],'Reminders':['🔔','app'],'Sapatilhas':['👟','app'],'Idioma · Language':['🌐','app'],
- 'Conta':['👤','acc'],'Apagar tudo':['🗑️','acc']};
+ 'Conta':['👤','acc'],'Sugerir melhoria':['💬','app'],'Suggest an improvement':['💬','app'],'Apagar tudo':['🗑️','acc']};
 const SET_GROUPS={train:['Treino','Training'],link:['Ligações','Connections'],app:['App','App'],acc:['Conta','Account']};
 function settify(){
   const app=$('#app');let lastG=null;
@@ -1097,6 +1103,7 @@ function settify(){
     d.appendChild(s);const body=document.createElement('div');body.className='setbody';while(sec.firstChild)body.appendChild(sec.firstChild);d.appendChild(body);
     d.addEventListener('toggle',()=>{d.open?SET_OPEN.add(title):SET_OPEN.delete(title);});
     sec.replaceWith(d);
+    if(SET_FOCUS&&SET_FOCUS.includes(title)){SET_FOCUS=null;setTimeout(()=>d.scrollIntoView({behavior:'smooth',block:'start'}),120);}
   });
 }
 
@@ -1154,6 +1161,34 @@ async function shareCard(log,w){
   openSheet(`<div class="row between"><h2>${L('Partilhar','Share')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div><img src="${url}" alt="" style="width:100%;border-radius:18px"><a class="btn primary" href="${url}" download="zone5-${log.date}.png" style="text-align:center;text-decoration:none">${L('Guardar imagem','Save image')}</a><div class="tiny muted">${L('No telemóvel, mantém o dedo na imagem para a guardar ou partilhar.','On your phone, long-press the image to save or share it.')}</div>`);
 }
 function shareLogIdx(i){const l=st.logs[i];if(!l)return;const w=l.wid?allW().find(x=>x.id===l.wid):null;toast(L('A preparar a imagem…','Preparing image…'));shareCard(l,w);}
+
+
+/* ---------- Descobrir aos poucos (uma sugestão de cada vez) ---------- */
+const NUDGES=[
+  ['group','👥',()=>L('Treina com amigos: cria um grupo e partilha o convite. Cada um segue o seu objetivo.','Train with friends: create a group and share the invite. Everyone follows their own goal.'),()=>mode==='cloud'&&grp.loaded&&!grp.groups.length&&nLogs()>=1,'#grupo',L('Ir para o Grupo','Go to Group')],
+  ['wx','🌦️',()=>L('Ativa a meteorologia para veres a previsão nos treinos e seres avisado de chuva no dia do longo.','Turn on weather to see the forecast on your workouts and get warned about rain on long-run day.'),()=>!st.wxLoc&&nLogs()>=1&&st.profile.goalType!=='gym','#ajustes:Meteorologia',L('Ativar','Turn on')],
+  ['shoes','👟',()=>L('Regista as tuas sapatilhas e eu aviso-te quando estiverem gastas.','Add your running shoes and I’ll tell you when they’re worn out.'),()=>!(st.shoes||[]).length&&nLogs()>=2&&st.profile.goalType!=='gym','#ajustes:Sapatilhas',L('Adicionar','Add')],
+  ['remind','🔔',()=>L('Queres um lembrete no telemóvel nos dias de treino?','Want a phone reminder on training days?'),()=>CONFIG.VAPID_PUBLIC_KEY&&mode==='cloud'&&!st.remind?.on&&nLogs()>=3,'#ajustes:Lembretes',L('Ligar','Turn on')],
+  ['gcal','📅',()=>L('Põe os treinos no teu Google Calendar, com a hora que preferires.','Put your workouts in Google Calendar, at the time you like.'),()=>!st.gcal?.last&&nLogs()>=4,'#ajustes:Google Calendar',L('Ligar','Connect')]];
+const nLogs=()=>st.logs.filter(l=>l.wid||l.dist>0).length;
+function nudgeHtml(){
+  if((st.tips|0)>=1&&(st.tips|0)<=TIPS.length)return tipsHtml();
+  st.nudges=st.nudges||{};
+  const n=NUDGES.find(([id,,,cond])=>!st.nudges[id]&&cond());if(!n)return'';
+  const [id,ic,tx,,go,btn]=n;
+  return `<section class="card tip"><div class="row" style="flex-wrap:nowrap;align-items:flex-start;gap:12px"><span style="font-size:26px">${ic}</span><div class="small">${tx()}</div></div>
+  <div class="row between"><button class="link small" data-act="nudge-x" data-v="${id}">${L('Agora não','Not now')}</button><button class="chip" data-act="nudge-go" data-v="${id}" data-go="${go}">${btn}</button></div></section>`;
+}
+let SET_FOCUS=null;
+function goSetting(target){const [h,sec]=target.split(':');if(sec){const alt={Meteorologia:'Weather',Lembretes:'Reminders'}[sec];SET_OPEN.add(sec);if(alt)SET_OPEN.add(alt);SET_FOCUS=[sec,alt];}if(location.hash===h)render();else location.hash=h;}
+
+/* ---------- Avisos agrupados numa só linha ---------- */
+function alertsHtml(parts){
+  const items=parts.filter(Boolean);if(!items.length)return'';
+  const first=(items[0].match(/<(?:h3|b)>(.*?)<\/(?:h3|b)>/)||[])[1]||'';
+  const open=items.some(x=>x.includes('class="card suggest"'))&&!SET_OPEN.has('__alerts_closed');
+  return `<details class="card setc alerts" ${open?'open':''}><summary><span class="ic">🔔</span><b>${items.length===1?L('1 aviso','1 alert'):items.length+' '+L('avisos','alerts')}${first?`<span class="small muted" style="display:block;font-weight:500">${first.replace(/<[^>]+>/g,'')}</span>`:''}</b><span class="chev">›</span></summary><div class="setbody">${items.join('')}</div></details>`;
+}
 
 /* ---------- GPX ---------- */
 function hav(a,b){const R=6371000,t=Math.PI/180,dl=(b.lat-a.lat)*t,dn=(b.lon-a.lon)*t;const x=Math.sin(dl/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
@@ -1863,12 +1898,12 @@ function workoutCard(w,hero){
     <div class="row between"><span class="eyebrow">${DOW[dow(w.date)]} ${fmtDate(w.date)}</span><div class="row">${stPill}${zonePill(z)}</div></div>
     <h2 class="wtitle">${esc(w.title)}</h2>
     <div class="metrics">${F?'':`<div class="metric"><b>${nf(w.km)}</b><span>km</span></div>`}<div class="metric"><b>~${mins}</b><span>min</span></div>${F?'':`<div class="metric"><b>${w.type==='E'||w.type==='L'?fmtPace(pz().E[0]):(w.extraRace&&w.km?fmtPace(predict(st.vdot,w.km*1000)/w.km):fmtPace(target(pz(),w.focus.z)))}</b><span>${w.type==='E'||w.type==='L'?'ritmo fácil':'ritmo alvo'}</span></div>`}</div>
-    ${F&&!w.hx&&!w.gym?'':profileHtml(w)}
+    ${l||F&&!w.hx&&!w.gym?'':profileHtml(w)}
     ${future&&status(w)!=='skip'?`<button class="link small cantlink" data-act="cant" data-id="${w.id}">Não posso fazer este treino ›</button>`:''}
     ${future&&WX&&WX[w.date]?`<div class="small" style="${badWx(WX[w.date])?'color:var(--warn)':''}">${wxLine(WX[w.date])}</div>`:''}
-    ${why?(hero?`<details class="why"><summary class="small">${L('Porquê este treino?','Why this workout?')}</summary><div class="small muted">${esc(why)}</div></details>`:`<div class="small muted">${esc(why)}</div>`):''}
+    ${l?'':why?(hero?`<details class="why"><summary class="small">${L('Porquê este treino?','Why this workout?')}</summary><div class="small muted">${esc(why)}</div></details>`:`<div class="small muted">${esc(why)}</div>`):''}
     ${w.race?(w.hx?hxRaceHtml(w):racePlanHtml(w)):''}
-    <ul class="steps">${w.steps.map(stepHtml).join('')}</ul>
+    ${l?'':`<ul class="steps">${w.steps.map(stepHtml).join('')}</ul>`}
     ${w.strength?'<div class="small muted">Força (opcional, 20 min): agachamentos, lunges, ponte de glúteos, gémeos e prancha.</div>':''}
     ${l?logSummary(l):''}
     <div class="btns">${btns}</div>
@@ -1926,6 +1961,7 @@ function render(){
   $('#tabs').hidden=false;
   if(!['hoje','plano','progresso','grupo','ajustes'].includes(tab))tab='hoje';
   document.querySelectorAll('nav.tabs a').forEach(a=>a.setAttribute('aria-current',a.dataset.tab===tab?'page':'false'));
+  if(render._t!==tab){app.classList.remove('vin');void app.offsetWidth;app.classList.add('vin');render._t=tab;}
   app.innerHTML=tab==='hoje'?hojeHtml():tab==='plano'?planoHtml():tab==='progresso'?progHtml():tab==='grupo'?grupoHtml():ajustesHtml();
   if(tab==='ajustes'){settify();bindAjustes();}
   if(tab==='plano')bindPlano();
@@ -1946,23 +1982,26 @@ function hojeHtml(){
   const days=p.raceDate?daysBetween(TODAY,p.raceDate):null;
   let out='';
   {const h=new Date().getHours();const nm=mode==='cloud'?myName():'';out+=`<div class="greet"><span class="eyebrow">${DOW[dow(TODAY)]} ${fmtDate(TODAY)}${days!==null&&days>=0?` · ${days} ${L('dias para a prova','days to race')}`:''}</span><h1>${h<12?L('Bom dia','Good morning'):h<20?L('Boa tarde','Good afternoon'):L('Boa noite','Good evening')}${nm?', '+esc(nm):''}</h1></div>`;}
-  if(st.suggest){out+=`<section class="card suggest"><h3>Sugestão: aliviar a próxima semana</h3><div class="small">${esc(st.suggest.why)} Recomendo reduzir a semana de ${fmtDate(st.suggest.week)} em cerca de 20%.</div><div class="btns"><button class="primary" data-act="sugg-yes">Aplicar</button><button class="ghost" data-act="sugg-no">Ignorar</button></div></section>`;}
-  if(st.gcal?.pending&&st.gcal?.last)out+=`<section class="card"><div class="row between"><span class="small">O plano mudou. O teu Google Calendar está por atualizar.</span><button data-act="gc-now">Atualizar</button></div></section>`;
-  out+=tipsHtml()+stravaCardsHtml()+wxSuggestHtml()+shoeAlertHtml();
-  out+=recapHtml();
+  const AL=[];
+  if(st.suggest){AL.push(`<section class="card suggest"><h3>Sugestão: aliviar a próxima semana</h3><div class="small">${esc(st.suggest.why)} Recomendo reduzir a semana de ${fmtDate(st.suggest.week)} em cerca de 20%.</div><div class="btns"><button class="primary" data-act="sugg-yes">Aplicar</button><button class="ghost" data-act="sugg-no">Ignorar</button></div></section>`);}
+  if(st.gcal?.pending&&st.gcal?.last)AL.push(`<section class="card"><div class="row between"><span class="small">O plano mudou. O teu Google Calendar está por atualizar.</span><button data-act="gc-now">Atualizar</button></div></section>`);
+  AL.push(stravaCardsHtml(),wxSuggestHtml(),shoeAlertHtml(),recapHtml());
+  out+=nudgeHtml();
   if(todayW&&!logFor(todayW)&&status(todayW)!=='skip')out+=workoutCard(todayW,true);
   else if(todayW){out+=workoutCard(todayW,false);if(next)out+=`<div class="eyebrow">Próximo treino</div>`+workoutCard(next,true);}
   else if(next){out+=`<section class="card"><div class="small muted">Hoje é dia de descanso.</div></section><div class="eyebrow">Próximo treino</div>`+workoutCard(next,true);}
   else out+=`<section class="card hero"><h2>Plano concluído</h2><div class="small">${p.goalType==='start'?'Já corres 30 minutos seguidos. O próximo passo natural é um plano de 5 km.':'Bom trabalho. Escolhe o próximo objetivo para continuares a evoluir.'}</div><div class="btns">${p.goalType==='maintain'?'<button class="primary" data-act="continue">Continuar mais 12 semanas</button>':''}<button class="${p.goalType==='maintain'?'':'primary'}" data-act="newplan">Escolher novo objetivo</button></div></section>`;
   for(const x of ws.filter(w=>w.date===TODAY&&w!==todayW))out+=workoutCard(x,false);
+  out+=alertsHtml(AL);
+  const fresh=nLogs()===0;
   out+=`<section class="card"><div class="row between"><span class="eyebrow">Semana ${wk?wk.n:''} · ${wk?PH[wk.phase]+(wk.recovery?' (recuperação)':''):''}</span><span class="num small muted">${p.goalType==='gym'?(wk?wk.workouts.filter(w=>logFor(w)).length+' / '+wk.workouts.length+' '+L('treinos','workouts'):''):nf(Math.round(done*10)/10)+' / '+nf(Math.round(plan))+' km'}</span></div><div class="week">${strip}</div></section>`;
-  if(p.goalType==='gym')out+=gymWeekHtml();else out+=`<section class="card"><div class="stats">
+  if(fresh){}else if(p.goalType==='gym')out+=gymWeekHtml();else out+=`<section class="card"><div class="stats">
     <div class="stat"><span class="v">${fmtTime(pred)}</span><span class="l">Previsão ${esc(gLabel())}</span></div>${p.goalTime?`<div class="stat"><span class="v">${fmtTime(p.goalTime)}</span><span class="l">Objetivo · ${goalVerdict()}</span></div>`:''}
     <div class="stat"><span class="v">${st.vdot.toFixed(1)}</span><span class="l">Índice de forma</span></div>
     ${p.goalTime?'':`<div class="stat"><span class="v">${days!==null&&days>=0?days:'–'}</span><span class="l">${days!==null&&days>=0?'Dias para a prova':'Sem prova marcada'}</span></div>`}
   </div></section>`;
   if(p.goalType!=='gym')out+=`<button class="ghost" data-act="log-extra">Registar corrida fora do plano</button>`;
-  if(st.notes.length)out+=`<section class="card"><h3>Ajustes do treinador</h3>${st.notes.slice(0,5).map(n=>`<div class="note ${n.kind}"><span class="tiny muted">${fmtDate(n.d)}</span><br>${esc(n.text)}</div>`).join('')}</section>`;
+  if(st.notes.length&&!fresh)out+=`<section class="card"><h3>Ajustes do treinador</h3>${st.notes.slice(0,3).map(n=>`<div class="note ${n.kind}"><span class="tiny muted">${fmtDate(n.d)}</span><br>${esc(n.text)}</div>`).join('')}</section>`;
   return out;
 }
 
@@ -2054,6 +2093,7 @@ function ajustesHtml(){
   ${remindHtml()}
   ${wxHtml()}
   ${shoesHtml()}
+  ${mode==='cloud'?`<section class="card"><h3>${L('Sugerir melhoria','Suggest an improvement')}</h3><div class="small muted">${L('Algo confuso, um erro ou uma ideia? Escreve uma frase. Vai diretamente para quem gere a Zone5.','Something confusing, a bug or an idea? Write a sentence. It goes straight to whoever runs Zone5.')}</div><textarea id="fbText" rows="3" maxlength="2000" placeholder="${L('Ex.: Não percebi onde mudo a hora dos lembretes','E.g. I couldn’t find where to change the reminder time')}"></textarea><button class="primary" data-act="fb-send">${L('Enviar','Send')}</button></section>`:''}
   <section class="card"><h3>Idioma · Language</h3>${langSeg()}</section>
   <section class="card"><h3>Conta</h3><div class="small muted">${mode==='cloud'?`Sessão iniciada como ${esc(user.email)} · nome no grupo: ${esc(myName())}`:'Modo experiência: os dados estão só neste dispositivo.'}</div>
     ${mode==='cloud'?`<label for="myNm">Nome no grupo<input id="myNm" value="${esc(myName())}"></label><div class="btns"><button id="saveNm">Guardar nome</button><button class="ghost" data-act="logout">Terminar sessão</button></div>`:`${sb?'<button class="primary" data-act="logout">Criar conta e guardar o plano</button>':''}`}</section>
@@ -2706,6 +2746,9 @@ document.addEventListener('click',e=>{
   else if(a==='ge-off'){delete st.profile.gymExtra;geDraft=null;for(const wk of st.plan.weeks)wk.workouts=wk.workouts.filter(w=>!w.gymExtra||logFor(w));persist();openPlanSettings();render();toast(L('Ginásio retirado do plano','Gym removed from plan'));}
   else if(a==='ps')psOpen(b.dataset.v);
   else if(a==='rb'){const S=RB[b.dataset.ctx],k=b.dataset.k;S[k]=k==='more'||k==='browsing'?true:b.dataset.v;if(k==='dist'||k==='reg')S.more=false;haptic();rbRerender(b.dataset.ctx);}
+  else if(a==='fb-send'){const t=($('#fbText').value||'').trim();if(t.length<2)return toast(L('Escreve uma frase primeiro.','Write a sentence first.'));b.disabled=true;sb.from('feedback').insert({text:t,screen:tab,lang:LANG}).then(({error})=>{b.disabled=false;if(error){toast(L('Ainda não foi possível enviar. Tenta mais tarde.','Couldn’t send yet. Try again later.'));return;}$('#fbText').value='';haptic();toast(L('Obrigado! Sugestão enviada.','Thanks! Suggestion sent.'));});}
+  else if(a==='nudge-x'){st.nudges=st.nudges||{};st.nudges[b.dataset.v]=1;persist();render();}
+  else if(a==='nudge-go'){st.nudges=st.nudges||{};st.nudges[b.dataset.v]=1;persist();goSetting(b.dataset.go);}
   else if(a==='tip-next'){st.tips=(st.tips|0)+1;persist();render();}
   else if(a==='tip-skip'){st.tips=99;persist();render();}
   else if(a==='share-log'){if(lastCele){toast(L('A preparar a imagem…','Preparing image…'));shareCard(lastCele.log,lastCele.w);}}
