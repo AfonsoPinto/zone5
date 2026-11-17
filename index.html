@@ -832,10 +832,11 @@ function removeExtraRace(rid){
   for(const wk of st.plan.weeks){const back=wk.workouts.filter(w=>w.extraRace===rid&&!logFor(w)).flatMap(w=>w.replaced||[]);wk.workouts=wk.workouts.filter(w=>w.extraRace!==rid||logFor(w)).concat(back).sort((a,b)=>a.date<b.date?-1:1);for(const w of wk.workouts)if(w.softBy===rid&&w.orig&&!logFor(w)){Object.assign(w,w.orig);delete w.orig;delete w.softBy;}}
   persist();closeSheet();render();toast(L('Prova removida','Race removed'));
 }
-let xrQ='',xrSport=null,xrKmSel=10,xrOpen=false;
+let xrQ='',xrSport=null,xrKmSel=10,xrOpen=false,xrMode=null;
 function openAddRace(){
   const head=`<div class="row between"><h2>${xrSport?L('Adicionar prova','Add a race'):L('Adicionar ao plano','Add to plan')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div>`;
   if(!xrSport){openSheet(head+`<div class="small muted">${L('O teu objetivo principal mantém-se. Junta outra modalidade (por exemplo ginásio) ou uma prova, e eu encaixo tudo no plano.','Your main goal stays the same. Add another sport (e.g. gym) or a race, and I’ll fit everything into your plan.')}</div><div class="small"><b>${L('O que queres juntar?','What do you want to add?')}</b></div>${sportPicker(null,null,'xr-sport',st.profile.goalType==='gym'?['gym']:[])}`);return;}
+  if(!xrMode&&(xrSport==='hyrox'?st.profile.goalType!=='hyrox':st.profile.goalType==='gym')){xrModePick();return;}
   const last=st.plan.weeks[st.plan.weeks.length-1];const maxD=last?addDays(last.start,6):addDays(TODAY,365);
   const main=st.profile.raceDate,hx=xrSport==='hyrox';
   const kms=[[5,'5 km'],[10,'10 km'],[21.0975,'Meia'],[42.195,'Maratona']];
@@ -967,6 +968,8 @@ function openPlanSettings(){
   ${gt==='gym'?row('gym','💪',L('Material, duração, foco e limitações','Equipment, duration, focus and limitations'),`${{full:L('Ginásio completo','Full gym'),basic:L('Ginásio pequeno','Small gym'),home:L('Em casa','Home'),body:L('Sem material','No equipment')}[p.gymEq||'basic']} · ${p.gymMin||45} min${p.gymFocus?.length?' · '+L('foco','focus')+': '+p.gymFocus.map(f=>L(GFOCUS[f][0],GFOCUS[f][1])).join(', '):''}${p.gymLimits?.length?' · '+L('com limitações','with limitations'):''}`):''}
   ${row('days','📅',L('Dias de treino','Training days'),`${D.length} ${L('dias','days')}: ${D.map(d=>DOW[d]).join(', ')}${gt==='gym'?'':' · '+L('longo','long')+' '+DOW[p.longDay??6]}${gt==='hyrox'&&p.gymDays?.length?' · 🏋️ '+p.gymDays.map(d=>DOW[d]).join(', '):''}`)}
   ${gt!=='gym'?row('gymx','🏋️‍♀️',L('Treino de ginásio','Gym training'),p.gymExtra?.days?.length?`${p.gymExtra.days.map(d=>DOW[d]).join(', ')} · ${p.gymExtra.min} min`:L('Não incluído · tocar para juntar','Not included · tap to add')):''}
+  ${gt==='gym'?row('runx','🏃',L('Corrida','Running'),p.runExtra?.days?.length?`${p.runExtra.days.map(d=>DOW[d]).join(', ')} · ${p.runExtra.kind==='start'?L('começar do zero','from zero'):L('manter a forma','keep fit')}`:L('Não incluída · tocar para juntar','Not included · tap to add')):''}
+  ${gt!=='hyrox'?row('hxx','🔥',L('Treinos HYROX','HYROX training'),p.hxExtra?.days?.length?p.hxExtra.days.map(d=>DOW[d]).join(', '):L('Não incluídos · tocar para juntar','Not included · tap to add')):''}
   ${gt!=='start'&&gt!=='gym'?row('fit','💪',L('Nível e tempo de referência','Level and reference time'),`${lvl}${p.refTime?' · '+esc(p.refTime)+' ('+(p.refDist>=21?nf(p.refDist):p.refDist)+' km)':''}`):''}
   </div>
   <div class="small"><b>${L('Outras provas','Other races')}</b></div>
@@ -975,6 +978,7 @@ function openPlanSettings(){
 }
 function psOpen(k){
   if(k==='gymx'){geDraft=null;openGymExtra();return;}
+  if(k==='runx'||k==='hxx'){xeDraft=null;openSideExtra(k==='runx'?'run':'hx');return;}
   closeSheet();ob=obDefaults();
   if(k==='goal'){ob.step=0;ob.edit=false;}
   else{const steps=obSteps();const i=steps.indexOf(k);ob.step=i<0?0:i;ob.edit=true;}
@@ -1084,6 +1088,61 @@ function openGymExtra(){
   <div class="small"><b>${L('Onde treinas?','Where do you train?')}</b></div><div class="chips">${chip('eq','full',L('Ginásio completo','Full gym'))}${chip('eq','basic',L('Ginásio pequeno','Small gym'))}${chip('eq','home',L('Em casa','Home'))}${chip('eq','body',L('Sem material','No equipment'))}</div>
   <div class="small"><b>${L('Tempo por treino','Time per workout')}</b></div><div class="chips">${[30,45,60].map(m=>chip('min',m,m+' min')).join('')}</div>
   <div class="btns"><button class="primary" data-act="ge-save" ${g.days.length?'':'disabled'}>${cur?L('Guardar','Save'):L('Juntar ao plano','Add to plan')}</button>${cur?`<button class="ghost" data-act="ge-off" style="color:var(--bad)">${L('Tirar o ginásio do plano','Remove gym from plan')}</button>`:''}</div>`);
+}
+
+/* ---------- Outras modalidades sem prova (corrida ou HYROX junto de outro plano) ---------- */
+const wkSort=wk=>wk.workouts.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.type==='F')-(b.type==='F'));
+function applyRunExtra(){
+  if(!st.plan)return;st.plan.weeks.forEach(wk=>{wk.workouts=wk.workouts.filter(w=>!(w.runExtra&&!logFor(w)));});
+  const r=st.profile.runExtra;if(!r?.days?.length||!st.plan.weeks.length)return;
+  const D=[...r.days].sort((a,b)=>a-b),end=addDays(st.plan.weeks[st.plan.weeks.length-1].start,6);
+  const base={goal:'10k',terrain:'flat',raceDate:null,raceName:null,raceId:null,raceKm:null,goalTime:null,runDays:D,days:D.length,longDay:D[D.length-1],strength:false,refDist:null,refTime:''};
+  const subs=[];let from=TODAY,guard=0;
+  if(r.kind==='start'){const s0=genPlan({...base,goalType:'start',goal:'5k',level:'ini'},from,st.vdot);subs.push(...s0.weeks);if(s0.weeks.length)from=addDays(s0.weeks[s0.weeks.length-1].start,7);}
+  while(from<=end&&guard++<10){const m=genPlan({...base,goalType:'maintain',level:r.kind==='start'?'ini':(st.profile.level||'int')},from,st.vdot);if(!m.weeks.length)break;subs.push(...m.weeks);from=addDays(m.weeks[m.weeks.length-1].start,7);}
+  subs.forEach(sw=>{const wk=st.plan.weeks.find(w=>w.start===sw.start);if(!wk)return;const raceDay=wk.workouts.find(w=>w.race)?.date;
+    sw.workouts.forEach(w=>{if(w.date<TODAY||w.type==='F'||w.race)return;if(raceDay&&Math.abs(daysBetween(w.date,raceDay))<=1)return;wk.workouts.push({...w,id:'r'+w.id,runExtra:true});});wkSort(wk);});
+}
+function applyHxExtra(){
+  if(!st.plan)return;st.plan.weeks.forEach(wk=>{wk.workouts=wk.workouts.filter(w=>!(w.hxExtra&&!logFor(w)));});
+  const x=st.profile.hxExtra;if(!x?.days?.length)return;
+  const n=st.plan.weeks.length,div=st.profile.body?.sex==='f'?'ow':'om',wf={ini:.6,int:.8,ava:.9}[st.profile.level]||.7;let c=0;
+  st.plan.weeks.forEach((wk,i)=>{
+    const prog=n>1?i/(n-1):1,rec=wk.recovery||wk.phase==='taper';
+    const f=Math.round(clamp(0.35+0.45*prog,0.3,0.8)*(rec?0.8:1)*20)/20,rounds=rec||i<3?2:3;
+    const raceDay=wk.workouts.find(w=>w.race)?.date;
+    [...x.days].sort((a,b)=>a-b).forEach(d=>{const date=addDays(wk.start,d);if(date<TODAY)return;if(raceDay&&Math.abs(daysBetween(date,raceDay))<=2)return;
+      const w=mkHxStations(c++%2?'B':'A',f,rounds,x.eq||'gym',div,wf);wk.workouts.push({...w,id:`x${i}-${d}`,date,km:0,hxExtra:true});});
+    wkSort(wk);});
+}
+function applySideExtras(){applyRunExtra();applyHxExtra();}
+let xeDraft=null;
+function openSideExtra(k){
+  const p=st.profile,cur=k==='run'?p.runExtra:p.hxExtra;
+  xeDraft=xeDraft&&xeDraft.k===k?xeDraft:{k,days:[...(cur?.days||[])],kind:cur?.kind||'easy',eq:cur?.eq||'gym'};
+  const g=xeDraft,chip=(kk,v,l)=>`<button type="button" class="chip" data-act="xe" data-k="${kk}" data-v="${v}" aria-pressed="${g[kk]===v}">${l}</button>`;
+  const busy=new Set([...(p.runDays||[]),...(p.gymExtra?.days||[]),...((k==='run'?p.hxExtra:p.runExtra)?.days||[])]),all=new Set([...busy,...g.days]);
+  const rec=k==='run'?(g.kind==='start'?L('Recomendado: 3 dias, alternados (para começar bastam 2 a 3).','Recommended: 3 days, spread out (2 to 3 is enough to start).'):L('Recomendado: 2 a 3 dias, com um dia de intervalo.','Recommended: 2 to 3 days, with a day in between.')):L('Recomendado: 1 a 2 dias por semana, longe dos treinos mais duros.','Recommended: 1 to 2 days a week, away from your hardest sessions.');
+  const warn=all.size>=7?L('Assim não tens nenhum dia de descanso. O corpo melhora a recuperar: considera tirar um dia.','This leaves you no rest day. Your body improves while recovering: consider dropping one day.'):g.days.length>(k==='run'?4:2)?L('São muitos dias para juntar ao teu plano. Começa com menos e aumenta depois.','That is a lot to add to your plan. Start with fewer and build up.'):g.days.some(d=>busy.has(d))?L('Num dia que já tem treino, faz os dois com algumas horas de intervalo.','On a day that already has a workout, do both a few hours apart.'):'';
+  openSheet(`<div class="row between"><h2>${k==='run'?L('Corrida sem prova','Running, no race'):L('Treinos HYROX sem prova','HYROX training, no race')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div>
+  <div class="small muted">${k==='run'?L('Corridas para ganhar condição, ao lado do teu plano. Sem prova marcada.','Runs to build fitness alongside your plan. No race needed.'):L('Sessões de estações (remo, kettlebell, wall balls, afundos…) para ganhar condição, ao lado do teu plano. Sem prova marcada.','Station sessions (rowing, kettlebell, wall balls, lunges…) to build fitness alongside your plan. No race needed.')}</div>
+  ${k==='run'?`<div class="small"><b>${L('De onde partes?','Where are you starting from?')}</b></div><div class="opts">
+    <button type="button" class="opt" data-act="xe" data-k="kind" data-v="start" aria-pressed="${g.kind==='start'}"><span class="ic">🌱</span><span><b>${L('Começar do zero','Start from zero')}</b><span class="small muted">${L('Corrida e caminhada, até 30 minutos seguidos.','Run-walk, up to 30 minutes non-stop.')}</span></span></button>
+    <button type="button" class="opt" data-act="xe" data-k="kind" data-v="easy" aria-pressed="${g.kind==='easy'}"><span class="ic">⚡</span><span><b>${L('Já corro','I already run')}</b><span class="small muted">${L('Treinos variados para manter e melhorar a forma.','Varied runs to keep and build fitness.')}</span></span></button></div>`:
+  `<div class="small"><b>${L('Onde treinas?','Where do you train?')}</b></div><div class="chips">${chip('eq','full',L('Ginásio HYROX','HYROX gym'))}${chip('eq','gym',L('Ginásio comum','Regular gym'))}${chip('eq','home',L('Em casa','At home'))}</div><div class="tiny muted">${L('O que não houver, troco por um exercício parecido.','Anything missing, I swap for a similar exercise.')}</div>`}
+  <div class="small"><b>${L('Em que dias?','Which days?')}</b></div>
+  <div class="daypick">${DOW.map((l,i)=>`<button type="button" data-act="xe-day" data-v="${i}" aria-pressed="${g.days.includes(i)}">${l}</button>`).join('')}</div>
+  <div class="tiny muted">${rec}</div>${warn?`<div class="small" style="color:var(--warn)">⚠ ${warn}</div>`:''}
+  <div class="btns"><button class="primary" data-act="xe-save" ${g.days.length?'':'disabled'}>${cur?L('Guardar','Save'):L('Juntar ao plano','Add to plan')}</button>${cur?`<button class="ghost" data-act="xe-off" style="color:var(--bad)">${L('Tirar do plano','Remove from plan')}</button>`:''}</div>`);
+}
+function xrModePick(){
+  const hx=xrSport==='hyrox';
+  const opt=(v,ic,t,d)=>`<button type="button" class="opt" data-act="xr-mode" data-v="${v}"><span class="ic">${ic}</span><span><b>${t}</b><span class="small muted">${d}</span></span></button>`;
+  openSheet(`<div class="row between"><h2>${hx?'HYROX':L('Corrida','Running')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div>
+  <button class="link small" data-act="xr-sport" data-v="" style="align-self:flex-start">‹ ${L('mudar desporto','change sport')}</button>
+  <div class="small"><b>${L('Qual é o objetivo?','What is the goal?')}</b></div><div class="opts">
+  ${opt('race','🏁',hx?L('Preparar uma prova HYROX','Train for a HYROX race'):L('Preparar uma prova','Train for a race'),L('Escolhe a prova e eu encaixo-a no plano.','Pick the race and I fit it into your plan.'))}
+  ${opt('free',hx?'🏋️':'🏃',hx?L('Treinar sem prova','Train without a race'):L('Correr sem prova','Run without a race'),hx?L('Sessões de estações para ganhar condição.','Station sessions to build fitness.'):L('Para começar do zero ou manter a forma.','To start from zero or keep fit.'))}</div>`);
 }
 
 
@@ -2369,12 +2428,12 @@ function obDefaults(){
   const pr=st?.profile;
   if(pr){
     const rd=Array.isArray(pr.runDays)&&pr.runDays.length?pr.runDays:slotsFor(pr,clamp(pr.days||4,2,7)).map(x=>x[0]);
-    return{step:0,goalType:pr.goalType||'race',raceId:pr.raceId&&raceById(pr.raceId)?pr.raceId:(pr.raceName?'custom':null),customName:pr.raceName||'',customDate:pr.raceDate||'',customKm:pr.raceKm||GOALS[pr.goal||'10k'].km,terrain:pr.terrain||'flat',hasGoal:!!pr.goalTime,goalSec:pr.goalTime||0,refDist:pr.refDist||5,refSec:parseTime(pr.refTime)||0,noRef:!pr.refTime,runDays:[...rd].sort((a,b)=>a-b),longDay:pr.longDay??6,level:pr.level||'int',strength:pr.strength!==false,q:'',hxId:pr.goalType==='hyrox'?(HX_RACES.find(r=>r.id===pr.raceId)?pr.raceId:'custom'):null,hxName:pr.goalType==='hyrox'?pr.raceName||'':'',hxDate:pr.goalType==='hyrox'?pr.raceDate||'':'',hxDiv:pr.hxDiv||'om',hxDbl:!!pr.hxDoubles,hxEq:pr.hxEq||'gym',hxGear:[...hxGearOf(pr)],hxQ:'',hxReg:'ib',hxDay:pr.goalType==='hyrox'?pr.raceDate||'':'',gymDays:Array.isArray(pr.gymDays)?[...pr.gymDays]:undefined,gymGoal:pr.gymGoal||null,gymEq:pr.gymEq||'basic',gymMin:pr.gymMin||45,gymLimits:[...(pr.gymLimits||[])],gymFocus:[...(pr.gymFocus||[])],gymCardio:!!pr.gymCardio,bSex:pr.body?.sex||null,bAge:pr.body?.age||30,bH:pr.body?.h||170,bW:pr.body?.w||70,bSkip:!!pr.body&&!pr.body.w};
+    return{step:0,goalType:pr.goalType||'race',raceId:pr.raceId&&raceById(pr.raceId)?pr.raceId:(pr.raceName?'custom':null),customName:pr.raceName||'',customDate:pr.raceDate||'',customKm:pr.raceKm||GOALS[pr.goal||'10k'].km,terrain:pr.terrain||'flat',hasGoal:!!pr.goalTime,goalSec:pr.goalTime||0,refDist:pr.refDist||5,refSec:parseTime(pr.refTime)||0,noRef:!pr.refTime,runDays:[...rd].sort((a,b)=>a-b),longDay:pr.longDay??6,level:pr.level||'int',strength:pr.strength!==false,q:'',hxMode:pr.goalType==='hyrox'?(pr.raceDate?'race':'free'):null,hxId:pr.goalType==='hyrox'&&pr.raceDate?(HX_RACES.find(r=>r.id===pr.raceId)?pr.raceId:'custom'):null,hxName:pr.goalType==='hyrox'?pr.raceName||'':'',hxDate:pr.goalType==='hyrox'?pr.raceDate||'':'',hxDiv:pr.hxDiv||'om',hxDbl:!!pr.hxDoubles,hxEq:pr.hxEq||'gym',hxGear:[...hxGearOf(pr)],hxQ:'',hxReg:'ib',hxDay:pr.goalType==='hyrox'?pr.raceDate||'':'',gymDays:Array.isArray(pr.gymDays)?[...pr.gymDays]:undefined,gymGoal:pr.gymGoal||null,gymEq:pr.gymEq||'basic',gymMin:pr.gymMin||45,gymLimits:[...(pr.gymLimits||[])],gymFocus:[...(pr.gymFocus||[])],gymCardio:!!pr.gymCardio,bSex:pr.body?.sex||null,bAge:pr.body?.age||30,bH:pr.body?.h||170,bW:pr.body?.w||70,bSkip:!!pr.body&&!pr.body.w};
   }
   return{step:0,goalType:null,raceId:null,customName:'',customDate:'',customKm:10,terrain:'flat',hasGoal:false,goalSec:0,refDist:5,refSec:1650,noRef:false,runDays:[1,3,6],longDay:6,level:'int',strength:true,q:'',hxId:null,hxName:'',hxDate:'',hxDiv:'om',hxDbl:false,hxEq:'gym',hxGear:[...HX_PRESET.gym],hxQ:'',hxReg:'ib',hxDay:'',gymGoal:null,gymEq:'basic',gymMin:45,gymLimits:[],gymFocus:[],gymCardio:false,bSex:null,bAge:30,bH:170,bW:70,bSkip:false};
 }
 const obSteps=()=>ob.goalType==='race'?['goal','race','fit','days','sum']:ob.goalType==='hyrox'?['goal','hx','fit','days','sum']:ob.goalType==='gym'?['goal','body','gym','days','sum']:['goal','fit','days','sum'];
-const obHx=()=>ob.goalType!=='hyrox'?null:ob.hxId&&ob.hxId!=='custom'?(r=>r?{...r,date:ob.hxDay&&ob.hxDay>=r.start&&ob.hxDay<=r.end?ob.hxDay:r.date}:null)(HX_RACES.find(r=>r.id===ob.hxId)):ob.hxId==='custom'?{id:'custom',name:(ob.hxName||'').trim()||'HYROX',date:ob.hxDate||null}:null;
+const obHx=()=>ob.goalType!=='hyrox'||ob.hxMode==='free'?null:ob.hxId&&ob.hxId!=='custom'?(r=>r?{...r,date:ob.hxDay&&ob.hxDay>=r.start&&ob.hxDay<=r.end?ob.hxDay:r.date}:null)(HX_RACES.find(r=>r.id===ob.hxId)):ob.hxId==='custom'?{id:'custom',name:(ob.hxName||'').trim()||'HYROX',date:ob.hxDate||null}:null;
 function obRace(){
   if(ob.goalType!=='race')return null;
   if(ob.raceId&&ob.raceId!=='custom'){const r=raceById(ob.raceId);if(r)return{name:r.name,date:r.date,km:r.km,terrain:r.terrain,id:r.id,shared:!!r.shared};}
@@ -2404,7 +2463,9 @@ function onboardHtml(){
       ${opt('back','🔁','Voltar a correr','Depois de uma pausa ou lesão, com calma.')}
       ${opt('maintain','⚡','Manter a forma','Treinos variados, sem prova marcada.')}</div>`:''}
     ${sp==='gym'?`<h3 style="margin-top:6px">${L('Qual é o teu objetivo no ginásio?','What is your gym goal?')}</h3><div class="opts">${Object.entries(GYM_GOALS).map(([v,[ic,t,d]])=>`<button type="button" class="opt" data-k="gymGoal" data-v="${v}" aria-pressed="${ob.gymGoal===v}"><span class="ic">${ic}</span><span><b>${tr(t)}</b><span class="small muted">${tr(d)}</span></span></button>`).join('')}</div>`:''}
-    ${sp==='hyrox'?`<div class="small muted">${L('Plano com corrida, estações e corrida comprometida, até ao dia da prova.','A plan with running, stations and compromised running, up to race day.')}</div>`:''}`;
+    ${sp==='hyrox'?`<h3 style="margin-top:6px">${L('Qual é o teu objetivo?','What is your goal?')}</h3><div class="opts">
+      <button type="button" class="opt" data-k="hxMode" data-v="race" aria-pressed="${ob.hxMode==='race'}"><span class="ic">🏁</span><span><b>${L('Preparar uma prova HYROX','Train for a HYROX race')}</b><span class="small muted">${L('Corrida, estações e corrida comprometida, até ao dia da prova.','Running, stations and compromised running, up to race day.')}</span></span></button>
+      <button type="button" class="opt" data-k="hxMode" data-v="free" aria-pressed="${ob.hxMode==='free'}"><span class="ic">🔥</span><span><b>${L('Treinar sem prova marcada','Train without a race')}</b><span class="small muted">${L('O mesmo estilo de treino, para ganhar condição. 12 semanas.','The same training style, to get fit. 12 weeks.')}</span></span></button></div>`:''}`;
   }
   if(cur==='race'){
     body=`<h2>Que prova vais fazer?</h2>
@@ -2424,14 +2485,15 @@ function onboardHtml(){
   if(cur==='hx'){
     const sel=HX_RACES.find(r=>r.id===ob.hxId);
     const gear=ob.hxGear||[];
-    body=`<h2>${L('Que HYROX vais fazer?','Which HYROX are you doing?')}</h2>
-    ${raceBrowserHtml('hx','ob','ob-hx',ob.hxId,{minDate:addDays(TODAY,14)})}
-    <div class="races">
-    ${ob.hxId&&ob.hxId!=='custom'&&!RB.ob.browsing?'':`<button type="button" class="race ${ob.hxId==='custom'?'on':''}" data-act="ob-hx" data-v="custom"><span class="rd"><b>＋</b></span><span class="ri"><b>${L('Não encontras a tua prova?','Can’t find your race?')}</b><span class="small muted">${L('Por exemplo HYROX Lisboa, quando sair a data','E.g. HYROX Lisbon, once the date is out')}</span></span></button>`}</div>
-    ${ob.hxId==='custom'?`<div class="card" style="background:var(--soft);border:none"><label for="hxCName">${L('Nome','Name')}<input id="hxCName" value="${esc(ob.hxName)}" placeholder="HYROX Lisboa" autocomplete="off"></label><label for="hxCDate">${L('Data','Date')}<input type="date" id="hxCDate" value="${ob.hxDate||''}" min="${addDays(TODAY,14)}"></label></div>`:''}
-    ${sel&&sel.end!==sel.start?`<div class="card" style="background:var(--soft);border:none"><label for="hxDay">${L('O teu dia de prova','Your race day')}<input type="date" id="hxDay" value="${ob.hxDay&&ob.hxDay>=sel.start&&ob.hxDay<=sel.end?ob.hxDay:sel.date}" min="${sel.start}" max="${sel.end}"></label><div class="tiny muted">${L('O evento dura vários dias. Põe o dia da tua vaga, se já souberes.','The event runs over several days. Set your heat day if you know it.')}</div></div>`:''}
+    const free=ob.hxMode==='free';
+    body=`<h2>${free?L('Como vais treinar?','How will you train?'):L('Que HYROX vais fazer?','Which HYROX are you doing?')}</h2>
+    ${free?`<div class="small muted">${L('Quando marcares uma prova, mudas o objetivo em Ajustes e o plano passa a apontar para esse dia.','When you book a race, change the goal in Settings and the plan will build up to that day.')}</div>`:`${raceBrowserHtml('hx','ob','ob-hx',ob.hxId,{minDate:addDays(TODAY,14)})}`}
+    <div class="races" ${free?'hidden':''}>
+    ${free||ob.hxId&&ob.hxId!=='custom'&&!RB.ob.browsing?'':`<button type="button" class="race ${ob.hxId==='custom'?'on':''}" data-act="ob-hx" data-v="custom"><span class="rd"><b>＋</b></span><span class="ri"><b>${L('Não encontras a tua prova?','Can’t find your race?')}</b><span class="small muted">${L('Por exemplo HYROX Lisboa, quando sair a data','E.g. HYROX Lisbon, once the date is out')}</span></span></button>`}</div>
+    ${!free&&ob.hxId==='custom'?`<div class="card" style="background:var(--soft);border:none"><label for="hxCName">${L('Nome','Name')}<input id="hxCName" value="${esc(ob.hxName)}" placeholder="HYROX Lisboa" autocomplete="off"></label><label for="hxCDate">${L('Data','Date')}<input type="date" id="hxCDate" value="${ob.hxDate||''}" min="${addDays(TODAY,14)}"></label></div>`:''}
+    ${!free&&sel&&sel.end!==sel.start?`<div class="card" style="background:var(--soft);border:none"><label for="hxDay">${L('O teu dia de prova','Your race day')}<input type="date" id="hxDay" value="${ob.hxDay&&ob.hxDay>=sel.start&&ob.hxDay<=sel.end?ob.hxDay:sel.date}" min="${sel.start}" max="${sel.end}"></label><div class="tiny muted">${L('O evento dura vários dias. Põe o dia da tua vaga, se já souberes.','The event runs over several days. Set your heat day if you know it.')}</div></div>`:''}
     <div class="small"><b>${L('Categoria','Division')}</b></div><div class="chips">${Object.entries(HX_DIV).map(([k,d])=>chip('hxDiv',k,d.l)).join('')}</div>
-    <label class="switch"><input type="checkbox" id="hxDbl" ${ob.hxDbl?'checked':''}><span>${L('Vou em Doubles (dividimos as estações)','Doubles (we split the stations)')}</span></label>
+    ${free?'':`<label class="switch"><input type="checkbox" id="hxDbl" ${ob.hxDbl?'checked':''}><span>${L('Vou em Doubles (dividimos as estações)','Doubles (we split the stations)')}</span></label>`}
     <div class="small"><b>${L('O que tens no ginásio?','What does your gym have?')}</b></div>
     <div class="chips">${[['full',L('Ginásio HYROX','HYROX gym')],['gym',L('Ginásio comum','Regular gym')],['home',L('Em casa','At home')]].map(([v,l])=>`<button type="button" class="chip ghost" data-act="ob-gearset" data-v="${v}">${l}</button>`).join('')}</div>
     <div class="chips">${HX_GEAR.map(([k,l])=>`<button type="button" class="chip" data-act="ob-gear" data-v="${k}" aria-pressed="${gear.includes(k)}">${gear.includes(k)?'✓ ':''}${tr(l)}</button>`).join('')}</div>
@@ -2535,7 +2597,7 @@ function buildProfile(){
   const gt=ob.goalType,race=obRace();
   let rd=[...ob.runDays].sort((a,b)=>a-b);if(!rd.includes(ob.longDay))ob.longDay=rd[rd.length-1];
   if(gt==='gym')return{goalType:'gym',goal:'10k',raceName:null,raceDate:null,raceKm:null,raceId:null,terrain:'flat',goalTime:null,gymGoal:ob.gymGoal||'muscle',gymEq:ob.gymEq||'basic',gymMin:ob.gymMin||45,gymLimits:[...(ob.gymLimits||[])],gymFocus:[...(ob.gymFocus||[])],gymCardio:!!ob.gymCardio,body:{sex:ob.bSex||'x',age:ob.bAge||30,h:ob.bSkip?null:ob.bH||170,w:ob.bSkip?null:ob.bW||70},refDist:null,refTime:'',runDays:rd,days:rd.length,longDay:ob.longDay,level:ob.level,strength:false};
-  if(gt==='hyrox'){const h=obHx();return{goalType:'hyrox',goal:'10k',raceName:h?h.name:'HYROX',raceDate:h?h.date:null,raceKm:null,raceId:h?h.id:null,terrain:'flat',goalTime:null,hxDiv:ob.hxDiv,hxDoubles:!!ob.hxDbl,hxEq:ob.hxEq,hxGear:[...(ob.hxGear||[])],gymDays:Array.isArray(ob.gymDays)?ob.gymDays.filter(d=>rd.includes(d)):hxAutoGym(rd,ob.longDay),
+  if(gt==='hyrox'){const h=obHx();return{goalType:'hyrox',goal:'10k',raceName:h?h.name:null,raceDate:h?h.date:null,raceKm:null,raceId:h?h.id:null,terrain:'flat',goalTime:null,hxDiv:ob.hxDiv,hxDoubles:!!ob.hxDbl,hxEq:ob.hxEq,hxGear:[...(ob.hxGear||[])],gymDays:Array.isArray(ob.gymDays)?ob.gymDays.filter(d=>rd.includes(d)):hxAutoGym(rd,ob.longDay),
     refDist:ob.noRef?null:ob.refDist,refTime:ob.noRef?'':fmtTime(ob.refSec),runDays:rd,days:rd.length,longDay:ob.longDay,level:ob.level,strength:false};}
   return{goalType:gt,goal:race?goalKeyFor(race.km):gt==='start'?'5k':'10k',raceName:race?race.name:null,raceDate:race?race.date:null,raceKm:race?race.km:null,raceId:race?race.id:null,terrain:race?race.terrain:'flat',goalTime:race&&ob.hasGoal&&ob.goalSec>0?ob.goalSec:null,
     refDist:ob.noRef?null:ob.refDist,refTime:ob.noRef?'':fmtTime(ob.refSec),runDays:rd,days:rd.length,longDay:ob.longDay,level:gt==='start'?'ini':ob.level,strength:ob.strength!==false};
@@ -2544,6 +2606,7 @@ function obValidate(){
   const cur=obSteps()[ob.step];
   if(cur==='goal'&&!ob.goalType)return'Escolhe um objetivo.';
   if(cur==='goal'&&ob.goalType==='gym'&&!ob.gymGoal)return'Escolhe um objetivo.';
+  if(cur==='goal'&&ob.goalType==='hyrox'&&!ob.hxMode)return'Escolhe um objetivo.';
   if(cur==='body'&&!ob.bSex)return L('Escolhe uma opção em Sexo.','Pick an option for Sex.');
   if(cur==='gym'&&!ob.gymEq)return L('Escolhe onde treinas.','Pick where you train.');
   if(cur==='days'&&ob.goalType==='gym'&&ob.runDays.length>6)return L('Escolhe no máximo 6 dias.','Pick at most 6 days.');
@@ -2553,7 +2616,7 @@ function obValidate(){
     if(ob.raceId==='custom'){if(!r.name)return'Escreve o nome da prova.';if(r.date&&r.date<=TODAY)return'A data da prova tem de ser no futuro.';}
     if(ob.hasGoal){if(!(ob.goalSec>0))return'Escolhe o tempo-objetivo.';const gv=vdotFrom(r.km*1000,ob.goalSec);if(!(gv>18&&gv<88))return'Esse tempo-objetivo parece improvável para a distância. Confirma.';}
   }
-  if(cur==='hx'){if(!ob.hxId)return'Escolhe uma prova.';if(ob.hxId==='custom'){if(!ob.hxDate)return'Escolhe a data da prova.';if(ob.hxDate<=TODAY)return'A data da prova tem de ser no futuro.';}}
+  if(cur==='hx'&&ob.hxMode!=='free'){if(!ob.hxId)return'Escolhe uma prova.';if(ob.hxId==='custom'){if(!ob.hxDate)return'Escolhe a data da prova.';if(ob.hxDate<=TODAY)return'A data da prova tem de ser no futuro.';}}
   if(cur==='fit'&&!ob.noRef){if(!(ob.refSec>0))return'Escolhe o tempo.';const v=vdotFrom(ob.refDist*1000,ob.refSec);if(!(v>18&&v<85))return'Esse tempo parece improvável para a distância escolhida. Confirma os valores.';}
   if(cur==='days'&&ob.runDays.length<2)return'Escolhe pelo menos 2 dias.';
   if(cur==='days'&&ob.goalType==='hyrox'&&Array.isArray(ob.gymDays)&&!ob.gymDays.some(d=>ob.runDays.includes(d)))return'Escolhe pelo menos 1 dia de ginásio.';
@@ -2609,6 +2672,7 @@ async function obCreate(){
   if(profile.body?.w&&!(st.weights||[]).length)st.weights=[{d:TODAY,kg:profile.body.w}];
   if(st.extraRaces?.length)applyExtraRaces();
   if(profile.goalType!=='gym'&&keep?.gymExtra){st.profile.gymExtra=keep.gymExtra;applyGymExtra();}
+  if(profile.goalType==='gym'&&keep?.runExtra)st.profile.runExtra=keep.runExtra;if(profile.goalType!=='hyrox'&&keep?.hxExtra)st.profile.hxExtra=keep.hxExtra;applySideExtras();
   for(const l of st.logs){if(l.extra)continue;const w=allW().find(x=>x.date===l.date&&((l.wtype==='F')===(x.type==='F')));l.wid=w?w.id:null;if(!w)l.extra=true;}
   st.suggest=null;
   const n=st.plan.weeks.length,gt=profile.goalType;
@@ -3021,14 +3085,19 @@ document.addEventListener('click',e=>{
   else if(a==='share-img')shareLogIdx(Number(b.dataset.v));
   else if(a==='xr-add'){RB.xr={q:'',dist:'all',reg:'ib'};xrOpen=false;xrSport=null;xrKmSel=10;openAddRace();}
   else if(a==='xr-sport'&&b.dataset.v==='gym'){geDraft=null;openGymExtra();}
-  else if(a==='xr-sport'){xrSport=b.dataset.v||null;RB.xr={q:'',dist:'all',reg:'ib'};xrOpen=false;openAddRace();}
+  else if(a==='xr-sport'){xrSport=b.dataset.v||null;xrMode=null;RB.xr={q:'',dist:'all',reg:'ib'};xrOpen=false;openAddRace();}
+  else if(a==='xr-mode'){if(b.dataset.v==='free'){xeDraft=null;openSideExtra(xrSport==='hyrox'?'hx':'run');}else{xrMode='race';openAddRace();}}
+  else if(a==='xe'){xeDraft[b.dataset.k]=b.dataset.v;openSideExtra(xeDraft.k);}
+  else if(a==='xe-day'){const d=+b.dataset.v;xeDraft.days=xeDraft.days.includes(d)?xeDraft.days.filter(x=>x!==d):[...xeDraft.days,d].sort((x,y)=>x-y);openSideExtra(xeDraft.k);}
+  else if(a==='xe-save'){const k=xeDraft.k;st.profile[k==='run'?'runExtra':'hxExtra']=k==='run'?{days:xeDraft.days,kind:xeDraft.kind}:{days:xeDraft.days,eq:xeDraft.eq};xeDraft=null;applySideExtras();addNote(k==='run'?L('Corrida juntada ao plano.','Running added to your plan.'):L('Treinos HYROX juntados ao plano.','HYROX training added to your plan.'),'info');persist();openPlanSettings();render();toast(L('Plano atualizado','Plan updated'));haptic();}
+  else if(a==='xe-off'){const k=xeDraft.k;delete st.profile[k==='run'?'runExtra':'hxExtra'];xeDraft=null;applySideExtras();persist();openPlanSettings();render();toast(L('Removido do plano','Removed from plan'));}
   else if(a==='xr-open'){xrOpen=true;openAddRace();setTimeout(()=>$('#xrName')?.focus(),50);}
   else if(a==='xr-km'){const nm=$('#xrName')?.value,dt=$('#xrDate')?.value;xrKmSel=b.dataset.v==='other'?'other':Number(b.dataset.v);openAddRace();if(nm)$('#xrName').value=nm;if(dt)$('#xrDate').value=dt;}
   else if(a==='xr-pick')xrPick(id);
   else if(a==='xr-custom')xrCustom();
   else if(a==='xr-del'){const inPs=!!document.querySelector('.sheet .slist,#sheet .slist');removeExtraRace(id);if(inPs)openPlanSettings();}
   else if(a==='newplan'){ob=null;$('#tabs').hidden=true;$('#app').innerHTML=onboardHtml();bindOnboard();window.scrollTo(0,0);}
-  else if(a==='continue'){st.plan=genPlan(st.profile,TODAY,st.vdot);addNote('Novo bloco de 12 semanas criado.','info');persist();render();toast('Plano pronto');}
+  else if(a==='continue'){st.plan=genPlan(st.profile,TODAY,st.vdot);if(st.extraRaces?.length)applyExtraRaces();if(st.profile.gymExtra&&st.profile.goalType!=='gym')applyGymExtra();applySideExtras();addNote('Novo bloco de 12 semanas criado.','info');persist();render();toast('Plano pronto');}
   else if(a==='auth-go')authGo();
   else if(a==='auth-switch'){authMode=authMode==='in'?'up':'in';render();}
   else if(a==='auth-forgot'){const e=($('#aEmail').value||'').trim();if(!e)return $('#aErr').textContent='Escreve o teu email primeiro.';sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname}).then(()=>toast('Enviámos um email para recuperares a palavra-passe.'));}
