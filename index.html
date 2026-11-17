@@ -146,6 +146,11 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .chips.scrollx{flex-shrink:0;padding-bottom:2px}
 .seg.segx{overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}.seg.segx::-webkit-scrollbar{display:none}.seg.segx button{flex:none;padding-left:14px;padding-right:14px}
 .race.rc{align-items:center}.rtags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.tag{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--soft);color:var(--muted)}.tag.warn{color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.setgroup{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:12px 4px 0}
+details.setc{padding:0;gap:0}details.setc>summary{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;list-style:none;min-height:56px}
+details.setc>summary::-webkit-details-marker{display:none}details.setc>summary b{flex:1;font-size:16px}details.setc>summary .ic{font-size:20px;width:28px;text-align:center}
+details.setc>summary .chev{color:var(--muted);font-size:22px;transition:transform .15s}details.setc[open]>summary .chev{transform:rotate(90deg)}
+details.setc .setbody{display:flex;flex-direction:column;gap:12px;padding:0 16px 16px}
 button.strava{background:#FC4C02;color:#fff;border:none;font-weight:800}
 .cantlink{align-self:flex-start;padding:2px 0;min-height:0;font-size:14px;width:auto}
 .authwrap{display:flex;flex-direction:column;gap:14px;min-height:calc(100dvh - 90px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
@@ -1070,6 +1075,30 @@ function openGymExtra(){
   <div class="btns"><button class="primary" data-act="ge-save" ${g.days.length?'':'disabled'}>${cur?L('Guardar','Save'):L('Juntar ao plano','Add to plan')}</button>${cur?`<button class="ghost" data-act="ge-off" style="color:var(--bad)">${L('Tirar o ginásio do plano','Remove gym from plan')}</button>`:''}</div>`);
 }
 
+
+/* ---------- Ajustes em lista agrupada (estilo definições do telemóvel) ---------- */
+const SET_OPEN=new Set();
+const SET_META={'Os teus ritmos':['⏱️','train'],'Registar uma prova ou teste':['🏁','train'],'Refazer o plano':['🗓️','train'],
+ 'Google Calendar':['📅','link'],'Outros calendários e cópia de segurança':['💾','link'],'Strava':['🟠','link'],
+ 'Lembretes':['🔔','app'],'Meteorologia':['🌦️','app'],'Weather':['🌦️','app'],'Reminders':['🔔','app'],'Sapatilhas':['👟','app'],'Idioma · Language':['🌐','app'],
+ 'Conta':['👤','acc'],'Apagar tudo':['🗑️','acc']};
+const SET_GROUPS={train:['Treino','Training'],link:['Ligações','Connections'],app:['App','App'],acc:['Conta','Account']};
+function settify(){
+  const app=$('#app');let lastG=null;
+  [...app.children].forEach(sec=>{
+    if(sec.tagName!=='SECTION'||!sec.classList.contains('card'))return;
+    const h=sec.querySelector('h3');if(!h)return;const title=h.textContent.trim();const m=SET_META[title]||['⚙️','app'];
+    if(m[1]!==lastG){lastG=m[1];const g=document.createElement('div');g.className='setgroup';g.textContent=L(...SET_GROUPS[m[1]]);sec.before(g);}
+    const pill=h.parentElement.classList.contains('row')?h.parentElement.querySelector('.pill'):null;
+    const d=document.createElement('details');d.className='card setc';if(SET_OPEN.has(title))d.open=true;
+    const s=document.createElement('summary');s.innerHTML=`<span class="ic">${m[0]}</span><b></b>${pill?pill.outerHTML:''}<span class="chev">›</span>`;s.querySelector('b').textContent=title;
+    (h.parentElement.classList.contains('row')?h.parentElement:h).remove();
+    d.appendChild(s);const body=document.createElement('div');body.className='setbody';while(sec.firstChild)body.appendChild(sec.firstChild);d.appendChild(body);
+    d.addEventListener('toggle',()=>{d.open?SET_OPEN.add(title):SET_OPEN.delete(title);});
+    sec.replaceWith(d);
+  });
+}
+
 /* ---------- GPX ---------- */
 function hav(a,b){const R=6371000,t=Math.PI/180,dl=(b.lat-a.lat)*t,dn=(b.lon-a.lon)*t;const x=Math.sin(dl/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
 function analyzePoints(raw){
@@ -1841,7 +1870,7 @@ function render(){
   if(!['hoje','plano','progresso','grupo','ajustes'].includes(tab))tab='hoje';
   document.querySelectorAll('nav.tabs a').forEach(a=>a.setAttribute('aria-current',a.dataset.tab===tab?'page':'false'));
   app.innerHTML=tab==='hoje'?hojeHtml():tab==='plano'?planoHtml():tab==='progresso'?progHtml():tab==='grupo'?grupoHtml():ajustesHtml();
-  if(tab==='ajustes')bindAjustes();
+  if(tab==='ajustes'){settify();bindAjustes();}
   if(tab==='plano')bindPlano();
   if(tab==='grupo'){const sel=$('#gSel');if(sel)sel.onchange=e=>{grp.active=e.target.value;grp.loaded=false;render();};}
 }
