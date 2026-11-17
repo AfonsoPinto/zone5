@@ -1010,13 +1010,13 @@ function gymWeekHtml(){
 /* ---------- Ginásio junto ao plano de corrida/HYROX ---------- */
 function applyGymExtra(){
   const g=st.profile.gymExtra;if(!g||!g.days?.length)return;
-  const types=g.days.length>=3?['A','B','C']:['A','B'];
+  const types=GSPLIT[Math.max(2,Math.min(6,g.days.length))];
   const pp={...st.profile,gymEq:g.eq,gymMin:g.min,gymGoal:g.goal,gymLimits:g.limits||[],gymCardio:false};
   st.plan.weeks.forEach((wk,i)=>{
     wk.workouts=wk.workouts.filter(w=>!(w.type==='F'&&!w.hx&&!w.gym&&!logFor(w))&&!(w.gymExtra&&!logFor(w)));
     const raceDay=wk.workouts.find(w=>w.race)?.date;
     g.days.forEach((d,j)=>{const date=addDays(wk.start,d);if(date<TODAY)return;if(raceDay&&Math.abs(daysBetween(date,raceDay))<=2)return;if(wk.workouts.some(w=>w.gymExtra&&w.date===date))return;
-      const w=mkGym(types[(i+j)%types.length],pp,wk.phase==='taper'?'base':wk.phase,wk.recovery||wk.phase==='taper',i);
+      const w=mkGym(types[j%types.length],pp,wk.phase==='taper'?'base':wk.phase,wk.recovery||wk.phase==='taper',i);
       wk.workouts.push({...w,id:`g${i}-${d}`,date,km:0,gymExtra:true});});
     wk.workouts.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.type==='F')-(b.type==='F'));
   });
@@ -1030,7 +1030,8 @@ function openGymExtra(){
   <div class="small muted">${L('Junta sessões de força ao teu plano. Ficam nos dias que escolheres, ao lado da corrida.','Add strength sessions to your plan, on the days you choose, alongside your running.')}</div>
   <div class="small"><b>${L('Em que dias vais ao ginásio?','Which days will you go to the gym?')}</b></div>
   <div class="daypick">${DOW.map((l,i)=>`<button type="button" data-act="ge-day" data-v="${i}" aria-pressed="${g.days.includes(i)}">${l}</button>`).join('')}</div>
-  <div class="tiny muted">${g.days.some(d=>runD.has(d))?L('Num dia com corrida, faz o ginásio depois da corrida ou com algumas horas de intervalo.','On a running day, do the gym after your run or a few hours apart.'):L('Até 3 dias. Evita a véspera do treino longo.','Up to 3 days. Avoid the day before your long run.')}</div>
+  <div class="tiny muted">${g.days.some(d=>runD.has(d))?L('Num dia com corrida, faz o ginásio depois da corrida ou com algumas horas de intervalo.','On a running day, do the gym after your run or a few hours apart.'):L('Evita a véspera do treino longo.','Avoid the day before your long run.')}</div>
+  ${(()=>{const all=new Set([...runD,...g.days]);const both=g.days.filter(d=>runD.has(d)).length;return g.days.length>=4||all.size>=7||both>=3?`<div class="small" style="color:var(--warn)">⚠ ${all.size>=7?L('Assim não tens nenhum dia de descanso. O corpo melhora a recuperar: considera tirar um dia.','This leaves you no rest day. Your body improves while recovering: consider dropping one day.'):L('É muita carga junto com a corrida. Funciona se dormires bem e fores ajustando; o plano alivia nas semanas de recuperação.','That’s a lot of load alongside running. It works if you sleep well and adjust; the plan eases off in recovery weeks.')}</div>`:'';})()}
   <div class="small"><b>${L('Objetivo','Goal')}</b></div><div class="chips">${chip('goal','health',L('Força para correr melhor','Strength to run better'))}${chip('goal','strength',L('Ganhar força','Build strength'))}${chip('goal','muscle',L('Ganhar massa muscular','Build muscle'))}</div>
   <div class="small"><b>${L('Onde treinas?','Where do you train?')}</b></div><div class="chips">${chip('eq','full',L('Ginásio completo','Full gym'))}${chip('eq','basic',L('Ginásio pequeno','Small gym'))}${chip('eq','home',L('Em casa','Home'))}${chip('eq','body',L('Sem material','No equipment'))}</div>
   <div class="small"><b>${L('Tempo por treino','Time per workout')}</b></div><div class="chips">${[30,45,60].map(m=>chip('min',m,m+' min')).join('')}</div>
@@ -2580,7 +2581,7 @@ document.addEventListener('click',e=>{
   else if(a.startsWith('ob-'))obNav(a,b.dataset.v);
   else if(a==='ps-open')openPlanSettings();
   else if(a==='ge'){const k=b.dataset.k;geDraft[k]=k==='min'?Number(b.dataset.v):b.dataset.v;openGymExtra();}
-  else if(a==='ge-day'){const d=Number(b.dataset.v),s2=new Set(geDraft.days);s2.has(d)?s2.delete(d):s2.size<3?s2.add(d):toast(L('No máximo 3 dias de ginásio.','Up to 3 gym days.'));geDraft.days=[...s2].sort((x,y)=>x-y);openGymExtra();}
+  else if(a==='ge-day'){const d=Number(b.dataset.v),s2=new Set(geDraft.days);s2.has(d)?s2.delete(d):s2.size<6?s2.add(d):toast(L('Deixa pelo menos 1 dia de descanso por semana.','Keep at least 1 rest day a week.'));geDraft.days=[...s2].sort((x,y)=>x-y);openGymExtra();}
   else if(a==='ge-save'){st.profile.gymExtra={...geDraft};geDraft=null;applyGymExtra();addNote(L('Treino de ginásio juntado ao plano.','Gym training added to the plan.'),'info');persist();openPlanSettings();render();toast(L('Ginásio juntado ao plano','Gym added to your plan'));}
   else if(a==='ge-off'){delete st.profile.gymExtra;geDraft=null;for(const wk of st.plan.weeks)wk.workouts=wk.workouts.filter(w=>!w.gymExtra||logFor(w));persist();openPlanSettings();render();toast(L('Ginásio retirado do plano','Gym removed from plan'));}
   else if(a==='ps')psOpen(b.dataset.v);
