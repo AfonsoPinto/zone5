@@ -843,6 +843,7 @@ function openAddRace(){
   openSheet(head+`<button class="link small" data-act="xr-sport" data-v="" style="align-self:flex-start">‹ ${hx?'HYROX':L('Corrida','Running')} · ${L('mudar desporto','change sport')}</button>
   ${raceBrowserHtml(hx?'hx':'run','xr','xr-pick',null,{minDate:addDays(TODAY,1),maxD,exclude:main})}
   ${xrOpen?'':`<button class="ghost" data-act="xr-open">＋ ${L('Não encontras a prova? Adiciona-a','Can’t find your race? Add it')}</button>`}
+  ${(hx?st.profile.goalType!=='hyrox':st.profile.goalType==='gym')?`<button class="ghost" data-act="xr-mode" data-v="free">${hx?'🔥 '+L('Sem prova marcada? Treinar HYROX sem prova','No race booked? Train HYROX without one'):'🏃 '+L('Sem prova marcada? Correr sem prova','No race booked? Run without one')}</button>`:''}
   <div class="card" style="background:var(--soft);border:none;${xrOpen?'':'display:none'}"><b>${hx?L('Outra prova HYROX','Another HYROX race'):L('Outra prova','Another race')}</b>
     <label for="xrName">${L('Nome','Name')}<input id="xrName" autocomplete="off" placeholder="${hx?'HYROX Lisboa':L('Ex.: Corrida do Tejo','E.g. River Run')}"></label>
     <label for="xrDate">${L('Data','Date')}<input type="date" id="xrDate" min="${addDays(TODAY,1)}" max="${maxD}"></label>
@@ -3083,7 +3084,7 @@ document.addEventListener('click',e=>{
   else if(a==='tip-skip'){st.tips=99;persist();render();}
   else if(a==='share-log'){if(lastCele){toast(L('A preparar a imagem…','Preparing image…'));shareCard(lastCele.log,lastCele.w);}}
   else if(a==='share-img')shareLogIdx(Number(b.dataset.v));
-  else if(a==='xr-add'){RB.xr={q:'',dist:'all',reg:'ib'};xrOpen=false;xrSport=null;xrKmSel=10;openAddRace();}
+  else if(a==='xr-add'){RB.xr={q:'',dist:'all',reg:'ib'};xrOpen=false;xrSport=null;xrMode=null;xrKmSel=10;openAddRace();}
   else if(a==='xr-sport'&&b.dataset.v==='gym'){geDraft=null;openGymExtra();}
   else if(a==='xr-sport'){xrSport=b.dataset.v||null;xrMode=null;RB.xr={q:'',dist:'all',reg:'ib'};xrOpen=false;openAddRace();}
   else if(a==='xr-mode'){if(b.dataset.v==='free'){xeDraft=null;openSideExtra(xrSport==='hyrox'?'hx':'run');}else{xrMode='race';openAddRace();}}
