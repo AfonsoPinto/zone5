@@ -132,6 +132,13 @@ details.why summary{cursor:pointer;color:var(--accent);list-style:none}details.w
 .wkscroll{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:0;scrollbar-width:none;align-items:flex-start;-webkit-overflow-scrolling:touch}
 .wkscroll::-webkit-scrollbar{display:none}.wkpage{flex:0 0 100%;scroll-snap-align:start;padding:0 1px;box-sizing:border-box}
 .wkhead{display:flex;justify-content:space-between;align-items:center;padding:14px 16px}
+.chips.scrollx{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -2px;padding:0 2px}.chips.scrollx::-webkit-scrollbar{display:none}.chips.scrollx .chip{flex:none}
+.mhead{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:10px 2px 2px}
+.race .prep{margin-left:auto;display:flex;flex-direction:column;align-items:center;min-width:52px;line-height:1.1;color:var(--pc)}
+.race .prep b{font-size:17px}.race .prep span{font-size:10px;color:var(--muted)}.race .prep i{font-style:normal;font-size:9.5px;text-align:center;margin-top:2px}
+.slist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.srow{display:flex;align-items:center;gap:12px;padding:12px 14px;background:none;border:none;border-bottom:1px solid var(--line);border-radius:0;text-align:left;width:100%;min-height:58px;font-weight:400}
+.srow:last-child{border-bottom:none}.srow>span:nth-child(2){flex:1;display:flex;flex-direction:column;min-width:0}.srow .ic{font-size:22px}.srow .chev{color:var(--muted);font-size:22px}
 button.strava{background:#FC4C02;color:#fff;border:none;font-weight:800}
 .cantlink{align-self:flex-start;padding:2px 0;min-height:0;font-size:14px;width:auto}
 .authwrap{display:flex;flex-direction:column;gap:14px;min-height:calc(100dvh - 90px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
@@ -769,21 +776,18 @@ let xrQ='',xrSport=null,xrKmSel=10;
 function openAddRace(){
   const head=`<div class="row between"><h2>${L('Adicionar prova','Add a race')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div>`;
   if(!xrSport){openSheet(head+`<div class="small muted">${L('O teu objetivo principal mantém-se. A app encaixa a prova no plano e alivia os dias antes e depois.','Your main goal stays the same. The app fits the race into your plan and eases the days before and after.')}</div><div class="small"><b>${L('Que desporto?','Which sport?')}</b></div>${sportPicker(null,null,'xr-sport')}`);return;}
-  const q=slugify(xrQ),last=st.plan.weeks[st.plan.weeks.length-1];const maxD=last?addDays(last.start,6):addDays(TODAY,365);
+  const last=st.plan.weeks[st.plan.weeks.length-1];const maxD=last?addDays(last.start,6):addDays(TODAY,365);
   const main=st.profile.raceDate,hx=xrSport==='hyrox';
-  const list=(hx?HX_RACES.filter(r=>r.date>TODAY&&r.date<=maxD&&r.date!==main&&(q?slugify(r.name+' '+r.cc).includes(q):r.region==='ib')).map(r=>({id:r.id,name:r.name,sub:`${r.cc} · ${fmtDate(r.start)}${r.end!==r.start?'–'+fmtDate(r.end):''}`,date:r.date}))
-    :allRaces().filter(r=>r.date>TODAY&&r.date<=maxD&&r.date!==main&&(!q||slugify(r.name+' '+r.city).includes(q))).map(r=>({id:r.id,name:r.name,sub:`${r.city} · ${nf(Math.round(r.km*10)/10)} km`,date:r.date}))).slice(0,40);
   const kms=[[5,'5 km'],[10,'10 km'],[21.0975,'Meia'],[42.195,'Maratona']];
   openSheet(head+`<button class="link small" data-act="xr-sport" data-v="" style="align-self:flex-start">‹ ${hx?'HYROX':L('Corrida','Running')} · ${L('mudar desporto','change sport')}</button>
-  <input id="xrQ" type="search" placeholder="${hx?L('Procurar cidade ou país','Search city or country'):L('Procurar prova ou cidade','Search race or city')}" value="${esc(xrQ)}" autocomplete="off">
-  <div class="races">${list.map(r=>`<button type="button" class="race" data-act="xr-pick" data-id="${r.id}"><span class="rd"><b>${toD(r.date).getUTCDate()}</b><span>${MES[toD(r.date).getUTCMonth()]}</span></span><span class="ri"><b>${esc(r.name)}</b><span class="small muted">${esc(r.sub)}</span></span></button>`).join('')||`<div class="small muted">${L('Nenhuma prova encontrada até ao fim do plano. Cria a tua em baixo.','No races found before the end of your plan. Add yours below.')}</div>`}</div>
+  ${raceBrowserHtml(hx?'hx':'run','xr','xr-pick',null,{minDate:addDays(TODAY,1),maxD,exclude:main})}
   <div class="card" style="background:var(--soft);border:none"><b>${hx?L('Outra prova HYROX','Another HYROX race'):L('Outra prova','Another race')}</b>
     <label for="xrName">${L('Nome','Name')}<input id="xrName" autocomplete="off" placeholder="${hx?'HYROX Lisboa':L('Ex.: Corrida do Tejo','E.g. River Run')}"></label>
     <label for="xrDate">${L('Data','Date')}<input type="date" id="xrDate" min="${addDays(TODAY,1)}" max="${maxD}"></label>
     ${hx?'':`<div class="small"><b>${L('Distância','Distance')}</b></div><div class="chips">${kms.map(([v,l])=>`<button type="button" class="chip" data-act="xr-km" data-v="${v}" aria-pressed="${xrKmSel===v}">${tr(l)}</button>`).join('')}<button type="button" class="chip" data-act="xr-km" data-v="other" aria-pressed="${xrKmSel==='other'}">${L('Outra','Other')}</button></div>${xrKmSel==='other'?`<label for="xrKm">${L('Distância (km)','Distance (km)')}<input id="xrKm" inputmode="decimal" placeholder="15"></label>`:''}`}
     <div class="small" id="xrErr" style="color:var(--bad)"></div>
     <button class="primary" data-act="xr-custom">${L('Adicionar','Add')}</button></div>`);
-  const qi=$('#xrQ');if(qi)qi.oninput=()=>{xrQ=qi.value;const pos=qi.selectionStart;const nm=$('#xrName')?.value,dt=$('#xrDate')?.value;openAddRace();if(nm)$('#xrName').value=nm;if(dt)$('#xrDate').value=dt;const n=$('#xrQ');n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}};
+  rbBindSearch();
 }
 function addExtraRace(r){
   st.extraRaces=(st.extraRaces||[]).filter(x=>x.date!==r.date);st.extraRaces.push(r);
@@ -844,6 +848,80 @@ function bindPlano(){
   $('#wkNext').onclick=()=>{haptic();sc.scrollBy({left:sc.clientWidth,behavior:'smooth'});};
 }
 let planoIdx=null;
+
+
+/* ---------- Escolher prova: filtros, meses e tempo de preparação ---------- */
+const RB={ob:{q:'',dist:'all',cc:'all',month:'all',reg:'ib'},xr:{q:'',dist:'all',cc:'all',month:'all',reg:'ib'}};
+const flag=cc=>cc&&cc.length===2?String.fromCodePoint(...[...cc.toUpperCase()].map(c=>0x1F1A5+c.charCodeAt(0))):'';
+const MESL_PT=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],MESL_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const monthLabel=ym=>{const [y,m]=ym.split('-').map(Number);return `${(LANG==='pt'?MESL_PT:MESL_EN)[m-1]} ${y}`;};
+function prepWeeks(km,hx){const ideal=hx?10:km<=5.5?6:km<=11?8:km<=22?10:km<=43?14:18,min=hx?5:km<=5.5?3:km<=11?5:km<=22?6:km<=43?10:12;return{ideal,min};}
+function prepBadge(date,km,hx){
+  const w=Math.floor(daysBetween(TODAY,date)/7),{ideal,min}=prepWeeks(km,hx);
+  const [c,t]=w>=ideal?['var(--good)',L('tempo ideal','ideal time')]:w>=min?['var(--warn)',L('dá para preparar','enough to prepare')]:['var(--bad)',L('pouco tempo','short notice')];
+  return `<span class="prep" style="--pc:${c}"><b>${w}</b><span>${L('sem.','wks')}</span><i>${t}</i></span>`;
+}
+const DISTF=[['all','Todas'],['5','5 km'],['10','10 km'],['half','Meia'],['full','Maratona'],['trail','Trail']];
+const distOk=(r,d)=>d==='all'||(d==='5'?r.km<=7.5:d==='10'?r.km>7.5&&r.km<=16:d==='half'?r.km>16&&r.km<=30:d==='full'?r.km>30&&r.terrain!=='trail':d==='trail'?r.terrain==='trail':true);
+// kind: 'run'|'hx'; ctx: 'ob'|'xr'; pick: data-act para escolher; sel: id escolhido; opts: {minDate,maxD,exclude}
+function raceBrowserHtml(kind,ctx,pick,sel,opts){
+  const S=RB[ctx];if(S.kind!==kind)Object.assign(S,{q:'',dist:'all',cc:'all',month:'all',reg:'ib',kind});const hx=kind==='hx',q=slugify(S.q||'');
+  let base=hx?HX_RACES.map(r=>({...r,km:null,city:r.city||r.name.replace(/^HYROX\s+/,'')})):allRaces();
+  base=base.filter(r=>r.date>=(opts.minDate||TODAY)&&(!opts.maxD||r.date<=opts.maxD)&&r.date!==opts.exclude);
+  const f1=base.filter(r=>q?slugify(r.name+' '+(r.city||'')+' '+(r.cc||'')).includes(q):hx?(S.reg==='all'||(S.reg==='eu'?r.region!=='world':r.region===S.reg)):distOk(r,S.dist)&&(S.cc==='all'||r.cc===S.cc));
+  const months=[...new Set(f1.map(r=>r.date.slice(0,7)))].sort();
+  const month=months.includes(S.month)?S.month:'all';
+  const list=f1.filter(r=>month==='all'||r.date.startsWith(month));
+  const chip=(k,v,l,on)=>`<button type="button" class="chip" data-act="rb" data-ctx="${ctx}" data-k="${k}" data-v="${v}" aria-pressed="${on}">${l}</button>`;
+  const ccs=[...new Set(base.map(r=>r.cc).filter(Boolean))];
+  let filters='';
+  if(!q){
+    filters=hx?`<div class="chips scrollx">${[['ib',flag('PT')+' '+flag('ES')+' '+L('Portugal e Espanha','Portugal & Spain')],['eu','🇪🇺 '+L('Europa','Europe')],['all','🌍 '+L('Todas','All')]].map(([v,l])=>chip('reg',v,l,S.reg===v)).join('')}</div>`
+      :`<div class="chips scrollx">${DISTF.map(([v,l])=>chip('dist',v,tr(l),S.dist===v)).join('')}</div>${ccs.length>1?`<div class="chips scrollx">${chip('cc','all','🌍 '+L('Todos','All'),S.cc==='all')}${ccs.map(c=>chip('cc',c,flag(c)+' '+({PT:'Portugal',ES:L('Espanha','Spain')}[c]||c),S.cc===c)).join('')}</div>`:''}`;
+  }
+  const mchips=months.length>1?`<div class="chips scrollx">${chip('month','all',L('Todos os meses','All months'),month==='all')}${months.map(m=>chip('month',m,monthLabel(m).replace(/ \d+$/,'')+(m.slice(0,4)!==TODAY.slice(0,4)?' '+m.slice(2,4):''),month===m)).join('')}</div>`:'';
+  let lastM='',rows='';
+  for(const r of list){const m=r.date.slice(0,7);if(m!==lastM){rows+=`<div class="mhead">${monthLabel(m)}</div>`;lastM=m;}
+    const sub=hx?`${flag(r.cc)} ${esc(r.cc)} · ${fmtDate(r.start)}${r.end!==r.start?'–'+fmtDate(r.end):''}${r.note?' · '+esc(tr(r.note)):''}`:`${flag(r.cc)} ${esc(r.city||'')} · ${nf(Math.round(r.km*10)/10)} km${r.terrain&&r.terrain!=='flat'?' · '+tr(TERRAIN[r.terrain]):''}${r.tbc?' · '+L('data a confirmar','date tbc'):''}${r.shared?' · '+L('adicionada por utilizadores','added by users'):''}`;
+    rows+=`<button type="button" class="race ${sel===r.id?'on':''}" data-act="${pick}" data-v="${r.id}" data-id="${r.id}"><span class="rd"><b>${toD(r.date).getUTCDate()}</b><span>${MES[toD(r.date).getUTCMonth()]}</span></span><span class="ri"><b>${esc(r.name)}</b><span class="small muted">${sub}</span></span>${prepBadge(r.date,r.km||0,hx)}</button>`;}
+  return `<input id="rbQ" data-ctx="${ctx}" type="search" placeholder="${hx?L('Procurar cidade ou país','Search city or country'):L('Procurar prova ou cidade','Search race or city')}" value="${esc(S.q||'')}" autocomplete="off">
+  ${filters}${mchips}
+  <div class="tiny muted">${list.length} ${list.length===1?L('prova','race'):L('provas','races')} · ${L('semanas até à prova','weeks to race')}</div>
+  <div class="races">${rows||`<div class="small muted">${L('Nenhuma prova com estes filtros. Muda os filtros ou cria a tua em baixo.','No races match these filters. Change the filters or add yours below.')}</div>`}</div>`;
+}
+function rbRerender(ctx){if(ctx==='ob')obRerender();else openAddRace();}
+function rbBindSearch(){
+  const qi=$('#rbQ');if(!qi)return;const ctx=qi.dataset.ctx;
+  qi.oninput=()=>{RB[ctx].q=qi.value;const pos=qi.selectionStart;const keep={};['xrName','xrDate','obCName','obCDate','hxCName','hxCDate'].forEach(id=>{const e=document.getElementById(id);if(e)keep[id]=e.value;});rbRerender(ctx);for(const id in keep){const e=document.getElementById(id);if(e)e.value=keep[id];}const n=$('#rbQ');if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}};
+}
+
+
+/* ---------- Editar o plano (sem refazer o questionário todo) ---------- */
+function openPlanSettings(){
+  const p=st.profile,gt=p.goalType,D=(p.runDays||[]).slice().sort((a,b)=>a-b);
+  const goalTxt=gt==='hyrox'?'🏋️ HYROX':({race:'🏁 '+L('Preparar uma prova','Train for a race'),start:'🌱 '+L('Começar a correr','Start running'),back:'🔁 '+L('Voltar a correr','Get back to running'),maintain:'⚡ '+L('Manter a forma','Stay in shape')})[gt]||'';
+  const lvl={ini:L('Iniciante','Beginner'),int:L('Intermédio','Intermediate'),ava:L('Avançado','Advanced')}[p.level]||'';
+  const row=(k,ic,t,v)=>`<button type="button" class="srow" data-act="ps" data-v="${k}"><span class="ic">${ic}</span><span><span class="small muted">${t}</span><b>${v}</b></span><span class="chev">›</span></button>`;
+  const xs=(st.extraRaces||[]).filter(r=>r.date>=TODAY).sort((a,b)=>a.date<b.date?-1:1);
+  openSheet(`<div class="row between"><h2>${L('Editar plano','Edit plan')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div>
+  <div class="small muted">${L('Muda só o que precisas. O plano é refeito a partir de hoje e os treinos registados ficam guardados.','Change only what you need. The plan is rebuilt from today and your logged workouts are kept.')}</div>
+  <div class="slist">
+  ${row('goal','🎯',L('Objetivo','Goal'),esc(goalTxt))}
+  ${gt==='race'?row('race','🏁',L('Prova e tempo-objetivo','Race and goal time'),`${esc(p.raceName||'')} · ${fmtDate(p.raceDate)}${p.goalTime?' · '+fmtTime(p.goalTime):''}`):''}
+  ${gt==='hyrox'?row('hx','🏋️',L('Prova, categoria e material','Race, division and equipment'),`${esc(p.raceName||'HYROX')}${p.raceDate?' · '+fmtDate(p.raceDate):''} · ${esc(tr(HX_DIV[p.hxDiv||'om'].l))}`):''}
+  ${row('days','📅',L('Dias de treino','Training days'),`${D.length} ${L('dias','days')}: ${D.map(d=>DOW[d]).join(', ')} · ${L('longo','long')} ${DOW[p.longDay??6]}${gt==='hyrox'&&p.gymDays?.length?' · 🏋️ '+p.gymDays.map(d=>DOW[d]).join(', '):''}`)}
+  ${gt!=='start'?row('fit','💪',L('Nível e tempo de referência','Level and reference time'),`${lvl}${p.refTime?' · '+esc(p.refTime)+' ('+(p.refDist>=21?nf(p.refDist):p.refDist)+' km)':''}`):''}
+  </div>
+  <div class="small"><b>${L('Outras provas','Other races')}</b></div>
+  ${xs.length?`<div class="slist">${xs.map(r=>`<div class="srow"><span class="ic">${r.hx?'🏋️':'🏁'}</span><span><b>${esc(r.name)}</b><span class="small muted">${fmtDate(r.date)}${r.km?' · '+nf(Math.round(r.km*10)/10)+' km':''}</span></span><button class="ghost chip" data-act="xr-del" data-id="${r.id}" aria-label="${L('Remover','Remove')}">✕</button></div>`).join('')}</div>`:`<div class="small muted">${L('Ainda não juntaste outras provas ao plano.','You haven’t added other races yet.')}</div>`}
+  <button data-act="xr-add">+ ${L('Adicionar outra prova','Add another race')}</button>`);
+}
+function psOpen(k){
+  closeSheet();ob=obDefaults();
+  if(k==='goal'){ob.step=0;ob.edit=false;}
+  else{const steps=obSteps();const i=steps.indexOf(k);ob.step=i<0?0:i;ob.edit=true;}
+  $('#tabs').hidden=true;$('#app').innerHTML=onboardHtml();bindOnboard();window.scrollTo(0,0);
+}
 
 /* ---------- GPX ---------- */
 function hav(a,b){const R=6371000,t=Math.PI/180,dl=(b.lat-a.lat)*t,dn=(b.lon-a.lon)*t;const x=Math.sin(dl/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
@@ -1051,6 +1129,7 @@ Object.assign(EN_EXACT,{"Remo": "Rower", "Trenó": "Sled", "Passadeira": "Treadm
 Object.assign(EN_EXACT,{"Escolher ficheiro .gpx ou .fit": "Choose a .gpx or .fit file", "Do relógio (Garmin Connect, Coros, Suunto…): exporta o ficheiro original (.fit ou .zip). Do Strava: no site, menu \"…\" e \"Exportar GPX\". No iPhone, guarda-o em Ficheiros e escolhe-o aqui.": "From your watch (Garmin Connect, Coros, Suunto…): export the original file (.fit or .zip). From Strava: on the website, \"…\" menu and \"Export GPX\". On iPhone, save it to Files and pick it here.", "Não consegui ler este ficheiro. Confirma que é um .gpx ou .fit de uma corrida com GPS ou distância.": "I couldn't read this file. Make sure it's a .gpx or .fit of a run with GPS or distance."});
 Object.assign(EN_EXACT,{"Escolhe pelo menos 1 dia de ginásio.": "Pick at least 1 gym day."});
 Object.assign(EN_EXACT,{"Corrida": "Running", "Provas, começar, voltar ou manter": "Races, start, return or maintain", "Corrida + 8 estações": "Running + 8 stations", "Triatlo": "Triathlon", "Natação, bicicleta e corrida": "Swim, bike and run", "Natação": "Swimming", "Ciclismo": "Cycling"});
+Object.assign(EN_EXACT,{'Todas':'All'});
 EN_RX.push([/^Troco por (.+) km fáceis\.$/,'Swap for $1 easy km.'],[/^Saltado\. O próximo treino duro \((.+)\) passou a fácil\.$/,'Skipped. The next hard session ($1) is now easy.'],[/^(.+): treino trocado por (.+) km fáceis por falta de tempo\.$/,'$1: workout swapped for $2 easy km (short on time).'],[/^(.+): (.+) saltado \((cansaço|doença|dores|impedimento)\)\.(?: Ajustei (\d+) treinos? a seguir\.)?$/,(m,d,t,r,n)=>`${d}: ${tr(t)} skipped (${{'cansaço':'tired','doença':'ill','dores':'pain','impedimento':"couldn't make it"}[r]}).${n?` Adjusted ${n} upcoming workout${n>1?'s':''}.`:''}`]);
 EN_RX.push([/^(\d) treinos por semana\.$/,'$1 runs a week.'],[/^Passo (\d+) \/ (\d+)$/,'Step $1 / $2']);
 EN_RX.push(
@@ -1655,7 +1734,7 @@ function planoHtml(){
   const p=st.profile,goalTxt=p.goalType==='hyrox'?(p.raceName||'HYROX'):p.goalType==='race'?(p.raceName||gLabel()):({start:'Começar a correr',back:'Voltar a correr',maintain:'Manter a forma'})[p.goalType]||'';
   const xs=(st.extraRaces||[]).filter(r=>r.date>=TODAY).sort((a,b)=>a.date<b.date?-1:1);
   return `<div class="row between"><h2>O teu plano</h2><span class="small muted">${st.plan.weeks.length} semanas</span></div>
-  <section class="card"><div class="row between"><div><span class="eyebrow">${L('Objetivo','Goal')}</span><div><b>${esc(tr(goalTxt))}</b>${p.raceDate?` · <span class="small muted">${fmtDate(p.raceDate)}</span>`:''}</div></div><button class="ghost chip" data-act="newplan">${L('Mudar','Change')}</button></div>
+  <section class="card"><div class="row between"><div><span class="eyebrow">${L('Objetivo','Goal')}</span><div><b>${esc(tr(goalTxt))}</b>${p.raceDate?` · <span class="small muted">${fmtDate(p.raceDate)}</span>`:''}</div></div><button class="ghost chip" data-act="ps-open">✎ ${L('Editar','Edit')}</button></div>
   ${xs.length?`<div class="small muted">${L('Outras provas','Other races')}: ${xs.map(r=>esc(r.name)+' ('+fmtDate(r.date)+')').join(', ')}</div>`:''}
   <button data-act="xr-add">+ ${L('Adicionar outra prova','Add another race')}</button></section>
   <div class="wknav"><button class="ghost chip" id="wkPrev" aria-label="${L('Semana anterior','Previous week')}">‹</button><span id="wkLbl" class="small"></span><button class="ghost chip" id="wkNext" aria-label="${L('Semana seguinte','Next week')}">›</button></div>
@@ -1798,12 +1877,9 @@ function onboardHtml(){
     ${sp==='hyrox'?`<div class="small muted">${L('Plano com corrida, estações e corrida comprometida, até ao dia da prova.','A plan with running, stations and compromised running, up to race day.')}</div>`:''}`;
   }
   if(cur==='race'){
-    const q=(ob.q||'').toLowerCase();
-    const list=allRaces().filter(r=>r.date>addDays(TODAY,13)&&(!q||(r.name+' '+r.city).toLowerCase().includes(q)));
-    const card=r=>`<button type="button" class="race ${ob.raceId===r.id?'on':''}" data-act="ob-race" data-v="${r.id}"><span class="rd"><b>${toD(r.date).getUTCDate()}</b><span>${MES[toD(r.date).getUTCMonth()]}</span></span><span class="ri"><b>${esc(r.name)}</b><span class="small muted">${esc(r.city||'')} · ${nf(Math.round(r.km*10)/10)} km · ${TERRAIN[r.terrain]||''}${r.tbc?' · '+'data a confirmar':''}</span></span></button>`;
     body=`<h2>Que prova vais fazer?</h2>
-    <input id="obQ" type="search" placeholder="Procurar prova ou cidade" value="${esc(ob.q||'')}" autocomplete="off">
-    <div class="races">${list.map(card).join('')||'<div class="small muted">Nenhuma prova encontrada. Cria a tua em baixo.</div>'}
+    ${raceBrowserHtml('run','ob','ob-race',ob.raceId,{minDate:addDays(TODAY,14)})}
+    <div class="races">
     <button type="button" class="race ${ob.raceId==='custom'?'on':''}" data-act="ob-race" data-v="custom"><span class="rd"><b>+</b></span><span class="ri"><b>Outra prova</b><span class="small muted">Escreve o nome, a data e a distância</span></span></button></div>
     ${ob.raceId==='custom'?`<div class="card" style="background:var(--soft);border:none">
       <label for="obCName">Nome da prova<input id="obCName" value="${esc(ob.customName)}" placeholder="Ex.: Corrida do Tejo" autocomplete="off"></label>
@@ -1816,15 +1892,11 @@ function onboardHtml(){
       ${ob.hasGoal?`${timePick('obGoalT',ob.goalSec||Math.round(predict(obVdot(),(obRace()?.km||10)*1000)/60)*60,true)}<div class="small" id="obGoalMsg"></div>`:''}</div>`:''}`;
   }
   if(cur==='hx'){
-    const q=slugify(ob.hxQ||''),reg=ob.hxReg||'eu';
-    const list=HX_RACES.filter(r=>r.date>addDays(TODAY,13)&&(q?slugify(r.name+' '+r.cc).includes(q):reg==='all'?true:reg==='eu'?r.region!=='world':r.region===reg));
     const sel=HX_RACES.find(r=>r.id===ob.hxId);
-    const card=r=>`<button type="button" class="race ${ob.hxId===r.id?'on':''}" data-act="ob-hx" data-v="${r.id}"><span class="rd"><b>${toD(r.date).getUTCDate()}</b><span>${MES[toD(r.date).getUTCMonth()]}</span></span><span class="ri"><b>${esc(r.name)}</b><span class="small muted">${esc(r.cc)} · ${fmtDate(r.start)}${r.end!==r.start?'–'+fmtDate(r.end):''}${r.note?' · '+esc(tr(r.note)):''}</span></span></button>`;
     const gear=ob.hxGear||[];
     body=`<h2>${L('Que HYROX vais fazer?','Which HYROX are you doing?')}</h2>
-    <input id="hxQ" type="search" placeholder="${L('Procurar cidade ou país','Search city or country')}" value="${esc(ob.hxQ||'')}" autocomplete="off">
-    ${q?'':`<div class="chips">${[['ib',L('Portugal e Espanha','Portugal & Spain')],['eu',L('Europa','Europe')],['all',L('Todas','All')]].map(([v,l])=>chip('hxReg',v,l,String(reg===v))).join('')}</div>`}
-    <div class="races">${list.map(card).join('')||`<div class="small muted">${L('Ainda não há provas anunciadas aqui. Escolhe "Outra prova HYROX" e põe a data.','No races announced here yet. Pick "Another HYROX race" and enter the date.')}</div>`}
+    ${raceBrowserHtml('hx','ob','ob-hx',ob.hxId,{minDate:addDays(TODAY,14)})}
+    <div class="races">
     <button type="button" class="race ${ob.hxId==='custom'?'on':''}" data-act="ob-hx" data-v="custom"><span class="rd"><b>+</b></span><span class="ri"><b>${L('Outra prova HYROX','Another HYROX race')}</b><span class="small muted">${L('Por exemplo HYROX Lisboa, quando sair a data','E.g. HYROX Lisbon, once the date is out')}</span></span></button></div>
     ${ob.hxId==='custom'?`<div class="card" style="background:var(--soft);border:none"><label for="hxCName">${L('Nome','Name')}<input id="hxCName" value="${esc(ob.hxName)}" placeholder="HYROX Lisboa" autocomplete="off"></label><label for="hxCDate">${L('Data','Date')}<input type="date" id="hxCDate" value="${ob.hxDate||''}" min="${addDays(TODAY,14)}"></label></div>`:''}
     ${sel&&sel.end!==sel.start?`<div class="card" style="background:var(--soft);border:none"><label for="hxDay">${L('O teu dia de prova','Your race day')}<input type="date" id="hxDay" value="${ob.hxDay&&ob.hxDay>=sel.start&&ob.hxDay<=sel.end?ob.hxDay:sel.date}" min="${sel.start}" max="${sel.end}"></label><div class="tiny muted">${L('O evento dura vários dias. Põe o dia da tua vaga, se já souberes.','The event runs over several days. Set your heat day if you know it.')}</div></div>`:''}
@@ -1871,6 +1943,10 @@ function onboardHtml(){
     <div class="tiny muted">Os ritmos ajustam-se sozinhos à medida que registas treinos.</div>`;
   }
   const last=idx===steps.length-1;
+  if(ob.edit)return `<div class="wiz"><span class="eyebrow">${L('Editar plano','Edit plan')}</span></div>
+  <section class="card">${body}</section>
+  <div class="small" id="obErr" style="color:var(--bad)"></div>
+  <div class="wnav"><button class="ghost" id="obCancel">${L('Cancelar','Cancel')}</button><button class="primary" data-act="ob-go">${L('Guardar alterações','Save changes')}</button></div>`;
   return `<div class="wiz"><div class="wbar"><div style="width:${(idx+1)/steps.length*100}%"></div></div><span class="tiny muted">${L('Passo','Step')} ${idx+1} / ${steps.length}</span></div>
   <section class="card">${body}</section>
   <div class="small" id="obErr" style="color:var(--bad)"></div>
@@ -1929,6 +2005,7 @@ function bindOnboard(){
     if(k==='sport'){ob.goalType=ob.sport==='hyrox'?'hyrox':ob.goalType==='hyrox'?null:ob.goalType;}
     if(k==='goalType'){ob.step=0;if(ob.goalType==='start'&&ob.runDays.length>3)ob.runDays=slotsFor({runDays:ob.runDays,longDay:ob.longDay},3).map(x=>x[0]);}
     obRerender();});
+  rbBindSearch();
   if($('#hxQ'))$('#hxQ').oninput=()=>{const pos=$('#hxQ').selectionStart;obRerender();const q=$('#hxQ');q.focus();try{q.setSelectionRange(pos,pos);}catch(e){}};
   if($('#obQ'))$('#obQ').oninput=()=>{const pos=$('#obQ').selectionStart;obRerender();const q=$('#obQ');q.focus();try{q.setSelectionRange(pos,pos);}catch(e){}};
   ['#obHasGoal','#obNoRef'].forEach(id=>{if($(id))$(id).onchange=obRerender;});
@@ -1964,7 +2041,7 @@ async function obCreate(){
   st.suggest=null;
   const n=st.plan.weeks.length,gt=profile.goalType;
   addNote(keep?'Plano refeito a partir de hoje.':gt==='start'?`Plano criado: ${n} semanas até correres 30 min seguidos.`:race&&race.date?`Plano criado: ${n} semanas até ${fmtDate(race.date)}.`:gt==='hyrox'&&profile.raceDate?`Plano criado: ${n} semanas até ${fmtDate(profile.raceDate)}.`:`Plano criado: ${n} semanas.`,'info');
-  ob=null;persist();pushPublic();tab='hoje';location.hash='#hoje';render();window.scrollTo(0,0);toast('Plano pronto');
+  const wasEdit=ob?.edit;ob=null;persist();pushPublic();tab=wasEdit?'plano':'hoje';location.hash='#'+tab;ob=null;render();window.scrollTo(0,0);toast(wasEdit?L('Plano atualizado','Plan updated'):'Plano pronto');
 }
 
 /* ---------- Ajustes: ações ---------- */
@@ -1991,7 +2068,7 @@ function bindAjustes(){
   if($('#gcOff'))$('#gcOff').onclick=()=>openSheet(`<h2>Apagar o calendário Zone5?</h2><div class="small muted">Apago o calendário "Zone5 · treinos" da tua conta Google. Os teus outros calendários não são tocados.</div><div class="btns"><button class="ghost" data-act="close">Cancelar</button><button class="primary" data-act="gc-off">Remover</button></div>`);
   $('#ttDist').onchange=e=>{$('#ttBox').innerHTML=timePick('ttTime',Math.round(predict(st.vdot,Number(e.target.value)*1000)),true);};
   $('#ttSave').onclick=()=>{const t=readPick('ttTime'),d=Number($('#ttDist').value);if(!(t>0))return toast('Escolhe o tempo.');const v=vdotFrom(d*1000,t);if(!(v>18&&v<85))return toast('Esse tempo parece improvável. Confirma.');const o=st.vdot;st.vdot=Math.round(v*10)/10;st.vdotHist.push({d:TODAY,v:st.vdot,why:'prova/teste'});addNote(`Ritmos recalculados com ${fmtTime(t)} em ${d} km (forma ${o.toFixed(1)} → ${st.vdot.toFixed(1)}).`,v>=o?'up':'down');persist();render();toast('Ritmos atualizados');};
-  $('#redo').onclick=()=>{ob=null;$('#tabs').hidden=true;$('#app').innerHTML=onboardHtml();bindOnboard();window.scrollTo(0,0);};
+  $('#redo').onclick=()=>openPlanSettings();
   $('#ics').onclick=()=>saveFile('zone5-plan.ics',icsText());
   $('#bkp').onclick=()=>saveFile(`zone5-backup-${TODAY}.json`,JSON.stringify(st));
   $('#restore').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!d.profile||!d.plan)throw 0;st=d;persist();render();toast('Cópia restaurada');}catch(_){toast('Esse ficheiro não é uma cópia válida da Zone5.');}};
@@ -2348,15 +2425,18 @@ document.addEventListener('click',e=>{
   else if(a==='sv-rpe'){const l=st.logs.find(x=>x.stravaId===Number(id));if(l){l.rpe=Number(b.dataset.v);const w=allW().find(x=>x.id===l.wid);l.eval=evaluate(l,w,st.vdot,st.profile.goal,popt());if(l.rpe>=8)checkFatigue();persist();render();toast(tr(l.eval.msg).split(/(?<=[.!?])\s/)[0]);}}
   else if(a==='rm-off')remindOff();
   else if(a.startsWith('ob-'))obNav(a,b.dataset.v);
+  else if(a==='ps-open')openPlanSettings();
+  else if(a==='ps')psOpen(b.dataset.v);
+  else if(a==='rb'){const S=RB[b.dataset.ctx];S[b.dataset.k]=b.dataset.v;if(b.dataset.k!=='month')S.month='all';haptic();rbRerender(b.dataset.ctx);}
   else if(a==='tip-next'){st.tips=(st.tips|0)+1;persist();render();}
   else if(a==='tip-skip'){st.tips=99;persist();render();}
   else if(a==='share-log')shareLog();
-  else if(a==='xr-add'){xrQ='';xrSport=null;xrKmSel=10;openAddRace();}
-  else if(a==='xr-sport'){xrSport=b.dataset.v||null;xrQ='';openAddRace();}
+  else if(a==='xr-add'){RB.xr={q:'',dist:'all',cc:'all',month:'all',reg:'ib'};xrSport=null;xrKmSel=10;openAddRace();}
+  else if(a==='xr-sport'){xrSport=b.dataset.v||null;RB.xr={q:'',dist:'all',cc:'all',month:'all',reg:'ib'};openAddRace();}
   else if(a==='xr-km'){const nm=$('#xrName')?.value,dt=$('#xrDate')?.value;xrKmSel=b.dataset.v==='other'?'other':Number(b.dataset.v);openAddRace();if(nm)$('#xrName').value=nm;if(dt)$('#xrDate').value=dt;}
   else if(a==='xr-pick')xrPick(id);
   else if(a==='xr-custom')xrCustom();
-  else if(a==='xr-del')removeExtraRace(id);
+  else if(a==='xr-del'){const inPs=!!document.querySelector('.sheet .slist,#sheet .slist');removeExtraRace(id);if(inPs)openPlanSettings();}
   else if(a==='newplan'){ob=null;$('#tabs').hidden=true;$('#app').innerHTML=onboardHtml();bindOnboard();window.scrollTo(0,0);}
   else if(a==='continue'){st.plan=genPlan(st.profile,TODAY,st.vdot);addNote('Novo bloco de 12 semanas criado.','info');persist();render();toast('Plano pronto');}
   else if(a==='auth-go')authGo();
