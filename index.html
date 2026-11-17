@@ -790,7 +790,7 @@ function removeExtraRace(rid){
 let xrQ='',xrSport=null,xrKmSel=10,xrOpen=false;
 function openAddRace(){
   const head=`<div class="row between"><h2>${L('Adicionar prova','Add a race')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div>`;
-  if(!xrSport){openSheet(head+`<div class="small muted">${L('O teu objetivo principal mantém-se. A app encaixa a prova no plano e alivia os dias antes e depois.','Your main goal stays the same. The app fits the race into your plan and eases the days before and after.')}</div><div class="small"><b>${L('Que desporto?','Which sport?')}</b></div>${sportPicker(null,null,'xr-sport')}`);return;}
+  if(!xrSport){openSheet(head+`<div class="small muted">${L('O teu objetivo principal mantém-se. A app encaixa a prova no plano e alivia os dias antes e depois.','Your main goal stays the same. The app fits the race into your plan and eases the days before and after.')}</div><div class="small"><b>${L('Que desporto?','Which sport?')}</b></div>${sportPicker(null,null,'xr-sport',['gym'])}<div class="tiny muted">${L('Queres juntar ginásio ao teu plano? Usa "Treino de ginásio" em ✎ Editar, no separador Plano.','Want to add gym sessions to your plan? Use "Gym training" in ✎ Edit, in the Plan tab.')}</div>`);return;}
   const last=st.plan.weeks[st.plan.weeks.length-1];const maxD=last?addDays(last.start,6):addDays(TODAY,365);
   const main=st.profile.raceDate,hx=xrSport==='hyrox';
   const kms=[[5,'5 km'],[10,'10 km'],[21.0975,'Meia'],[42.195,'Maratona']];
@@ -920,6 +920,7 @@ function openPlanSettings(){
   ${gt==='hyrox'?row('hx','🏋️',L('Prova, categoria e material','Race, division and equipment'),`${esc(p.raceName||'HYROX')}${p.raceDate?' · '+fmtDate(p.raceDate):''} · ${esc(tr(HX_DIV[p.hxDiv||'om'].l))}`):''}
   ${gt==='gym'?row('gym','💪',L('Material, duração e limitações','Equipment, duration and limitations'),`${{full:L('Ginásio completo','Full gym'),basic:L('Ginásio pequeno','Small gym'),home:L('Em casa','Home'),body:L('Sem material','No equipment')}[p.gymEq||'basic']} · ${p.gymMin||45} min${p.gymLimits?.length?' · '+L('com limitações','with limitations'):''}`):''}
   ${row('days','📅',L('Dias de treino','Training days'),`${D.length} ${L('dias','days')}: ${D.map(d=>DOW[d]).join(', ')}${gt==='gym'?'':' · '+L('longo','long')+' '+DOW[p.longDay??6]}${gt==='hyrox'&&p.gymDays?.length?' · 🏋️ '+p.gymDays.map(d=>DOW[d]).join(', '):''}`)}
+  ${gt!=='gym'?row('gymx','🏋️‍♀️',L('Treino de ginásio','Gym training'),p.gymExtra?.days?.length?`${p.gymExtra.days.map(d=>DOW[d]).join(', ')} · ${p.gymExtra.min} min`:L('Não incluído · tocar para juntar','Not included · tap to add')):''}
   ${gt!=='start'&&gt!=='gym'?row('fit','💪',L('Nível e tempo de referência','Level and reference time'),`${lvl}${p.refTime?' · '+esc(p.refTime)+' ('+(p.refDist>=21?nf(p.refDist):p.refDist)+' km)':''}`):''}
   </div>
   <div class="small"><b>${L('Outras provas','Other races')}</b></div>
@@ -927,6 +928,7 @@ function openPlanSettings(){
   <button data-act="xr-add">+ ${L('Adicionar outra prova','Add another race')}</button>`);
 }
 function psOpen(k){
+  if(k==='gymx'){geDraft=null;openGymExtra();return;}
   closeSheet();ob=obDefaults();
   if(k==='goal'){ob.step=0;ob.edit=false;}
   else{const steps=obSteps();const i=steps.indexOf(k);ob.step=i<0?0:i;ob.edit=true;}
@@ -991,6 +993,37 @@ function gymWeekHtml(){
   const cur=mondayOf(TODAY),wk=weekOf(TODAY),done=wk?wk.workouts.filter(w=>logFor(w)).length:0,tot=wk?wk.workouts.length:0;
   const all=st.logs.filter(l=>l.wtype==='F').length,r=records();
   return `<section class="card"><div class="stats"><div class="stat"><span class="v">${done}/${tot}</span><span class="l">${L('Treinos esta semana','Workouts this week')}</span></div><div class="stat"><span class="v">${all}</span><span class="l">${L('Treinos feitos','Workouts done')}</span></div><div class="stat"><span class="v">${r.streak}</span><span class="l">${L('Semanas seguidas','Weeks in a row')}</span></div></div></section>`;
+}
+
+
+/* ---------- Ginásio junto ao plano de corrida/HYROX ---------- */
+function applyGymExtra(){
+  const g=st.profile.gymExtra;if(!g||!g.days?.length)return;
+  const types=g.days.length>=3?['A','B','C']:['A','B'];
+  const pp={...st.profile,gymEq:g.eq,gymMin:g.min,gymGoal:g.goal,gymLimits:g.limits||[],gymCardio:false};
+  st.plan.weeks.forEach((wk,i)=>{
+    wk.workouts=wk.workouts.filter(w=>!(w.type==='F'&&!w.hx&&!w.gym&&!logFor(w))&&!(w.gymExtra&&!logFor(w)));
+    const raceDay=wk.workouts.find(w=>w.race)?.date;
+    g.days.forEach((d,j)=>{const date=addDays(wk.start,d);if(date<TODAY)return;if(raceDay&&Math.abs(daysBetween(date,raceDay))<=2)return;if(wk.workouts.some(w=>w.gymExtra&&w.date===date))return;
+      const w=mkGym(types[(i+j)%types.length],pp,wk.phase==='taper'?'base':wk.phase,wk.recovery||wk.phase==='taper',i);
+      wk.workouts.push({...w,id:`g${i}-${d}`,date,km:0,gymExtra:true});});
+    wk.workouts.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.type==='F')-(b.type==='F'));
+  });
+}
+let geDraft=null;
+function openGymExtra(){
+  const cur=st.profile.gymExtra;geDraft=geDraft||{days:[...(cur?.days||[])],eq:cur?.eq||'basic',min:cur?.min||45,goal:cur?.goal||'health',limits:[...(cur?.limits||[])]};
+  const g=geDraft,chip=(k,v,l)=>`<button type="button" class="chip" data-act="ge" data-k="${k}" data-v="${v}" aria-pressed="${String(g[k])===String(v)}">${l}</button>`;
+  const runD=new Set((st.profile.runDays||[]));
+  openSheet(`<div class="row between"><h2>${L('Treino de ginásio','Gym training')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div>
+  <div class="small muted">${L('Junta sessões de força ao teu plano. Ficam nos dias que escolheres, ao lado da corrida.','Add strength sessions to your plan, on the days you choose, alongside your running.')}</div>
+  <div class="small"><b>${L('Em que dias vais ao ginásio?','Which days will you go to the gym?')}</b></div>
+  <div class="daypick">${DOW.map((l,i)=>`<button type="button" data-act="ge-day" data-v="${i}" aria-pressed="${g.days.includes(i)}">${l}</button>`).join('')}</div>
+  <div class="tiny muted">${g.days.some(d=>runD.has(d))?L('Num dia com corrida, faz o ginásio depois da corrida ou com algumas horas de intervalo.','On a running day, do the gym after your run or a few hours apart.'):L('Até 3 dias. Evita a véspera do treino longo.','Up to 3 days. Avoid the day before your long run.')}</div>
+  <div class="small"><b>${L('Objetivo','Goal')}</b></div><div class="chips">${chip('goal','health',L('Força para correr melhor','Strength to run better'))}${chip('goal','strength',L('Ganhar força','Build strength'))}${chip('goal','muscle',L('Ganhar massa muscular','Build muscle'))}</div>
+  <div class="small"><b>${L('Onde treinas?','Where do you train?')}</b></div><div class="chips">${chip('eq','full',L('Ginásio completo','Full gym'))}${chip('eq','basic',L('Ginásio pequeno','Small gym'))}${chip('eq','home',L('Em casa','Home'))}${chip('eq','body',L('Sem material','No equipment'))}</div>
+  <div class="small"><b>${L('Tempo por treino','Time per workout')}</b></div><div class="chips">${[30,45,60].map(m=>chip('min',m,m+' min')).join('')}</div>
+  <div class="btns"><button class="primary" data-act="ge-save" ${g.days.length?'':'disabled'}>${cur?L('Guardar','Save'):L('Juntar ao plano','Add to plan')}</button>${cur?`<button class="ghost" data-act="ge-off" style="color:var(--bad)">${L('Tirar o ginásio do plano','Remove gym from plan')}</button>`:''}</div>`);
 }
 
 /* ---------- GPX ---------- */
@@ -1773,7 +1806,7 @@ window.addEventListener('hashchange',()=>{tab=(location.hash||'#hoje').slice(1);
 function hojeHtml(){
   const ws=allW();
   const next=ws.find(w=>w.date>=TODAY&&!logFor(w)&&!st.skipped?.includes(w.id)&&w.date!==TODAY)||ws.find(w=>w.date>TODAY&&!logFor(w))||null;
-  const todayW=ws.find(w=>w.date===TODAY);
+  const todayW=ws.find(w=>w.date===TODAY&&!logFor(w)&&!st.skipped?.includes(w.id))||ws.find(w=>w.date===TODAY);
   const p=st.profile;
   const pred=st.profile.goalType==='hyrox'?hxPredict(st.vdot):predict(st.vdot,gKm()*1000);
   const wk=weekOf(TODAY)||st.plan.weeks.find(w=>w.start>TODAY)||st.plan.weeks[st.plan.weeks.length-1];
@@ -1791,6 +1824,7 @@ function hojeHtml(){
   else if(todayW){out+=workoutCard(todayW,false);if(next)out+=`<div class="eyebrow">Próximo treino</div>`+workoutCard(next,true);}
   else if(next){out+=`<section class="card"><div class="small muted">Hoje é dia de descanso.</div></section><div class="eyebrow">Próximo treino</div>`+workoutCard(next,true);}
   else out+=`<section class="card hero"><h2>Plano concluído</h2><div class="small">${p.goalType==='start'?'Já corres 30 minutos seguidos. O próximo passo natural é um plano de 5 km.':'Bom trabalho. Escolhe o próximo objetivo para continuares a evoluir.'}</div><div class="btns">${p.goalType==='maintain'?'<button class="primary" data-act="continue">Continuar mais 12 semanas</button>':''}<button class="${p.goalType==='maintain'?'':'primary'}" data-act="newplan">Escolher novo objetivo</button></div></section>`;
+  for(const x of ws.filter(w=>w.date===TODAY&&w!==todayW))out+=workoutCard(x,false);
   out+=`<section class="card"><div class="row between"><span class="eyebrow">Semana ${wk?wk.n:''} · ${wk?PH[wk.phase]+(wk.recovery?' (recuperação)':''):''}</span><span class="num small muted">${p.goalType==='gym'?(wk?wk.workouts.filter(w=>logFor(w)).length+' / '+wk.workouts.length+' '+L('treinos','workouts'):''):nf(Math.round(done*10)/10)+' / '+nf(Math.round(plan))+' km'}</span></div><div class="week">${strip}</div></section>`;
   if(p.goalType==='gym')out+=gymWeekHtml();else out+=`<section class="card"><div class="stats">
     <div class="stat"><span class="v">${fmtTime(pred)}</span><span class="l">Previsão ${esc(gLabel())}</span></div>${p.goalTime?`<div class="stat"><span class="v">${fmtTime(p.goalTime)}</span><span class="l">Objetivo · ${goalVerdict()}</span></div>`:''}
@@ -1933,7 +1967,7 @@ function obVdot(){
 function verdictOf(v,km,g,dateS){const gv=vdotFrom(km*1000,g),diff=gv-v;const wks=dateS?Math.max(0,daysBetween(TODAY,dateS)/7):8;const gain=Math.min(wks*0.25,5)+0.5;
   return diff<=0.3?['ao teu alcance','var(--good)']:diff<=gain?['realista com treino','var(--good)']:diff<=gain+2?['ambicioso','var(--warn)']:['muito ambicioso','var(--bad)'];}
 const SPORTS=[['run','🏃','Corrida','Provas, começar, voltar ou manter'],['hyrox','🏋️','HYROX','Corrida + 8 estações'],['gym','💪','Ginásio','Plano de treino de força'],['tri','🏊','Triatlo','Natação, bicicleta e corrida',true],['swim','🌊','Natação','',true],['bike','🚴','Ciclismo','',true]];
-function sportPicker(cur,k,act){return `<div class="sports">${SPORTS.map(([v,ic,t,d,soon])=>`<button type="button" class="sport" ${soon?'disabled':`${act?`data-act="${act}"`:`data-k="${k}"`} data-v="${v}"`} aria-pressed="${cur===v}"><span class="ic">${ic}</span><b>${tr(t)}</b>${soon?`<span class="tiny">${L('em breve','soon')}</span>`:d?`<span class="tiny muted">${tr(d)}</span>`:''}</button>`).join('')}</div>`;}
+function sportPicker(cur,k,act,skip){return `<div class="sports">${SPORTS.filter(x=>!(skip||[]).includes(x[0])).map(([v,ic,t,d,soon])=>`<button type="button" class="sport" ${soon?'disabled':`${act?`data-act="${act}"`:`data-k="${k}"`} data-v="${v}"`} aria-pressed="${cur===v}"><span class="ic">${ic}</span><b>${tr(t)}</b>${soon?`<span class="tiny">${L('em breve','soon')}</span>`:d?`<span class="tiny muted">${tr(d)}</span>`:''}</button>`).join('')}</div>`;}
 function onboardHtml(){
   ob=ob||obDefaults();
   const steps=obSteps(),cur=steps[ob.step]||'goal',idx=ob.step;
@@ -2137,6 +2171,7 @@ async function obCreate(){
   if(changedRef){st.vdot=Math.round(v*10)/10;st.vdotHist.push({d:TODAY,v:st.vdot,why:'tempo de referência'});}
   st.plan=genPlan(profile,TODAY,st.vdot);
   if(st.extraRaces?.length)applyExtraRaces();
+  if(profile.goalType!=='gym'&&keep?.gymExtra){st.profile.gymExtra=keep.gymExtra;applyGymExtra();}
   for(const l of st.logs){if(l.extra)continue;const w=allW().find(x=>x.date===l.date&&((l.wtype==='F')===(x.type==='F')));l.wid=w?w.id:null;if(!w)l.extra=true;}
   st.suggest=null;
   const n=st.plan.weeks.length,gt=profile.goalType;
@@ -2528,13 +2563,17 @@ document.addEventListener('click',e=>{
   else if(a==='rm-off')remindOff();
   else if(a.startsWith('ob-'))obNav(a,b.dataset.v);
   else if(a==='ps-open')openPlanSettings();
+  else if(a==='ge'){const k=b.dataset.k;geDraft[k]=k==='min'?Number(b.dataset.v):b.dataset.v;openGymExtra();}
+  else if(a==='ge-day'){const d=Number(b.dataset.v),s2=new Set(geDraft.days);s2.has(d)?s2.delete(d):s2.size<3?s2.add(d):toast(L('No máximo 3 dias de ginásio.','Up to 3 gym days.'));geDraft.days=[...s2].sort((x,y)=>x-y);openGymExtra();}
+  else if(a==='ge-save'){st.profile.gymExtra={...geDraft};geDraft=null;applyGymExtra();addNote(L('Treino de ginásio juntado ao plano.','Gym training added to the plan.'),'info');persist();openPlanSettings();render();toast(L('Ginásio juntado ao plano','Gym added to your plan'));}
+  else if(a==='ge-off'){delete st.profile.gymExtra;geDraft=null;for(const wk of st.plan.weeks)wk.workouts=wk.workouts.filter(w=>!w.gymExtra||logFor(w));persist();openPlanSettings();render();toast(L('Ginásio retirado do plano','Gym removed from plan'));}
   else if(a==='ps')psOpen(b.dataset.v);
   else if(a==='rb'){const S=RB[b.dataset.ctx],k=b.dataset.k;S[k]=k==='more'||k==='browsing'?true:b.dataset.v;if(k==='dist'||k==='reg')S.more=false;haptic();rbRerender(b.dataset.ctx);}
   else if(a==='tip-next'){st.tips=(st.tips|0)+1;persist();render();}
   else if(a==='tip-skip'){st.tips=99;persist();render();}
   else if(a==='share-log')shareLog();
   else if(a==='xr-add'){RB.xr={q:'',dist:'all',reg:'ib'};xrOpen=false;xrSport=null;xrKmSel=10;openAddRace();}
-  else if(a==='xr-sport'){xrSport=b.dataset.v||null;RB.xr={q:'',dist:'all',reg:'ib'};xrOpen=false;openAddRace();}
+  else if(a==='xr-sport'){xrSport=b.dataset.v==='gym'?null:b.dataset.v||null;RB.xr={q:'',dist:'all',reg:'ib'};xrOpen=false;openAddRace();}
   else if(a==='xr-open'){xrOpen=true;openAddRace();setTimeout(()=>$('#xrName')?.focus(),50);}
   else if(a==='xr-km'){const nm=$('#xrName')?.value,dt=$('#xrDate')?.value;xrKmSel=b.dataset.v==='other'?'other':Number(b.dataset.v);openAddRace();if(nm)$('#xrName').value=nm;if(dt)$('#xrDate').value=dt;}
   else if(a==='xr-pick')xrPick(id);
