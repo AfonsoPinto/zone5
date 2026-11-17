@@ -545,6 +545,23 @@ function mkHxRun(kind,n){
   if(kind==='T')return{type:'Q',title:'Limiar',steps:[{t:'2 km aquecimento',km:2,z:'E'},{t:`${nf(n)} km a limiar`,km:n,z:'T'},{t:'1 km retorno à calma',km:1,z:'E'}],focus:{z:'T',km:n}};
   return{type:'Q',title:'Intervalos HYROX',steps:[{t:'2 km aquecimento',km:2,z:'E'},{t:`${n} × 1 km`,reps:n,repKm:1,z:'P',rest:'90 s a trote'},{t:'1 km retorno à calma',km:1,z:'E'}],focus:{z:'P',km:1}};
 }
+function hxAutoGym(D,Ld){const others=D.filter(d=>d!==Ld),gap=d=>Math.min((d-Ld+7)%7,(Ld-d+7)%7);return others.sort((a,b)=>gap(b)-gap(a)).slice(0,Math.min(2,others.length)).sort((a,b)=>a-b);}
+function hxSlots(p,days){
+  let D=Array.isArray(p.runDays)&&p.runDays.length>=2?[...new Set(p.runDays)].sort((a,b)=>a-b):slotsFor(p,days).map(x=>x[0]);
+  let Ld=D.includes(p.longDay)?p.longDay:D[D.length-1];
+  let G=Array.isArray(p.gymDays)?p.gymDays.filter(d=>D.includes(d)):hxAutoGym(D,Ld);
+  if(!G.length)G=hxAutoGym(D,Ld).slice(0,1);
+  if(G.includes(Ld)){const free=D.filter(d=>!G.includes(d));if(free.length)Ld=free[free.length-1];else G=G.filter(d=>d!==Ld);}
+  if(!G.length&&D.length)G=[D.find(d=>d!==Ld)];
+  const dist=(a,b)=>Math.min((a-b+7)%7,(b-a+7)%7);
+  const gs=[...G].sort((a,b)=>dist(b,Ld)-dist(a,Ld));
+  const kind={};kind[Ld]='L';
+  gs.forEach((d,i)=>kind[d]=i===0?'C':i<=2?'X':'E');
+  const rest=D.filter(d=>!kind[d]);
+  const far=[...rest].sort((a,b)=>Math.min(dist(b,Ld),dist(b,gs[0]))-Math.min(dist(a,Ld),dist(a,gs[0])));
+  far.forEach((d,i)=>kind[d]=i===0&&(D.length>=4||G.length===1&&D.length>=3)?'Q':'E');
+  return D.map(d=>[d,kind[d]]);
+}
 function genHyrox(p,todayS,vdot){
   const days=clamp(Array.isArray(p.runDays)&&p.runDays.length>=2?p.runDays.length:p.days|0,2,7);
   const eq=hxGearOf(p),div=p.hxDiv||'om',mon0=mondayOf(todayS),beg=p.level==='ini';
@@ -553,7 +570,7 @@ function genHyrox(p,todayS,vdot){
   const T=N>=6?1:0,TW=N-T,nb=Math.round(TW*0.35),nbu=Math.round(TW*0.35);
   const lv={ini:0,int:1,ava:2}[p.level]??1;
   const L0=[5,7,9][lv],L1=[9,12,14][lv];
-  const slots=slotsFor(p,days);
+  const slots=hxSlots(p,days),oneGym=slots.filter(x=>x[1]==='C').length&&!slots.some(x=>x[1]==='X');
   const fullSimWeek=TW>=8&&(!beg||TW>=12)?TW-3:-1,halfSimWeek=TW>=5?Math.max(nb+nbu,TW-5):-1;
   const weeks=[];
   for(let i=0;i<N;i++){
@@ -570,16 +587,14 @@ function genHyrox(p,todayS,vdot){
     for(const [d,k] of slots){
       const date=addDays(ws,d);let w;
       if(k==='L')w=phase==='taper'?mkEasy(r05(longKm*0.5),false):{type:'L',title:'Longo',steps:[{t:`${nf(longKm)} km fácil`,km:longKm,z:'E'}],focus:{z:'E'}};
-      else if(k==='Q1'){
+      else if(k==='C'){
         if(i===fullSimWeek&&!rec)w=mkHxCompromised(8,1,eq,div,0,'Simulação HYROX completa');
         else if(i===halfSimWeek&&!rec)w=mkHxCompromised(4,beg?0.75:1,eq,div,i%2?4:0,'Simulação: meia HYROX',beg?0.9:1);
-        else w=mkHxCompromised(cr,phase==='taper'?0.5:f,eq,div,(i*3)%8,null,wf);
+        else w=mkHxCompromised(oneGym&&phase!=='taper'?cr+1:cr,phase==='taper'?0.5:f,eq,div,(i*3)%8,null,wf);
       }
-      else if(k==='Q2')w=phase==='base'||i%2===0?mkHxRun('T',r05(clamp(3+3*prog,3,7))):mkHxRun('I',clamp(Math.round(4+4*prog),4,8));
-      else{
-        if(days>=3&&xCount<(days>=6?2:1)&&phase!=='taper'){w=mkHxStations((i+xCount)%2?'B':'A',f,xr,eq,div,wf);xCount++;}
-        else w=mkEasy(r05(clamp(longKm*0.6,3,8)),phase!=='taper'&&days>=5);
-      }
+      else if(k==='Q')w=phase==='base'||i%2===0?mkHxRun('T',r05(clamp(3+3*prog,3,7))):mkHxRun('I',clamp(Math.round(4+4*prog),4,8));
+      else if(k==='X'&&phase!=='taper'){w=mkHxStations((i+xCount)%2?'B':'A',f,xr,eq,div,wf);xCount++;}
+      else w=mkEasy(r05(clamp(longKm*0.6,3,8)),phase!=='taper'&&days>=5);
       w={...w,id:`w${i}-${d}`,date};w.km=w.type==='F'?0:Math.round(stepsKm(w.steps)*10)/10;
       list.push(w);
     }
@@ -624,6 +639,151 @@ function hxProgHtml(){
   return `<section class="card"><div class="row between"><h3>${L('Estações HYROX','HYROX stations')}</h3>${st.profile.goalType==='hyrox'?`<span class="num">${fmtTime(hxPredict(st.vdot))}</span>`:''}</div>
   <div class="small muted">${L('À direita, o tempo estimado para a estação completa em prova, a partir dos teus treinos guiados. Os tempos são gravados quando tocas em "Feito" em cada estação.','On the right, the estimated time for the full station on race day, from your guided workouts. Times are saved when you tap "Done" at each station.')}</div>
   <div class="card" style="padding:0;gap:0">${rows}</div></section>`;
+}
+
+
+/* ---------- Ficheiros .FIT (Garmin, Coros, Wahoo, Suunto…) ---------- */
+async function unzipFirstFit(buf){
+  const u=new Uint8Array(buf),v=new DataView(buf);let o=0;
+  while(o+30<u.length&&v.getUint32(o,true)===0x04034b50){
+    const flags=v.getUint16(o+6,true),meth=v.getUint16(o+8,true);let csz=v.getUint32(o+18,true);const nl=v.getUint16(o+26,true),xl=v.getUint16(o+28,true);
+    const name=new TextDecoder().decode(u.subarray(o+30,o+30+nl));const start=o+30+nl+xl;
+    if(flags&8&&!csz){let e=start;while(e+4<u.length&&v.getUint32(e,true)!==0x08074b50&&v.getUint32(e,true)!==0x04034b50)e++;csz=e-start;}
+    if(/\.fit$/i.test(name)){const data=u.slice(start,start+csz);if(meth===0)return data.buffer;
+      if(meth===8&&window.DecompressionStream){const s=new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));return await new Response(s).arrayBuffer();}
+      throw new Error('zip');}
+    o=start+csz+(flags&8?16:0);
+  }
+  throw new Error('sem fit');
+}
+function parseFit(buf){
+  const v=new DataView(buf),hs=v.getUint8(0);
+  if(String.fromCharCode(v.getUint8(8),v.getUint8(9),v.getUint8(10),v.getUint8(11))!=='.FIT')throw new Error('não é fit');
+  const end=Math.min(buf.byteLength,hs+v.getUint32(4,true));let o=hs;const defs={};let lastTs=0;
+  const out={record:[],lap:[],session:[]};const want={20:'record',19:'lap',18:'session'};
+  const SZ={0:1,1:1,2:1,3:2,4:2,5:4,6:4,7:1,8:4,9:8,10:1,11:2,12:4,13:1,14:8,15:8,16:8};
+  const rd=(bt,off,size,le)=>{const t=bt&0x1f;
+    switch(t){case 0:case 2:case 10:case 13:{const x=v.getUint8(off);return x===0xff||(t===10&&x===0)?null:x;}
+      case 1:{const x=v.getInt8(off);return x===0x7f?null:x;}
+      case 3:{const x=v.getInt16(off,le);return x===0x7fff?null:x;}
+      case 4:case 11:{const x=v.getUint16(off,le);return x===0xffff||(t===11&&x===0)?null:x;}
+      case 5:{const x=v.getInt32(off,le);return x===0x7fffffff?null:x;}
+      case 6:case 12:{const x=v.getUint32(off,le);return x===0xffffffff||(t===12&&x===0)?null:x;}
+      case 8:{const x=v.getFloat32(off,le);return isFinite(x)?x:null;}
+      default:return null;}};
+  while(o<end){
+    const h=v.getUint8(o);o++;
+    if(h&0x80){ // timestamp comprimido
+      const lt=(h>>5)&3,off=h&0x1f,d=defs[lt];if(!d)throw new Error('fit');
+      let ts=(lastTs&~0x1f)+off;if(off<(lastTs&0x1f))ts+=0x20;lastTs=ts;
+      const m=readMsg(d);if(m){m[253]=m[253]??ts;}continue;
+    }
+    const lt=h&0x0f;
+    if(h&0x40){
+      const le=v.getUint8(o+1)===0,gm=v.getUint16(o+2,le),n=v.getUint8(o+4);o+=5;const f=[];
+      for(let i=0;i<n;i++){f.push([v.getUint8(o),v.getUint8(o+1),v.getUint8(o+2)]);o+=3;}
+      let dev=0;if(h&0x20){const nd=v.getUint8(o);o++;for(let i=0;i<nd;i++){dev+=v.getUint8(o+1);o+=3;}}
+      defs[lt]={le,gm,f,dev};
+    }else{const d=defs[lt];if(!d)throw new Error('fit');readMsg(d);}
+  }
+  function readMsg(d){
+    const name=want[d.gm];let m=null;if(name)m={};
+    for(const [num,size,bt] of d.f){if(m&&size===(SZ[bt&0x1f]||size))m[num]=rd(bt,o,size,d.le);o+=size;}
+    o+=d.dev;
+    if(m){if(m[253]!=null)lastTs=m[253];out[name].push(m);}
+    return m;
+  }
+  return out;
+}
+const FIT0=631065600,SEMI=180/2147483648;
+function fitToAnalysis(f){
+  const recs=f.record.filter(r=>r[253]!=null);if(recs.length<2)return null;
+  const s=f.session[0]||{};
+  const hasGps=recs.filter(r=>r[0]!=null&&r[1]!=null).length>recs.length*0.5;
+  const hasDist=recs.some(r=>r[5]!=null);
+  let a;
+  if(hasDist){
+    const pts=[];let hrS=0,hrN=0;
+    for(const r of recs){if(r[5]==null)continue;const p={t:r[253]+FIT0,d:r[5]/100};if(r[0]!=null){p.lat=r[0]*SEMI;p.lon=r[1]*SEMI;}if(pts.length&&p.t<=pts[pts.length-1].t)continue;pts.push(p);if(r[3]){hrS+=r[3];hrN++;}}
+    if(pts.length<2)return null;
+    const t0=pts[0].t,splits=[];let next=1000,last=t0;for(const p of pts){if(p.d>=next){splits.push(p.t-last);last=p.t;next+=1000;}}
+    const dist=(s[9]!=null?s[9]/100:pts[pts.length-1].d)/1000;
+    a={pts,dist,elapsed:s[7]!=null?Math.round(s[7]/1000):pts[pts.length-1].t-t0,moving:s[8]!=null?Math.round(s[8]/1000):null,avgHr:s[16]||(hrN?Math.round(hrS/hrN):null),splits,t0};
+  }else if(hasGps){
+    a=analyzePoints(recs.map(r=>({lat:r[0]*SEMI,lon:r[1]*SEMI,t:r[253]+FIT0,hr:r[3]||0})));if(!a)return null;
+    if(s[8]!=null)a.moving=Math.round(s[8]/1000);
+  }else return null;
+  a.laps=f.lap.filter(l=>l[9]!=null&&l[8]!=null).map(l=>({d:l[9]/100,t:l[8]/1000}));
+  a.src='fit';
+  return a;
+}
+async function readFit(file){
+  let buf=await file.arrayBuffer();
+  if(new DataView(buf).getUint32(0,true)===0x04034b50)buf=await unzipFirstFit(buf);
+  const a=fitToAnalysis(parseFit(buf));
+  if(!a||a.dist<0.2)throw new Error('curto');
+  return a;
+}
+
+
+/* ---------- Provas extra (além do objetivo principal) ---------- */
+function softenW(w,rid){if(!w||logFor(w)||w.race||w.softBy)return;if(w.type==='E'||w.type==='F'&&!w.hx)return;const km=w.type==='F'?4:Math.min(5,Math.max(3,Math.round((w.km||5)*0.5)));const e=mkEasy(km,true);w.orig=w.orig||{type:w.type,title:w.title,steps:w.steps,focus:w.focus,km:w.km,min:w.min,hx:w.hx};Object.assign(w,{type:'E',title:e.title,steps:e.steps,focus:e.focus,km,hx:false,softBy:rid});delete w.min;}
+function applyExtraRaces(){
+  for(const r of st.extraRaces||[]){
+    if(r.date<TODAY)continue;const wk=weekOf(r.date);if(!wk)continue;
+    const id='xr-'+r.id;if(wk.workouts.some(w=>w.id===id))continue;
+    if(wk.workouts.some(w=>w.date===r.date&&w.race))continue;
+    wk.workouts=wk.workouts.filter(w=>w.date!==r.date||logFor(w));
+    let w;
+    if(r.hx){const c=mkHxCompromised(8,1,HX_PRESET.full,st.profile.hxDiv||'om',0,`Prova: ${r.name}`);w={...c,type:'F',hx:true,race:true,extraRace:r.id,id,date:r.date,km:0,min:Math.round(hxPredict(st.vdot)/60),steps:c.steps.filter(s=>s.seq)};}
+    else{const km=Math.round(r.km*10)/10;w={id,date:r.date,type:'R',title:`Prova: ${r.name}`,steps:[{t:`${fmtKm(km)} em ritmo de prova`,km:r.km,z:'P'}],focus:{z:'P',km:r.km},km,race:true,extraRace:r.id};}
+    wk.workouts.push(w);
+    for(const x of allW()){const dd=daysBetween(r.date,x.date);if(x.id===id)continue;
+      if(dd===-1||dd===1||(dd===2&&(r.hx||r.km>=15)))softenW(x,r.id);
+      if(x.type==='L'&&Math.abs(dd)<=3&&dd!==0&&(r.hx||r.km>=10))softenW(x,r.id);}
+    wk.workouts.sort((a,b)=>a.date<b.date?-1:1);
+  }
+}
+function removeExtraRace(rid){
+  st.extraRaces=(st.extraRaces||[]).filter(r=>r.id!==rid);
+  for(const wk of st.plan.weeks){wk.workouts=wk.workouts.filter(w=>w.extraRace!==rid||logFor(w));for(const w of wk.workouts)if(w.softBy===rid&&w.orig&&!logFor(w)){Object.assign(w,w.orig);delete w.orig;delete w.softBy;}}
+  persist();closeSheet();render();toast(L('Prova removida','Race removed'));
+}
+let xrQ='';
+function openAddRace(){
+  const q=slugify(xrQ),last=st.plan.weeks[st.plan.weeks.length-1];const maxD=last?addDays(last.start,6):addDays(TODAY,365);
+  const main=st.profile.raceDate;
+  const runs=allRaces().filter(r=>r.date>TODAY&&r.date<=maxD&&r.date!==main&&(!q||slugify(r.name+' '+r.city).includes(q))).map(r=>({id:r.id,name:r.name,sub:`${r.city} · ${nf(Math.round(r.km*10)/10)} km`,date:r.date,km:r.km}));
+  const hx=HX_RACES.filter(r=>r.date>TODAY&&r.date<=maxD&&r.date!==main&&(q?slugify(r.name+' '+r.cc).includes(q):r.region==='ib')).map(r=>({id:r.id,name:r.name,sub:`HYROX · ${r.cc}`,date:r.date,hx:true}));
+  const list=runs.concat(hx).sort((a,b)=>a.date<b.date?-1:1).slice(0,40);
+  openSheet(`<div class="row between"><h2>${L('Adicionar prova','Add a race')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div>
+  <div class="small muted">${L('O teu objetivo principal mantém-se. A app encaixa a prova no plano e alivia os dias antes e depois.','Your main goal stays the same. The app fits the race into your plan and eases the days before and after.')}</div>
+  <input id="xrQ" type="search" placeholder="${L('Procurar prova ou cidade','Search race or city')}" value="${esc(xrQ)}" autocomplete="off">
+  <div class="races">${list.map(r=>`<button type="button" class="race" data-act="xr-pick" data-id="${r.id}"><span class="rd"><b>${toD(r.date).getUTCDate()}</b><span>${MES[toD(r.date).getUTCMonth()]}</span></span><span class="ri"><b>${esc(r.name)}</b><span class="small muted">${esc(r.sub)}</span></span></button>`).join('')||`<div class="small muted">${L('Nenhuma prova encontrada até ao fim do plano.','No races found before the end of your plan.')}</div>`}</div>
+  <div class="card" style="background:var(--soft);border:none"><b>${L('Outra prova','Another race')}</b>
+    <label for="xrName">${L('Nome','Name')}<input id="xrName" autocomplete="off" placeholder="${L('Ex.: Corrida do Tejo','E.g. River Run')}"></label>
+    <div class="grid2"><label for="xrDate">${L('Data','Date')}<input type="date" id="xrDate" min="${addDays(TODAY,1)}" max="${maxD}"></label><label for="xrKm">${L('Distância (km)','Distance (km)')}<input id="xrKm" inputmode="decimal" placeholder="10"></label></div>
+    <label class="switch"><input type="checkbox" id="xrHx"><span>${L('É uma prova HYROX','It’s a HYROX race')}</span></label>
+    <div class="small" id="xrErr" style="color:var(--bad)"></div>
+    <button data-act="xr-custom">${L('Adicionar','Add')}</button></div>`);
+  const qi=$('#xrQ');if(qi)qi.oninput=()=>{xrQ=qi.value;const pos=qi.selectionStart;openAddRace();const n=$('#xrQ');n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}};
+}
+function addExtraRace(r){
+  st.extraRaces=(st.extraRaces||[]).filter(x=>x.date!==r.date);st.extraRaces.push(r);
+  applyExtraRaces();addNote(`${r.name} (${fmtDate(r.date)}) ${L('adicionada ao plano. Aliviei os dias à volta.','added to your plan. I eased the days around it.')}`,'info');
+  persist();closeSheet();render();toast(L('Prova adicionada ao plano','Race added to your plan'));
+}
+function xrPick(id){
+  const r=allRaces().find(x=>x.id===id);if(r)return addExtraRace({id:r.id,name:r.name,date:r.date,km:r.km});
+  const h=HX_RACES.find(x=>x.id===id);if(h)return addExtraRace({id:h.id,name:h.name,date:h.date,hx:true});
+}
+function xrCustom(){
+  const name=($('#xrName').value||'').trim(),date=$('#xrDate').value,hx=$('#xrHx').checked,km=parseFloat(String($('#xrKm').value).replace(',','.'));
+  const err=m=>{$('#xrErr').textContent=m;};
+  if(!name)return err(L('Escreve o nome da prova.','Enter the race name.'));
+  if(!date||date<=TODAY)return err(L('Escolhe uma data no futuro.','Pick a future date.'));
+  if(!hx&&!(km>0&&km<=250))return err(L('Indica a distância em km.','Enter the distance in km.'));
+  addExtraRace({id:'c'+Date.now().toString(36),name,date,km:hx?null:km,hx});
 }
 
 /* ---------- GPX ---------- */
@@ -829,6 +989,8 @@ EN_RX.push([/^(\d+) voltas$/,'$1 rounds'],[/^(\d+) × \(1 km \+ estação\)$/,'$
 Object.assign(EN_EXACT,{"🌱 Começar a correr": "🌱 Start running", "🔁 Voltar a correr": "🔁 Get back to running", "⚡ Manter a forma": "⚡ Stay in shape"});
 EN_RX.push([/^(.+) km a limiar$/,'$1 km at threshold']);
 Object.assign(EN_EXACT,{"Remo": "Rower", "Trenó": "Sled", "Passadeira": "Treadmill", "Bola de wall ball": "Wall ball", "Kettlebells ou halteres": "Kettlebells or dumbbells", "Sandbag": "Sandbag", "Afundos a andar": "Walking lunges", "Remo forte, braços": "Hard row, arms focus", "Remada com elástico ou mochila": "Band or backpack row", "SkiErg (em vez de remo)": "SkiErg (instead of rowing)", "Farmers carry com garrafões ou sacos": "Farmers carry with water jugs or bags", "Lunges com halteres": "Dumbbell lunges", "Agachamentos com salto": "Jump squats", "qualificados": "qualifiers only"});
+Object.assign(EN_EXACT,{"Escolher ficheiro .gpx ou .fit": "Choose a .gpx or .fit file", "Do relógio (Garmin Connect, Coros, Suunto…): exporta o ficheiro original (.fit ou .zip). Do Strava: no site, menu \"…\" e \"Exportar GPX\". No iPhone, guarda-o em Ficheiros e escolhe-o aqui.": "From your watch (Garmin Connect, Coros, Suunto…): export the original file (.fit or .zip). From Strava: on the website, \"…\" menu and \"Export GPX\". On iPhone, save it to Files and pick it here.", "Não consegui ler este ficheiro. Confirma que é um .gpx ou .fit de uma corrida com GPS ou distância.": "I couldn't read this file. Make sure it's a .gpx or .fit of a run with GPS or distance."});
+Object.assign(EN_EXACT,{"Escolhe pelo menos 1 dia de ginásio.": "Pick at least 1 gym day."});
 EN_RX.push([/^Troco por (.+) km fáceis\.$/,'Swap for $1 easy km.'],[/^Saltado\. O próximo treino duro \((.+)\) passou a fácil\.$/,'Skipped. The next hard session ($1) is now easy.'],[/^(.+): treino trocado por (.+) km fáceis por falta de tempo\.$/,'$1: workout swapped for $2 easy km (short on time).'],[/^(.+): (.+) saltado \((cansaço|doença|dores|impedimento)\)\.(?: Ajustei (\d+) treinos? a seguir\.)?$/,(m,d,t,r,n)=>`${d}: ${tr(t)} skipped (${{'cansaço':'tired','doença':'ill','dores':'pain','impedimento':"couldn't make it"}[r]}).${n?` Adjusted ${n} upcoming workout${n>1?'s':''}.`:''}`]);
 EN_RX.push([/^(\d) treinos por semana\.$/,'$1 runs a week.'],[/^Passo (\d+) \/ (\d+)$/,'Step $1 / $2']);
 EN_RX.push(
@@ -1298,8 +1460,8 @@ function goalVerdict(){
   return diff<=0.3?'ao teu alcance':diff<=gain?'realista com treino':diff<=gain+2?'ambicioso':'muito ambicioso';
 }
 function racePlanHtml(w){
-  const p=st.profile,km=p.raceKm||w.km;
-  const tgt=p.goalTime||predict(st.vdot,km*1000);const pace=tgt/km;
+  const p=st.profile,km=w.extraRace?w.km:(p.raceKm||w.km);
+  const tgt=!w.extraRace&&p.goalTime||predict(st.vdot,km*1000);const pace=tgt/km;
   const marks=[];for(let k=5;k<km-0.5;k+=5)marks.push(k);
   const fuel=km>=40?'Leva géis: um a cada 35–45 min, a começar por volta dos 45 min. Bebe um pouco em cada abastecimento.':km>=20?'Um gel por volta dos 50–60 min ajuda. Bebe água nos abastecimentos.':'Não precisas de comer durante a prova. Bebe só se tiveres sede.';
   return `<div class="card" style="background:var(--soft);border:none;padding:14px;gap:8px"><span class="eyebrow">Plano de prova</span>
@@ -1320,11 +1482,12 @@ function workoutCard(w,hero){
   else if(F)btns=`${w.hx&&(w.date===TODAY||s==='next'||s==='today')?`<button class="primary" data-act="guide" data-id="${w.id}">Treino guiado</button>`:''}<button class="${w.hx&&(w.date===TODAY||s==='next')?'':'primary'}" data-act="fdone" data-id="${w.id}">Marcar como feito</button>`;
   else btns=`${w.date===TODAY||s==='next'?`<button class="primary" data-act="guide" data-id="${w.id}">Treino guiado</button>`:''}<button class="${w.date===TODAY||s==='next'?'':'primary'}" data-act="log" data-id="${w.id}">Registar treino</button>`;
   if(s==='miss')btns+=`<button class="ghost" data-act="skip" data-id="${w.id}">Marcar como saltado</button>`;
+  if(w.extraRace&&!l)btns+=`<button class="ghost" data-act="xr-del" data-id="${w.extraRace}" style="color:var(--bad)">${L('Remover esta prova','Remove this race')}</button>`;
   const mins=estMin(w);
   return `<section class="card ${hero?'hero':''}" style="--zc:var(--z${z})">
     <div class="row between"><span class="eyebrow">${DOW[dow(w.date)]} ${fmtDate(w.date)}</span><div class="row">${stPill}${zonePill(z)}</div></div>
     <h2 class="wtitle">${esc(w.title)}</h2>
-    <div class="metrics">${F?'':`<div class="metric"><b>${nf(w.km)}</b><span>km</span></div>`}<div class="metric"><b>~${mins}</b><span>min</span></div>${F?'':`<div class="metric"><b>${w.type==='E'||w.type==='L'?fmtPace(pz().E[0]):fmtPace(target(pz(),w.focus.z))}</b><span>${w.type==='E'||w.type==='L'?'ritmo fácil':'ritmo alvo'}</span></div>`}</div>
+    <div class="metrics">${F?'':`<div class="metric"><b>${nf(w.km)}</b><span>km</span></div>`}<div class="metric"><b>~${mins}</b><span>min</span></div>${F?'':`<div class="metric"><b>${w.type==='E'||w.type==='L'?fmtPace(pz().E[0]):(w.extraRace&&w.km?fmtPace(predict(st.vdot,w.km*1000)/w.km):fmtPace(target(pz(),w.focus.z)))}</b><span>${w.type==='E'||w.type==='L'?'ritmo fácil':'ritmo alvo'}</span></div>`}</div>
     ${F&&!w.hx?'':profileHtml(w)}
     ${future&&status(w)!=='skip'?`<button class="link small cantlink" data-act="cant" data-id="${w.id}">Não posso fazer este treino ›</button>`:''}
     ${future&&WX&&WX[w.date]?`<div class="small" style="${badWx(WX[w.date])?'color:var(--warn)':''}">${wxLine(WX[w.date])}</div>`:''}
@@ -1427,7 +1590,12 @@ function hojeHtml(){
 
 function planoHtml(){
   const cur=weekOf(TODAY);
-  return `<div class="row between"><h2>O teu plano</h2><span class="small muted">${st.plan.weeks.length} semanas</span></div>`+st.plan.weeks.map(wk=>{
+  const p=st.profile,goalTxt=p.goalType==='hyrox'?(p.raceName||'HYROX'):p.goalType==='race'?(p.raceName||gLabel()):({start:'Começar a correr',back:'Voltar a correr',maintain:'Manter a forma'})[p.goalType]||'';
+  const xs=(st.extraRaces||[]).filter(r=>r.date>=TODAY).sort((a,b)=>a.date<b.date?-1:1);
+  return `<div class="row between"><h2>O teu plano</h2><span class="small muted">${st.plan.weeks.length} semanas</span></div>
+  <section class="card"><div class="row between"><div><span class="eyebrow">${L('Objetivo','Goal')}</span><div><b>${esc(tr(goalTxt))}</b>${p.raceDate?` · <span class="small muted">${fmtDate(p.raceDate)}</span>`:''}</div></div><button class="ghost chip" data-act="newplan">${L('Mudar','Change')}</button></div>
+  ${xs.length?`<div class="small muted">${L('Outras provas','Other races')}: ${xs.map(r=>esc(r.name)+' ('+fmtDate(r.date)+')').join(', ')}</div>`:''}
+  <button data-act="xr-add">+ ${L('Adicionar outra prova','Add another race')}</button></section>`+st.plan.weeks.map(wk=>{
     const tot=wk.workouts.reduce((a,w)=>a+w.km,0);
     const done=wk.workouts.filter(w=>status(w)==='done').length;
     return `<details class="wk" ${cur&&cur.n===wk.n?'open':''}><summary><div><h3>Semana ${wk.n}</h3><div class="small muted">${fmtDate(wk.start)} · ${PH[wk.phase]}${wk.recovery?' · recuperação':''}${wk.adjusted?' · aliviada':''}</div></div><div class="num small" style="text-align:right">${Math.round(tot)} km<br><span class="muted">${done}/${wk.workouts.length} feitos</span></div></summary>
@@ -1528,7 +1696,7 @@ function obDefaults(){
   const pr=st?.profile;
   if(pr){
     const rd=Array.isArray(pr.runDays)&&pr.runDays.length?pr.runDays:slotsFor(pr,clamp(pr.days||4,2,7)).map(x=>x[0]);
-    return{step:0,goalType:pr.goalType||'race',raceId:pr.raceId&&raceById(pr.raceId)?pr.raceId:(pr.raceName?'custom':null),customName:pr.raceName||'',customDate:pr.raceDate||'',customKm:pr.raceKm||GOALS[pr.goal||'10k'].km,terrain:pr.terrain||'flat',hasGoal:!!pr.goalTime,goalSec:pr.goalTime||0,refDist:pr.refDist||5,refSec:parseTime(pr.refTime)||0,noRef:!pr.refTime,runDays:[...rd].sort((a,b)=>a-b),longDay:pr.longDay??6,level:pr.level||'int',strength:pr.strength!==false,q:'',hxId:pr.goalType==='hyrox'?(HX_RACES.find(r=>r.id===pr.raceId)?pr.raceId:'custom'):null,hxName:pr.goalType==='hyrox'?pr.raceName||'':'',hxDate:pr.goalType==='hyrox'?pr.raceDate||'':'',hxDiv:pr.hxDiv||'om',hxDbl:!!pr.hxDoubles,hxEq:pr.hxEq||'gym',hxGear:[...hxGearOf(pr)],hxQ:'',hxReg:'ib',hxDay:pr.goalType==='hyrox'?pr.raceDate||'':''};
+    return{step:0,goalType:pr.goalType||'race',raceId:pr.raceId&&raceById(pr.raceId)?pr.raceId:(pr.raceName?'custom':null),customName:pr.raceName||'',customDate:pr.raceDate||'',customKm:pr.raceKm||GOALS[pr.goal||'10k'].km,terrain:pr.terrain||'flat',hasGoal:!!pr.goalTime,goalSec:pr.goalTime||0,refDist:pr.refDist||5,refSec:parseTime(pr.refTime)||0,noRef:!pr.refTime,runDays:[...rd].sort((a,b)=>a-b),longDay:pr.longDay??6,level:pr.level||'int',strength:pr.strength!==false,q:'',hxId:pr.goalType==='hyrox'?(HX_RACES.find(r=>r.id===pr.raceId)?pr.raceId:'custom'):null,hxName:pr.goalType==='hyrox'?pr.raceName||'':'',hxDate:pr.goalType==='hyrox'?pr.raceDate||'':'',hxDiv:pr.hxDiv||'om',hxDbl:!!pr.hxDoubles,hxEq:pr.hxEq||'gym',hxGear:[...hxGearOf(pr)],hxQ:'',hxReg:'ib',hxDay:pr.goalType==='hyrox'?pr.raceDate||'':'',gymDays:Array.isArray(pr.gymDays)?[...pr.gymDays]:undefined};
   }
   return{step:0,goalType:null,raceId:null,customName:'',customDate:'',customKm:10,terrain:'flat',hasGoal:false,goalSec:0,refDist:5,refSec:1650,noRef:false,runDays:[1,3,6],longDay:6,level:'int',strength:true,q:'',hxId:null,hxName:'',hxDate:'',hxDiv:'om',hxDbl:false,hxEq:'gym',hxGear:[...HX_PRESET.gym],hxQ:'',hxReg:'ib',hxDay:''};
 }
@@ -1613,6 +1781,7 @@ function onboardHtml(){
     <div class="daypick">${DOW.map((l,i)=>`<button type="button" data-act="ob-day" data-v="${i}" aria-pressed="${ob.runDays.includes(i)}">${l}</button>`).join('')}</div>
     <div class="small ${n<2?'':'muted'}" style="${n<2?'color:var(--bad)':''}">${n<2?'Escolhe pelo menos 2 dias.':n===2?'2 treinos: um de qualidade e um longo.':`${n} treinos por semana.`}</div>
     ${n>=2?`<div class="small"><b>Dia do treino longo</b></div><div class="chips">${ob.runDays.map(i=>chip('longDay',i,DOWL()[i])).join('')}</div>`:''}
+    ${ob.goalType==='hyrox'&&n>=2?(()=>{const G=Array.isArray(ob.gymDays)?ob.gymDays.filter(d=>ob.runDays.includes(d)):hxAutoGym(ob.runDays,ob.runDays.includes(ob.longDay)?ob.longDay:ob.runDays[ob.runDays.length-1]);return `<div class="small"><b>${L('Dias de ginásio','Gym days')}</b></div><div class="chips">${ob.runDays.map(i=>`<button type="button" class="chip" data-act="ob-gym" data-v="${i}" aria-pressed="${G.includes(i)}">${G.includes(i)?'🏋️ ':''}${DOWL()[i]}</button>`).join('')}</div><div class="tiny muted">${G.length===1?L('Com 1 dia de ginásio, a corrida comprometida desse dia leva mais estações.','With 1 gym day, that day’s compromised run gets more stations.'):L('Estações e corrida comprometida vão para os dias de ginásio. Nos outros dias, corrida.','Stations and compromised runs go on gym days. Other days are runs.')}</div>`;})():''}
     ${ob.goalType==='hyrox'?`<div class="tiny muted">${n===2?L('Com 2 dias: corrida comprometida (com estações) e um longo.','With 2 days: compromised run (with stations) and a long run.'):L('Os dias que sobram para além do longo e da corrida comprometida ficam com estações e corrida.','Days beyond the long run and the compromised run get stations and runs.')}</div>`:`<label class="switch"><input type="checkbox" id="obStr" ${ob.strength?'checked':''}><span>Incluir treino de força (25 min, sem material)</span></label>`}
     ${ob.goalType==='start'&&n>3?'<div class="tiny muted">Para começar a correr bastam 3 dias. Escolho os 3 mais espaçados.</div>':''}`;
   }
@@ -1657,7 +1826,7 @@ function obCollect(){
 function buildProfile(){
   const gt=ob.goalType,race=obRace();
   let rd=[...ob.runDays].sort((a,b)=>a-b);if(!rd.includes(ob.longDay))ob.longDay=rd[rd.length-1];
-  if(gt==='hyrox'){const h=obHx();return{goalType:'hyrox',goal:'10k',raceName:h?h.name:'HYROX',raceDate:h?h.date:null,raceKm:null,raceId:h?h.id:null,terrain:'flat',goalTime:null,hxDiv:ob.hxDiv,hxDoubles:!!ob.hxDbl,hxEq:ob.hxEq,hxGear:[...(ob.hxGear||[])],
+  if(gt==='hyrox'){const h=obHx();return{goalType:'hyrox',goal:'10k',raceName:h?h.name:'HYROX',raceDate:h?h.date:null,raceKm:null,raceId:h?h.id:null,terrain:'flat',goalTime:null,hxDiv:ob.hxDiv,hxDoubles:!!ob.hxDbl,hxEq:ob.hxEq,hxGear:[...(ob.hxGear||[])],gymDays:Array.isArray(ob.gymDays)?ob.gymDays.filter(d=>rd.includes(d)):hxAutoGym(rd,ob.longDay),
     refDist:ob.noRef?null:ob.refDist,refTime:ob.noRef?'':fmtTime(ob.refSec),runDays:rd,days:rd.length,longDay:ob.longDay,level:ob.level,strength:false};}
   return{goalType:gt,goal:race?goalKeyFor(race.km):gt==='start'?'5k':'10k',raceName:race?race.name:null,raceDate:race?race.date:null,raceKm:race?race.km:null,raceId:race?race.id:null,terrain:race?race.terrain:'flat',goalTime:race&&ob.hasGoal&&ob.goalSec>0?ob.goalSec:null,
     refDist:ob.noRef?null:ob.refDist,refTime:ob.noRef?'':fmtTime(ob.refSec),runDays:rd,days:rd.length,longDay:ob.longDay,level:gt==='start'?'ini':ob.level,strength:ob.strength!==false};
@@ -1674,6 +1843,7 @@ function obValidate(){
   if(cur==='hx'){if(!ob.hxId)return'Escolhe uma prova.';if(ob.hxId==='custom'){if(!ob.hxDate)return'Escolhe a data da prova.';if(ob.hxDate<=TODAY)return'A data da prova tem de ser no futuro.';}}
   if(cur==='fit'&&!ob.noRef){if(!(ob.refSec>0))return'Escolhe o tempo.';const v=vdotFrom(ob.refDist*1000,ob.refSec);if(!(v>18&&v<85))return'Esse tempo parece improvável para a distância escolhida. Confirma os valores.';}
   if(cur==='days'&&ob.runDays.length<2)return'Escolhe pelo menos 2 dias.';
+  if(cur==='days'&&ob.goalType==='hyrox'&&Array.isArray(ob.gymDays)&&!ob.gymDays.some(d=>ob.runDays.includes(d)))return'Escolhe pelo menos 1 dia de ginásio.';
   return null;
 }
 function obRerender(){obCollect();$('#app').innerHTML=onboardHtml();bindOnboard();}
@@ -1700,6 +1870,7 @@ function obNav(a,v){
   obCollect();
   const err=m=>{const e=$('#obErr');e.textContent=tr(m);};
   if(a==='ob-hx'){ob.hxId=v;ob.hxDay='';obRerender();return;}
+  if(a==='ob-gym'){const d=Number(v);const D=ob.runDays,Ld=D.includes(ob.longDay)?ob.longDay:D[D.length-1];const G=new Set(Array.isArray(ob.gymDays)?ob.gymDays:hxAutoGym(D,Ld));G.has(d)?G.delete(d):G.add(d);ob.gymDays=[...G].sort((a,b)=>a-b);obRerender();return;}
   if(a==='ob-gear'){const g=new Set(ob.hxGear||[]);g.has(v)?g.delete(v):g.add(v);ob.hxGear=[...g];obRerender();return;}
   if(a==='ob-gearset'){ob.hxGear=[...HX_PRESET[v]];ob.hxEq=v;obRerender();return;}
   if(a==='ob-race'){ob.raceId=v;if(v!=='custom'){const r=raceById(v);if(r&&ob.hasGoal&&!ob.goalSec)ob.goalSec=0;}obRerender();return;}
@@ -1718,6 +1889,7 @@ async function obCreate(){
   st.profile=profile;
   if(changedRef){st.vdot=Math.round(v*10)/10;st.vdotHist.push({d:TODAY,v:st.vdot,why:'tempo de referência'});}
   st.plan=genPlan(profile,TODAY,st.vdot);
+  if(st.extraRaces?.length)applyExtraRaces();
   for(const l of st.logs){if(l.extra)continue;const w=allW().find(x=>x.date===l.date&&((l.wtype==='F')===(x.type==='F')));l.wid=w?w.id:null;if(!w)l.extra=true;}
   st.suggest=null;
   const n=st.plan.weeks.length,gt=profile.goalType;
@@ -1782,7 +1954,7 @@ function renderLog(){
   <div class="seg"><button type="button" data-mode="gpx" aria-pressed="${draft.mode==='gpx'}">Ficheiro GPX</button><button type="button" data-mode="man" aria-pressed="${draft.mode==='man'}">À mão</button></div>`;
   let body='';
   if(draft.mode==='gpx'){
-    if(!draft.gpx)body=`<label class="drop" for="gpxIn"><b>Escolher ficheiro .gpx</b><span class="small muted">No Strava: abre a atividade no site, menu "…" e "Exportar GPX". No iPhone, guarda-o em Ficheiros e escolhe-o aqui.</span><input type="file" id="gpxIn" accept=".gpx,application/gpx+xml,application/xml,text/xml"></label><div class="small" id="gpxErr" style="color:var(--bad)"></div>`;
+    if(!draft.gpx)body=`<label class="drop" for="gpxIn"><b>Escolher ficheiro .gpx ou .fit</b><span class="small muted">Do relógio (Garmin Connect, Coros, Suunto…): exporta o ficheiro original (.fit ou .zip). Do Strava: no site, menu "…" e "Exportar GPX". No iPhone, guarda-o em Ficheiros e escolhe-o aqui.</span><input type="file" id="gpxIn" accept=".gpx,.fit,.zip,application/gpx+xml,application/xml,text/xml,application/octet-stream,application/zip"></label><div class="small" id="gpxErr" style="color:var(--bad)"></div>`;
     else{const a=draft.gpx;body=`<div class="stats"><div class="stat"><span class="v">${nf(Math.round(a.dist*100)/100)}</span><span class="l">km</span></div><div class="stat"><span class="v">${fmtTime(a.moving||a.elapsed)}</span><span class="l">tempo em movimento</span></div><div class="stat"><span class="v">${fmtPace((a.moving||a.elapsed)/a.dist)}</span><span class="l">ritmo médio</span></div></div>
       <div class="small muted">${fmtDate(a.date)}${a.avgHr?` · FC média ${a.avgHr} bpm`:''}${a.fast?` · partes rápidas ${fmtPace(a.fast)}/km`:''}</div>${a.splits.length>1?splitsHtml(a.splits):''}${a.src==='gps'?'<div class="tiny muted">Gravado com o GPS do telemóvel.</div>':'<button class="link" data-act="gpx-clear">Escolher outro ficheiro</button>'}`;}
   }else{
@@ -1803,6 +1975,7 @@ function renderLog(){
 async function readGpx(f){
   if(!f)return;
   try{
+    if(/\.(fit|zip)$/i.test(f.name)||!/\.gpx$/i.test(f.name)&&new Uint8Array(await f.slice(8,12).arrayBuffer()).join()==='46,70,73,84'){const a=await readFit(f);prepAnalysis(a);renderLog();return;}
     const txt=await f.text();
     const doc=new DOMParser().parseFromString(txt,'application/xml');
     const tps=[...doc.getElementsByTagNameNS('*','trkpt')];
@@ -1811,7 +1984,7 @@ async function readGpx(f){
     const a=analyzePoints(raw);
     if(!a||a.dist<0.2)throw new Error('curto');
     prepAnalysis(a);renderLog();
-  }catch(e){const el=$('#gpxErr');if(el)el.textContent='Não consegui ler este ficheiro. Confirma que é um .gpx exportado do Strava com GPS.';}
+  }catch(e){const el=$('#gpxErr');if(el)el.textContent='Não consegui ler este ficheiro. Confirma que é um .gpx ou .fit de uma corrida com GPS ou distância.';}
 }
 function prepAnalysis(a){
   {
@@ -1823,6 +1996,7 @@ function prepAnalysis(a){
       let m=(w.focus.km||0)*1000;
       if(w.focus.repSec)m=Math.round(w.focus.repSec/target(pz(),w.focus.z)*1000);
       if(w.focus.z!=='H'&&m>=200&&m<=a.dist*1000)a.fast=bestEffort(a.pts,m);
+      if(a.laps&&a.laps.length>1){const lf=stravaFast({laps:a.laps,splits:[]},w);if(lf)a.fast=lf;}
     }
     a.best={};for(const m of [1000,5000,10000]){if(a.dist*1000>=m){const pc=bestEffort(a.pts,m);if(pc)a.best[m/1000]=pc*m/1000;}}
     a.pts=null;
@@ -2105,6 +2279,10 @@ document.addEventListener('click',e=>{
   else if(a==='sv-rpe'){const l=st.logs.find(x=>x.stravaId===Number(id));if(l){l.rpe=Number(b.dataset.v);const w=allW().find(x=>x.id===l.wid);l.eval=evaluate(l,w,st.vdot,st.profile.goal,popt());if(l.rpe>=8)checkFatigue();persist();render();toast(tr(l.eval.msg).split(/(?<=[.!?])\s/)[0]);}}
   else if(a==='rm-off')remindOff();
   else if(a.startsWith('ob-'))obNav(a,b.dataset.v);
+  else if(a==='xr-add'){xrQ='';openAddRace();}
+  else if(a==='xr-pick')xrPick(id);
+  else if(a==='xr-custom')xrCustom();
+  else if(a==='xr-del')removeExtraRace(id);
   else if(a==='newplan'){ob=null;$('#tabs').hidden=true;$('#app').innerHTML=onboardHtml();bindOnboard();window.scrollTo(0,0);}
   else if(a==='continue'){st.plan=genPlan(st.profile,TODAY,st.vdot);addNote('Novo bloco de 12 semanas criado.','info');persist();render();toast('Plano pronto');}
   else if(a==='auth-go')authGo();
