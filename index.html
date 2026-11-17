@@ -121,6 +121,17 @@ nav.tabs[hidden]{display:none}
 .sport{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 6px;min-height:92px;border-radius:18px;text-align:center;font-weight:400;width:auto}
 .sport .ic{font-size:26px}.sport b{font-size:15px}.sport[disabled]{opacity:.45}
 .sport[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,var(--surface))}
+button.primary.go{flex-basis:100%;font-size:18px;min-height:56px}
+.cele{display:flex;flex-direction:column;gap:12px;text-align:center;align-items:stretch}.cele .stats{text-align:left}
+.cele-ic{font-size:64px;line-height:1;animation:pop .5s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes pop{0%{transform:scale(.2) rotate(-20deg);opacity:0}100%{transform:none;opacity:1}}
+.tip{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.empty{align-items:center;text-align:center}
+details.why summary{cursor:pointer;color:var(--accent);list-style:none}details.why summary::-webkit-details-marker{display:none}
+.wknav{display:flex;align-items:center;justify-content:space-between;gap:8px}.wknav .chip{width:44px;min-width:44px;font-size:20px;padding:0}
+.wkscroll{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:0;scrollbar-width:none;align-items:flex-start;-webkit-overflow-scrolling:touch}
+.wkscroll::-webkit-scrollbar{display:none}.wkpage{flex:0 0 100%;scroll-snap-align:start;padding:0 1px;box-sizing:border-box}
+.wkhead{display:flex;justify-content:space-between;align-items:center;padding:14px 16px}
 button.strava{background:#FC4C02;color:#fff;border:none;font-weight:800}
 .cantlink{align-self:flex-start;padding:2px 0;min-height:0;font-size:14px;width:auto}
 .authwrap{display:flex;flex-direction:column;gap:14px;min-height:calc(100dvh - 90px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
@@ -792,6 +803,48 @@ function xrCustom(){
   addExtraRace({id:'c'+Date.now().toString(36),name,date,km:hx?null:km,hx});
 }
 
+
+/* ---------- UX: celebração, dicas, vibração, plano em carrossel ---------- */
+function haptic(){try{if(navigator.vibrate){navigator.vibrate(18);return;}let l=document.getElementById('hapt');if(!l){l=document.createElement('label');l.id='hapt';l.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';l.innerHTML='<input type="checkbox" switch>';document.body.appendChild(l);}l.click();}catch(e){}}
+function weekCount(date){const wk=weekOf(date);if(!wk)return null;const c=x=>x.type!=='F'||x.hx;const ws=wk.workouts.filter(c);return{done:ws.filter(x=>logFor(x)).length,tot:ws.length};}
+let lastCele=null;
+function celebrate(log,w){
+  haptic();lastCele={log,w};
+  const e=log.eval||{},wc=weekCount(log.date),r=records();
+  const title=w?tr(w.title):L('Corrida','Run');
+  const em=e.cls==='down'?'💪':w&&w.race?'🏅':'🎉';
+  openSheet(`<div class="cele"><div class="cele-ic">${em}</div><h2>${w?(w.race?L('Prova feita!','Race done!'):L('Treino feito!','Workout done!')):L('Corrida registada!','Run logged!')}</h2><div class="small muted">${esc(title)} · ${fmtDate(log.date)}</div>
+  ${log.dist>0?`<div class="stats"><div class="stat"><span class="v">${nf(Math.round(log.dist*100)/100)}</span><span class="l">km</span></div><div class="stat"><span class="v">${fmtTime(log.time)}</span><span class="l">${L('tempo','time')}</span></div><div class="stat"><span class="v">${fmtPace(log.time/log.dist)}</span><span class="l">min/km</span></div></div>`:''}
+  ${e.msg?`<div class="note ${e.cls||'info'}">${esc(e.msg)}</div>`:''}
+  <div class="small">${wc?`${L('Esta semana','This week')}: <b>${wc.done}/${wc.tot}</b> ${L('treinos','workouts')}`:''}${r.streak>=1?` · 🔥 ${r.streak} ${r.streak===1?L('semana seguida','week in a row'):L('semanas seguidas','weeks in a row')}`:''}</div>
+  <div class="btns"><button class="primary" data-act="close">${L('Continuar','Continue')}</button>${navigator.share?`<button data-act="share-log">${L('Partilhar','Share')}</button>`:''}</div></div>`);
+}
+function shareLog(){
+  if(!lastCele)return;const {log,w}=lastCele;
+  const t=`${w?tr(w.title):L('Corrida','Run')} ✓ ${log.dist>0?`${nf(Math.round(log.dist*100)/100)} km ${L('em','in')} ${fmtTime(log.time)} (${fmtPace(log.time/log.dist)}/km)`:''} · Zone5`;
+  navigator.share({text:t,url:location.origin+location.pathname}).catch(()=>{});
+}
+const TIPS=[
+  ['👋',()=>L('Este é o teu treino de hoje. Toca em ▶ Começar treino e eu guio-te bloco a bloco, com voz e sinais sonoros.','This is today’s workout. Tap ▶ Start workout and I’ll guide you block by block, with voice and beeps.')],
+  ['✅',()=>L('Treinaste com o relógio ou o Strava? Toca em "Já fiz · registar" e escolhe o ficheiro. Eu analiso e ajusto o plano sozinho.','Trained with your watch or Strava? Tap "Done it · log" and pick the file. I’ll analyse it and adjust your plan.')],
+  ['👥',()=>L('No separador Grupo convidas amigos. Cada um segue o seu objetivo e comparam quanto do plano cumpriram.','In the Group tab you can invite friends. Everyone follows their own goal and you compare how much of the plan you completed.')]];
+function tipsHtml(){
+  const i=st.tips|0;if(i<1||i>TIPS.length)return'';const [ic,tx]=TIPS[i-1];
+  return `<section class="card tip"><div class="row" style="flex-wrap:nowrap;align-items:flex-start;gap:12px"><span style="font-size:26px">${ic}</span><div class="small">${tx()}</div></div>
+  <div class="row between"><span class="tiny muted">${L('Dica','Tip')} ${i}/${TIPS.length}</span><div class="row"><button class="link small" data-act="tip-skip">${L('Saltar','Skip')}</button><button class="chip" data-act="tip-next">${i<TIPS.length?L('Seguinte','Next'):L('Percebi','Got it')}</button></div></div></section>`;
+}
+function bindPlano(){
+  const sc=$('#wkScroll');if(!sc)return;const pages=[...sc.children];
+  const cur=weekOf(TODAY);let idx=Math.max(0,pages.findIndex(p=>cur&&+p.dataset.n===cur.n));
+  if(planoIdx!=null)idx=Math.min(planoIdx,pages.length-1);
+  sc.scrollLeft=idx*sc.clientWidth;
+  const upd=()=>{const i=Math.round(sc.scrollLeft/Math.max(1,sc.clientWidth));planoIdx=i;const p=pages[i];if(!p)return;$('#wkLbl').innerHTML=`<b>${L('Semana','Week')} ${p.dataset.n}</b> ${L('de','of')} ${pages.length}`;$('#wkPrev').disabled=i===0;$('#wkNext').disabled=i===pages.length-1;};
+  let t;sc.onscroll=()=>{clearTimeout(t);t=setTimeout(upd,60);};upd();
+  $('#wkPrev').onclick=()=>{haptic();sc.scrollBy({left:-sc.clientWidth,behavior:'smooth'});};
+  $('#wkNext').onclick=()=>{haptic();sc.scrollBy({left:sc.clientWidth,behavior:'smooth'});};
+}
+let planoIdx=null;
+
 /* ---------- GPX ---------- */
 function hav(a,b){const R=6371000,t=Math.PI/180,dl=(b.lat-a.lat)*t,dn=(b.lon-a.lon)*t;const x=Math.sin(dl/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
 function analyzePoints(raw){
@@ -1078,6 +1131,7 @@ async function boot(){
   if(!mode&&localStorage.getItem('zone5.mode')==='demo'){mode='demo';st=readLocal();setSync('local');}
   if(!mode)setSync('off');
   {const q=new URLSearchParams(location.search),sv=q.get('strava');if(sv){q.delete('strava');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:'')+location.hash);setTimeout(()=>toast(sv==='ok'?L('Strava ligado. A importar corridas…','Strava connected. Importing runs…'):sv==='scope'?L('Para ligar, autoriza o acesso às atividades.','To connect, allow access to your activities.'):sv==='cancel'?L('Ligação ao Strava cancelada.','Strava connection cancelled.'):L('Não foi possível ligar ao Strava.',"Couldn't connect to Strava.")),600);if(sv==='ok')localStorage.removeItem('zone5.svSync');}}
+  if(st&&st.profile&&st.tips===undefined)st.tips=1;
   if(st&&st.profile){setTimeout(stravaTick,1500);checkFatigue();if(lightenAfter({date:addDays(mondayOf(TODAY),-1)}))persist();loadWeather();}
   render();
   setTimeout(maybeAutoSync,3000);
@@ -1393,7 +1447,7 @@ function grupoHtml(){
   const joinCard=`<section class="card"><h3>${grp.groups.length?'Juntar-me a outro grupo':'Juntar-me a um grupo'}</h3><div class="row" style="flex-wrap:nowrap"><input id="gCode" placeholder="Código" value="${esc(inv)}" style="text-transform:uppercase;letter-spacing:.15em" maxlength="6"><button data-act="g-join">${L("Entrar","Join")}</button></div></section>
   <section class="card"><h3>Criar um grupo</h3><div class="row" style="flex-wrap:nowrap"><input id="gName" placeholder="Nome do grupo"><button data-act="g-create">Criar</button></div></section>`;
   if(grp.err)return `<h2>Grupo</h2><section class="card"><div class="small" style="color:var(--bad)">${esc(grp.err)}</div><button data-act="g-reload">Tentar outra vez</button></section>`;
-  if(!grp.active)return `<h2>Grupo</h2><section class="card"><div class="small">Cria um grupo e partilha o código com os teus amigos. Cada um segue o seu plano e todos veem o ranking de quilómetros da semana.</div></section>`+joinCard;
+  if(!grp.active)return `<h2>Grupo</h2><section class="card empty"><div style="font-size:34px">👥</div><b>${L('Treinar com amigos sabe melhor','Training with friends is better')}</b><div class="small muted">${L('Cria um grupo e partilha o convite. Cada um segue o seu objetivo — corrida ou HYROX — e veem quem cumpriu mais do plano esta semana.','Create a group and share the invite. Everyone follows their own goal — running or HYROX — and you see who completed more of their plan this week.')}</div></section>`+joinCard;
   const g=grp.groups.find(x=>x.id===grp.active);
   const cur=mondayOf(TODAY),wk=grp.week==='cur'?cur:addDays(cur,-7);
   const pct=r=>r.planned?Math.min(1,r.runs/r.planned):0,byPct=grp.sort==='pct';
@@ -1486,8 +1540,8 @@ function workoutCard(w,hero){
   let btns='';
   if(l)btns=`<button class="ghost" data-act="dellog" data-id="${w.id}">Apagar registo</button>`;
   else if(s==='skip')btns=`<button class="ghost" data-act="unskip" data-id="${w.id}">Afinal vou fazer</button>`;
-  else if(F)btns=`${w.hx&&(w.date===TODAY||s==='next'||s==='today')?`<button class="primary" data-act="guide" data-id="${w.id}">Treino guiado</button>`:''}<button class="${w.hx&&(w.date===TODAY||s==='next')?'':'primary'}" data-act="fdone" data-id="${w.id}">Marcar como feito</button>`;
-  else btns=`${w.date===TODAY||s==='next'?`<button class="primary" data-act="guide" data-id="${w.id}">Treino guiado</button>`:''}<button class="${w.date===TODAY||s==='next'?'':'primary'}" data-act="log" data-id="${w.id}">Registar treino</button>`;
+  else if(F)btns=`${w.hx&&(w.date===TODAY||s==='next'||s==='today')?`<button class="primary" data-act="guide" data-id="${w.id}">▶ ${L('Começar treino','Start workout')}</button>`:''}<button class="${w.hx&&(w.date===TODAY||s==='next')?'':'primary'}" data-act="fdone" data-id="${w.id}">Marcar como feito</button>`;
+  else btns=`${w.date===TODAY||s==='next'?`<button class="primary go" data-act="guide" data-id="${w.id}">▶ ${L('Começar treino','Start workout')}</button><button data-act="log" data-id="${w.id}">${L('Já fiz · registar','Done it · log')}</button>`:`<button class="primary" data-act="log" data-id="${w.id}">Registar treino</button>`}`;
   if(s==='miss')btns+=`<button class="ghost" data-act="skip" data-id="${w.id}">Marcar como saltado</button>`;
   if(w.extraRace&&!l)btns+=`<button class="ghost" data-act="xr-del" data-id="${w.extraRace}" style="color:var(--bad)">${L('Remover esta prova','Remove this race')}</button>`;
   const mins=estMin(w);
@@ -1498,7 +1552,7 @@ function workoutCard(w,hero){
     ${F&&!w.hx?'':profileHtml(w)}
     ${future&&status(w)!=='skip'?`<button class="link small cantlink" data-act="cant" data-id="${w.id}">Não posso fazer este treino ›</button>`:''}
     ${future&&WX&&WX[w.date]?`<div class="small" style="${badWx(WX[w.date])?'color:var(--warn)':''}">${wxLine(WX[w.date])}</div>`:''}
-    ${why?`<div class="small muted">${esc(why)}</div>`:''}
+    ${why?(hero?`<details class="why"><summary class="small">${L('Porquê este treino?','Why this workout?')}</summary><div class="small muted">${esc(why)}</div></details>`:`<div class="small muted">${esc(why)}</div>`):''}
     ${w.race?(w.hx?hxRaceHtml(w):racePlanHtml(w)):''}
     <ul class="steps">${w.steps.map(stepHtml).join('')}</ul>
     ${w.strength?'<div class="small muted">Força (opcional, 20 min): agachamentos, lunges, ponte de glúteos, gémeos e prancha.</div>':''}
@@ -1559,6 +1613,7 @@ function render(){
   document.querySelectorAll('nav.tabs a').forEach(a=>a.setAttribute('aria-current',a.dataset.tab===tab?'page':'false'));
   app.innerHTML=tab==='hoje'?hojeHtml():tab==='plano'?planoHtml():tab==='progresso'?progHtml():tab==='grupo'?grupoHtml():ajustesHtml();
   if(tab==='ajustes')bindAjustes();
+  if(tab==='plano')bindPlano();
   if(tab==='grupo'){const sel=$('#gSel');if(sel)sel.onchange=e=>{grp.active=e.target.value;grp.loaded=false;render();};}
 }
 window.addEventListener('hashchange',()=>{tab=(location.hash||'#hoje').slice(1);render();window.scrollTo(0,0);});
@@ -1578,7 +1633,7 @@ function hojeHtml(){
   {const h=new Date().getHours();const nm=mode==='cloud'?myName():'';out+=`<div class="greet"><span class="eyebrow">${DOW[dow(TODAY)]} ${fmtDate(TODAY)}${days!==null&&days>=0?` · ${days} ${L('dias para a prova','days to race')}`:''}</span><h1>${h<12?L('Bom dia','Good morning'):h<20?L('Boa tarde','Good afternoon'):L('Boa noite','Good evening')}${nm?', '+esc(nm):''}</h1></div>`;}
   if(st.suggest){out+=`<section class="card suggest"><h3>Sugestão: aliviar a próxima semana</h3><div class="small">${esc(st.suggest.why)} Recomendo reduzir a semana de ${fmtDate(st.suggest.week)} em cerca de 20%.</div><div class="btns"><button class="primary" data-act="sugg-yes">Aplicar</button><button class="ghost" data-act="sugg-no">Ignorar</button></div></section>`;}
   if(st.gcal?.pending&&st.gcal?.last)out+=`<section class="card"><div class="row between"><span class="small">O plano mudou. O teu Google Calendar está por atualizar.</span><button data-act="gc-now">Atualizar</button></div></section>`;
-  out+=stravaCardsHtml()+wxSuggestHtml()+shoeAlertHtml();
+  out+=tipsHtml()+stravaCardsHtml()+wxSuggestHtml()+shoeAlertHtml();
   out+=recapHtml();
   if(todayW&&!logFor(todayW)&&status(todayW)!=='skip')out+=workoutCard(todayW,true);
   else if(todayW){out+=workoutCard(todayW,false);if(next)out+=`<div class="eyebrow">Próximo treino</div>`+workoutCard(next,true);}
@@ -1602,16 +1657,19 @@ function planoHtml(){
   return `<div class="row between"><h2>O teu plano</h2><span class="small muted">${st.plan.weeks.length} semanas</span></div>
   <section class="card"><div class="row between"><div><span class="eyebrow">${L('Objetivo','Goal')}</span><div><b>${esc(tr(goalTxt))}</b>${p.raceDate?` · <span class="small muted">${fmtDate(p.raceDate)}</span>`:''}</div></div><button class="ghost chip" data-act="newplan">${L('Mudar','Change')}</button></div>
   ${xs.length?`<div class="small muted">${L('Outras provas','Other races')}: ${xs.map(r=>esc(r.name)+' ('+fmtDate(r.date)+')').join(', ')}</div>`:''}
-  <button data-act="xr-add">+ ${L('Adicionar outra prova','Add another race')}</button></section>`+st.plan.weeks.map(wk=>{
+  <button data-act="xr-add">+ ${L('Adicionar outra prova','Add another race')}</button></section>
+  <div class="wknav"><button class="ghost chip" id="wkPrev" aria-label="${L('Semana anterior','Previous week')}">‹</button><span id="wkLbl" class="small"></span><button class="ghost chip" id="wkNext" aria-label="${L('Semana seguinte','Next week')}">›</button></div>
+  <div class="wkscroll" id="wkScroll">`+st.plan.weeks.map(wk=>{
     const tot=wk.workouts.reduce((a,w)=>a+w.km,0);
     const done=wk.workouts.filter(w=>status(w)==='done').length;
-    return `<details class="wk" ${cur&&cur.n===wk.n?'open':''}><summary><div><h3>Semana ${wk.n}</h3><div class="small muted">${fmtDate(wk.start)} · ${PH[wk.phase]}${wk.recovery?' · recuperação':''}${wk.adjusted?' · aliviada':''}</div></div><div class="num small" style="text-align:right">${Math.round(tot)} km<br><span class="muted">${done}/${wk.workouts.length} feitos</span></div></summary>
-    ${wk.workouts.map(w=>{const s=status(w);const z=zOf(w);return `<button class="wrow" data-act="open" data-id="${w.id}"><span class="d">${DOW[dow(w.date)]}<br><span class="muted tiny">${fmtDate(w.date)}</span></span><span><b>${esc(w.title)}</b><br><span class="small muted num">${w.type==='F'?(w.min||25)+' min':nf(w.km)+' km'} · ${ZN[z]}</span></span>${s==='done'?'<span class="pill st-done">Feito</span>':s==='miss'?'<span class="pill st-miss">Falhado</span>':s==='skip'?'<span class="pill">Saltado</span>':s==='today'?'<span class="pill st-next">Hoje</span>':'<span></span>'}</button>`;}).join('')}</details>`;
-  }).join('');
+    return `<div class="wkpage" data-n="${wk.n}"><section class="card wk" style="padding:0;gap:0"><div class="wkhead"><div><h3>Semana ${wk.n}</h3><div class="small muted">${fmtDate(wk.start)} · ${PH[wk.phase]}${wk.recovery?' · recuperação':''}${wk.adjusted?' · aliviada':''}</div></div><div class="num small" style="text-align:right">${Math.round(tot)} km<br><span class="muted">${done}/${wk.workouts.length} feitos</span></div></div>
+    ${wk.workouts.map(w=>{const s=status(w);const z=zOf(w);return `<button class="wrow" data-act="open" data-id="${w.id}"><span class="d">${DOW[dow(w.date)]}<br><span class="muted tiny">${fmtDate(w.date)}</span></span><span><b>${esc(w.title)}</b><br><span class="small muted num">${w.type==='F'?(w.min||25)+' min':nf(w.km)+' km'} · ${ZN[z]}</span></span>${s==='done'?'<span class="pill st-done">Feito</span>':s==='miss'?'<span class="pill st-miss">Falhado</span>':s==='skip'?'<span class="pill">Saltado</span>':s==='today'?'<span class="pill st-next">Hoje</span>':'<span></span>'}</button>`;}).join('')}</section></div>`;
+  }).join('')+'</div>';
 }
 
 function progHtml(){
-  const h=progHtml2();
+  let h=progHtml2();
+  if(!st.logs.some(l=>l.dist>0||l.wtype==='F'))h=h.replace(/<h2>Progresso<\/h2>/,`<h2>Progresso</h2><section class="card empty"><div style="font-size:34px">📈</div><b>${L('A tua evolução aparece aqui','Your progress shows up here')}</b><div class="small muted">${L('Regista o primeiro treino e começas a ver os quilómetros, os recordes e a previsão a mudar.','Log your first workout to start seeing your distance, records and prediction change.')}</div><button class="primary" data-act="log-extra">${L('Registar um treino','Log a workout')}</button></section>`);
   if(st.profile.goalType!=='hyrox')return h;
   return h.replace('<h2>Progresso</h2>','<h2>Progresso</h2>'+hxProgHtml());
 }
@@ -1896,7 +1954,7 @@ async function obCreate(){
   const profile=buildProfile(),v=obVdot(),race=obRace();
   if(race&&race.id==='custom'&&race.date&&mode==='cloud'&&sb){try{const {data}=await sb.from('races').insert({name:race.name,date:race.date,km:race.km,terrain:race.terrain}).select('id').single();if(data?.id)profile.raceId='db-'+data.id;}catch(e){}}
   const keep=st?.profile;
-  if(!keep)st={v:1,logs:[],notes:[],vdotHist:[],skipped:[],dismissed:[]};
+  if(!keep)st={v:1,logs:[],notes:[],vdotHist:[],skipped:[],dismissed:[],tips:1};
   const changedRef=!keep||keep.refTime!==profile.refTime||keep.refDist!==profile.refDist||(!profile.refTime&&keep.level!==profile.level);
   st.profile=profile;
   if(changedRef){st.vdot=Math.round(v*10)/10;st.vdotHist.push({d:TODAY,v:st.vdot,why:'tempo de referência'});}
@@ -2041,8 +2099,7 @@ function saveLog(){
   {const so=$('#mShoe');const v=so?so.value:st.shoeDefault;if(v)log.shoe=v;}
   const w=draft.wid?allW().find(x=>x.id===draft.wid):null;
   commitLog(log,w);
-  persist();closeSheet();render();
-  toast(tr(log.eval.msg).split(/(?<=[.!?])\s/)[0]);
+  persist();render();celebrate(log,w);
 }
 
 
@@ -2170,7 +2227,7 @@ function guideTick(){
   const now=Date.now();{const c0=G.seg[G.i];if(c0.open){G.up+=(now-G.last)/1000;G.last=now;const el=$('#gT');if(el)el.textContent=fmtTime(G.up);if(G.gps)updGps();return;}}G.left-=(now-G.last)/1000;G.last=now;
   const L=Math.ceil(G.left);
   if(L<=3&&L>=1&&G.beeped!==L){G.beeped=L;beep(660);}
-  if(G.left<=0){G.i++;if(G.i>=G.seg.length){finishGuide();return;}const c=G.seg[G.i];G.left=c.sec;G.up=0;G.beeped=-1;beep(990,0.3);say(`${c.label}. ${paceWords(c.sub)}`);renderGuide();return;}
+  if(G.left<=0){G.i++;haptic();if(G.i>=G.seg.length){finishGuide();return;}const c=G.seg[G.i];G.left=c.sec;G.up=0;G.beeped=-1;beep(990,0.3);say(`${c.label}. ${paceWords(c.sub)}`);renderGuide();return;}
   const el=$('#gT');if(el)el.textContent=fmtTime(Math.max(0,L));
   if(G.gps)updGps();
 }
@@ -2271,7 +2328,7 @@ document.addEventListener('click',e=>{
   else if(a==='move-to')moveTo(id,b.dataset.d);
   else if(a==='guide')startGuide(id);
   else if(a==='g-toggle'){if(!G)return;G.run=!G.run;G.last=Date.now();if(G.run&&G.i===0&&G.left===G.seg[0].sec){beep(990,0.3);say(`${G.seg[0].label}. ${paceWords(G.seg[0].sub)}`);}renderGuide();}
-  else if(a==='g-next'){if(!G)return;const c=G.seg[G.i];if(c.open){if(G.run){G.up+=(Date.now()-G.last)/1000;}if(G.up>3)G.times.push({k:c.k,amt:c.sub,f:c.f,sec:Math.round(G.up)});G.i++;if(G.i>=G.seg.length){finishGuide();return;}const n=G.seg[G.i];G.left=n.sec;G.up=0;G.run=true;G.last=Date.now();G.beeped=-1;beep(990,0.3);say(`${n.label}. ${n.open?n.sub:paceWords(n.sub)}`);renderGuide();return;}G.left=0;G.run=true;G.last=Date.now();guideTick();}
+  else if(a==='g-next'){if(!G)return;const c=G.seg[G.i];if(c.open){if(G.run){G.up+=(Date.now()-G.last)/1000;}haptic();if(G.up>3)G.times.push({k:c.k,amt:c.sub,f:c.f,sec:Math.round(G.up)});G.i++;if(G.i>=G.seg.length){finishGuide();return;}const n=G.seg[G.i];G.left=n.sec;G.up=0;G.run=true;G.last=Date.now();G.beeped=-1;beep(990,0.3);say(`${n.label}. ${n.open?n.sub:paceWords(n.sub)}`);renderGuide();return;}G.left=0;G.run=true;G.last=Date.now();guideTick();}
   else if(a==='g-stop'){hxSaveTimes();if(G?.w?.type==='F'&&G.times.length&&!logFor(G.w)){st.logs.push({date:TODAY,wid:G.w.id,wtype:'F',dist:0,time:0,rpe:null});}persist();const w=G?.w;gpsStop();const hasGps=w&&gpsToLog(w);try{G?.lock?.release();speechSynthesis?.cancel();}catch(e){}G=null;if(hasGps){renderLog();toast('Corrida gravada. Confirma o esforço e guarda.');}else closeSheet();}
   else if(a==='g-gps'){if(G)gpsStart();}
   else if(a==='gc-off'){closeSheet();gcalSync(true,true);}
@@ -2291,6 +2348,9 @@ document.addEventListener('click',e=>{
   else if(a==='sv-rpe'){const l=st.logs.find(x=>x.stravaId===Number(id));if(l){l.rpe=Number(b.dataset.v);const w=allW().find(x=>x.id===l.wid);l.eval=evaluate(l,w,st.vdot,st.profile.goal,popt());if(l.rpe>=8)checkFatigue();persist();render();toast(tr(l.eval.msg).split(/(?<=[.!?])\s/)[0]);}}
   else if(a==='rm-off')remindOff();
   else if(a.startsWith('ob-'))obNav(a,b.dataset.v);
+  else if(a==='tip-next'){st.tips=(st.tips|0)+1;persist();render();}
+  else if(a==='tip-skip'){st.tips=99;persist();render();}
+  else if(a==='share-log')shareLog();
   else if(a==='xr-add'){xrQ='';xrSport=null;xrKmSel=10;openAddRace();}
   else if(a==='xr-sport'){xrSport=b.dataset.v||null;xrQ='';openAddRace();}
   else if(a==='xr-km'){const nm=$('#xrName')?.value,dt=$('#xrDate')?.value;xrKmSel=b.dataset.v==='other'?'other':Number(b.dataset.v);openAddRace();if(nm)$('#xrName').value=nm;if(dt)$('#xrDate').value=dt;}
