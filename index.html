@@ -1286,7 +1286,7 @@ const isTimed=r=>/(s|m)$/.test(String(r||'').trim());
 const repRange=r=>{const m=String(r||'').match(/(\d+)(?:\s*[–-]\s*(\d+))?/);return m?[+m[1],+(m[2]||m[1])]:[8,12];};
 const LIFT_BW=/^(Flexões|Prancha|Dead bug|Hollow|Mountain|Agachamento$|Agachamento para cadeira|Agachamento em parede|Agachamento búlgaro leve|Afundos$|Afundos alternados|Y-T-W|Abdução deitado|Abdução com elástico|Remada com toalha|Remada invertida|Curl nórdico|Fundos numa cadeira|Ponte de glúteos$|Ponte de glúteos a uma perna|Hip thrust a uma perna|Polichinelos|Marcha|Círculos|Bom dia)/;
 const liftInc=n=>/barra|Leg press|máquina|polia|cabo|Puxada/i.test(n)?2.5:/halter|goblet|Farmers|garrafas|mochila/i.test(n)?2:1;
-const liftHist=n=>(st.lifts||{})[n]||[];
+const liftHist=n=>(st?.lifts||{})[n]||[];
 const e1rm=(kg,r)=>kg>0?kg*(1+Math.min(r,12)/30):0;
 const fmtKg=k=>nf(Math.round(k*10)/10);
 function liftLast(n){const l=liftHist(n).slice(-1)[0];if(!l)return'';const kg=[...new Set(l.sets.map(x=>x[0]))];return `${kg.length===1&&kg[0]>0?fmtKg(kg[0])+' kg × ':''}${l.sets.map(x=>(kg.length>1&&x[0]>0?fmtKg(x[0])+'×':'')+x[1]).join(' · ')}`;}
@@ -1624,7 +1624,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611181532';
+const APP_VER='202611181559';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
