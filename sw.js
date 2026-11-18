@@ -1,6 +1,6 @@
 // Zone5: guarda a app para abrir sem rede. Dados e APIs vão sempre à rede.
-const CACHE='zone5-202611181559';
-const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg','./icon-180.png','./icon-192.png','./icon-512.png'];
+const CACHE='zone5-202611181834';
+const SHELL=['./','./index.html','./manifest.webmanifest','./icon-v2.svg','./apple-touch-icon-v2.png','./icon-192-v2.png','./icon-512-v2.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',e=>{
@@ -12,7 +12,7 @@ self.addEventListener('fetch',e=>{
 // Lembretes de treino (notificações push)
 self.addEventListener('push',e=>{
   let d={};try{d=e.data?e.data.json():{};}catch(_){d={title:'Zone5',body:e.data?e.data.text():''};}
-  e.waitUntil(self.registration.showNotification(d.title||'Zone5',{body:d.body||'',icon:'./icon-192.png',badge:'./icon-192.png',tag:'zone5-'+(d.date||'today'),data:{url:d.url||'./#hoje'}}));
+  e.waitUntil(self.registration.showNotification(d.title||'Zone5',{body:d.body||'',icon:'./icon-192-v2.png',badge:'./icon-192-v2.png',tag:'zone5-'+(d.date||'today'),data:{url:d.url||'./#hoje'}}));
 });
 self.addEventListener('notificationclick',e=>{
   e.notification.close();
