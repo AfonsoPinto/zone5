@@ -1620,7 +1620,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611181454';
+const APP_VER='202611181524';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2729,7 +2729,7 @@ function bindOnboard(){
 }
 function obNav(a,v){
   obCollect();
-  const err=m=>{const e=$('#obErr');e.textContent=tr(m);};
+  const err=m=>{const e=$('#obErr');e.textContent=tr(m);toast(tr(m));haptic();e.scrollIntoView({behavior:'smooth',block:'center'});};
   if(a==='ob-hx'){ob.hxId=v;ob.hxDay='';RB.ob.browsing=false;obRerender();window.scrollTo(0,0);return;}
   if(a==='ob-focus'){const g=new Set(ob.gymFocus||[]);if(g.has(v))g.delete(v);else if(g.size<3)g.add(v);else toast(L('Escolhe no máximo 3 zonas.','Pick up to 3 areas.'));ob.gymFocus=[...g];obRerender();return;}
   if(a==='ob-lim'){const g=new Set(ob.gymLimits||[]);g.has(v)?g.delete(v):g.add(v);ob.gymLimits=[...g];obRerender();return;}
