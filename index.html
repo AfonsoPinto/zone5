@@ -119,7 +119,7 @@ nav.tabs .in{width:100%;max-width:560px;display:grid;grid-template-columns:repea
 nav.tabs[hidden]{display:none}
 .sports{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
 .sport{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 6px;min-height:92px;border-radius:18px;text-align:center;font-weight:400;width:auto}
-.sport .ic{font-size:26px}.sport b{font-size:15px}.sport[disabled]{opacity:.45}
+.sport .ic{font-size:26px}.sport b{font-size:15px}.sport[disabled],.sport.soon{opacity:.45}
 .sport[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,var(--surface))}
 button.primary.go{flex-basis:100%;font-size:18px;min-height:56px}
 .cele{display:flex;flex-direction:column;gap:12px;text-align:center;align-items:stretch}.cele .stats{text-align:left}
@@ -869,7 +869,7 @@ function xrPick(id){
 }
 function xrCustom(){
   const name=($('#xrName').value||'').trim(),date=$('#xrDate').value,hx=xrSport==='hyrox',km=xrKmSel==='other'?parseFloat(String($('#xrKm')?.value||'').replace(',','.')):xrKmSel;
-  const err=m=>{$('#xrErr').textContent=m;};
+  const err=m=>showErr('#xrErr',m);
   if(!name)return err(L('Escreve o nome da prova.','Enter the race name.'));
   if(!date||date<=TODAY)return err(L('Escolhe uma data no futuro.','Pick a future date.'));
   if(!hx&&!(km>0&&km<=250))return err(L('Indica a distância em km.','Enter the distance in km.'));
@@ -1100,7 +1100,7 @@ function openGymExtra(){
   <div class="small"><b>${L('Objetivo','Goal')}</b></div><div class="chips">${chip('goal','health',L('Força para correr melhor','Strength to run better'))}${chip('goal','strength',L('Ganhar força','Build strength'))}${chip('goal','muscle',L('Ganhar massa muscular','Build muscle'))}</div>
   <div class="small"><b>${L('Onde treinas?','Where do you train?')}</b></div><div class="chips">${chip('eq','full',L('Ginásio completo','Full gym'))}${chip('eq','basic',L('Ginásio pequeno','Small gym'))}${chip('eq','home',L('Em casa','Home'))}${chip('eq','body',L('Sem material','No equipment'))}</div>
   <div class="small"><b>${L('Tempo por treino','Time per workout')}</b></div><div class="chips">${[30,45,60].map(m=>chip('min',m,m+' min')).join('')}</div>
-  <div class="btns"><button class="primary" data-act="ge-save" ${g.days.length?'':'disabled'}>${cur?L('Guardar','Save'):L('Juntar ao plano','Add to plan')}</button>${cur?`<button class="ghost" data-act="ge-off" style="color:var(--bad)">${L('Tirar o ginásio do plano','Remove gym from plan')}</button>`:''}</div>`);
+  <div class="btns"><button class="primary" data-act="ge-save">${cur?L('Guardar','Save'):L('Juntar ao plano','Add to plan')}</button>${cur?`<button class="ghost" data-act="ge-off" style="color:var(--bad)">${L('Tirar o ginásio do plano','Remove gym from plan')}</button>`:''}</div>`);
 }
 
 /* ---------- Outras modalidades sem prova (corrida ou HYROX junto de outro plano) ---------- */
@@ -1146,7 +1146,7 @@ function openSideExtra(k){
   <div class="small"><b>${L('Em que dias?','Which days?')}</b></div>
   <div class="daypick">${DOW.map((l,i)=>`<button type="button" data-act="xe-day" data-v="${i}" aria-pressed="${g.days.includes(i)}">${l}</button>`).join('')}</div>
   <div class="tiny muted">${rec}</div>${warn?`<div class="small" style="color:var(--warn)">⚠ ${warn}</div>`:''}
-  <div class="btns"><button class="primary" data-act="xe-save" ${g.days.length?'':'disabled'}>${cur?L('Guardar','Save'):L('Juntar ao plano','Add to plan')}</button>${cur?`<button class="ghost" data-act="xe-off" style="color:var(--bad)">${L('Tirar do plano','Remove from plan')}</button>`:''}</div>`);
+  <div class="btns"><button class="primary" data-act="xe-save">${cur?L('Guardar','Save'):L('Juntar ao plano','Add to plan')}</button>${cur?`<button class="ghost" data-act="xe-off" style="color:var(--bad)">${L('Tirar do plano','Remove from plan')}</button>`:''}</div>`);
 }
 function xrModePick(){
   const hx=xrSport==='hyrox';
@@ -1620,7 +1620,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611181524';
+const APP_VER='202611181527';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -1806,6 +1806,7 @@ let sb=null,user=null,mode=null; // mode: 'cloud' | 'demo' | null (por entrar)
 const lsKey=()=>'zone5.v1.'+(user?user.id:'demo');
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function showErr(sel,m){const e=$(sel);m=tr(m);if(e){e.textContent=m;try{e.scrollIntoView({behavior:'smooth',block:'center'});}catch(_){}}toast(m);haptic();}
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2800);}
 function setSync(k){$('#syncDot').className='dot '+(k==='ok'?'ok':k==='local'?'local':'');$('#syncTxt').textContent=k==='ok'?'Sincronizado':k==='local'?(mode==='demo'?'Modo experiência':'Sem ligação'):k==='off'?'':'A ligar…';}
 try{if(CONFIG.SUPABASE_URL&&window.supabase)sb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true}});}catch(e){sb=null;}
@@ -1880,7 +1881,7 @@ async function authGo(){
   const btn=document.querySelector('[data-act="auth-go"]');if(btn?.disabled)return;if(btn)btn.disabled=true;try{await authGo2();}finally{if(btn&&btn.isConnected)btn.disabled=false;}
 }
 async function authGo2(){
-  const email=$('#aEmail').value.trim(),pass=$('#aPass').value,err=m=>$('#aErr').textContent=m;
+  const email=$('#aEmail').value.trim(),pass=$('#aPass').value,err=m=>showErr('#aErr',m);
   if(!/^\S+@\S+\.\S+$/.test(email))return err('Escreve um email válido.');
   if(pass.length<8)return err('A palavra-passe tem de ter pelo menos 8 caracteres.');
   err('');
@@ -2530,7 +2531,7 @@ function obVdot(){
 function verdictOf(v,km,g,dateS){const gv=vdotFrom(km*1000,g),diff=gv-v;const wks=dateS?Math.max(0,daysBetween(TODAY,dateS)/7):8;const gain=Math.min(wks*0.25,5)+0.5;
   return diff<=0.3?['ao teu alcance','var(--good)']:diff<=gain?['realista com treino','var(--good)']:diff<=gain+2?['ambicioso','var(--warn)']:['muito ambicioso','var(--bad)'];}
 const SPORTS=[['run','🏃','Corrida','Provas, começar, voltar ou manter'],['hyrox','🏋️','HYROX','Corrida + 8 estações'],['gym','💪','Ginásio','Plano de treino de força'],['tri','🏊','Triatlo','Natação, bicicleta e corrida',true],['swim','🌊','Natação','',true],['bike','🚴','Ciclismo','',true]];
-function sportPicker(cur,k,act,skip){return `<div class="sports">${SPORTS.filter(x=>!(skip||[]).includes(x[0])).map(([v,ic,t,d,soon])=>`<button type="button" class="sport" ${soon?'disabled':`${act?`data-act="${act}"`:`data-k="${k}"`} data-v="${v}"`} aria-pressed="${cur===v}"><span class="ic">${ic}</span><b>${tr(t)}</b>${soon?`<span class="tiny">${L('em breve','soon')}</span>`:d?`<span class="tiny muted">${tr(d)}</span>`:''}</button>`).join('')}</div>`;}
+function sportPicker(cur,k,act,skip){return `<div class="sports">${SPORTS.filter(x=>!(skip||[]).includes(x[0])).map(([v,ic,t,d,soon])=>`<button type="button" class="sport${soon?' soon':''}" ${soon?`data-act="soon" data-v="${esc(tr(t))}"`:`${act?`data-act="${act}"`:`data-k="${k}"`} data-v="${v}"`} aria-pressed="${cur===v}"><span class="ic">${ic}</span><b>${tr(t)}</b>${soon?`<span class="tiny">${L('em breve','soon')}</span>`:d?`<span class="tiny muted">${tr(d)}</span>`:''}</button>`).join('')}</div>`;}
 function onboardHtml(){
   ob=ob||obDefaults();
   const steps=obSteps();if(!(ob.step>=0))ob.step=0;if(ob.step>steps.length-1)ob.step=0;const cur=steps[ob.step]||'goal',idx=ob.step;
@@ -2729,7 +2730,7 @@ function bindOnboard(){
 }
 function obNav(a,v){
   obCollect();
-  const err=m=>{const e=$('#obErr');e.textContent=tr(m);toast(tr(m));haptic();e.scrollIntoView({behavior:'smooth',block:'center'});};
+  const err=m=>showErr('#obErr',m);
   if(a==='ob-hx'){ob.hxId=v;ob.hxDay='';RB.ob.browsing=false;obRerender();window.scrollTo(0,0);return;}
   if(a==='ob-focus'){const g=new Set(ob.gymFocus||[]);if(g.has(v))g.delete(v);else if(g.size<3)g.add(v);else toast(L('Escolhe no máximo 3 zonas.','Pick up to 3 areas.'));ob.gymFocus=[...g];obRerender();return;}
   if(a==='ob-lim'){const g=new Set(ob.gymLimits||[]);g.has(v)?g.delete(v):g.add(v);ob.gymLimits=[...g];obRerender();return;}
@@ -2851,7 +2852,7 @@ async function readGpx(f){
     const a=analyzePoints(raw);
     if(!a||a.dist<0.2)throw new Error('curto');
     prepAnalysis(a);renderLog();
-  }catch(e){const el=$('#gpxErr');if(el)el.textContent='Não consegui ler este ficheiro. Confirma que é um .gpx ou .fit de uma corrida com GPS ou distância.';}
+  }catch(e){showErr('#gpxErr','Não consegui ler este ficheiro. Confirma que é um .gpx ou .fit de uma corrida com GPS ou distância.');}
 }
 function prepAnalysis(a){
   {
@@ -2879,7 +2880,7 @@ function commitLog(log,w){
   adapt();
 }
 function saveLog(){
-  const err=m=>{$('#logErr').textContent=m;};
+  const err=m=>showErr('#logErr',m);
   let log;
   const sel=$('#mWid');if(sel){draft.wid=sel.value||null;draft.extra=!sel.value;}
   if(draft.mode==='gpx'){
@@ -3201,12 +3202,14 @@ document.addEventListener('click',e=>{
   else if(a==='ps-open')openPlanSettings();
   else if(a==='ge'){const k=b.dataset.k;geDraft[k]=k==='min'?Number(b.dataset.v):b.dataset.v;openGymExtra();}
   else if(a==='ge-day'){const d=Number(b.dataset.v),s2=new Set(geDraft.days);s2.has(d)?s2.delete(d):s2.size<6?s2.add(d):toast(L('Deixa pelo menos 1 dia de descanso por semana.','Keep at least 1 rest day a week.'));geDraft.days=[...s2].sort((x,y)=>x-y);openGymExtra();}
+  else if(a==='ge-save'&&!geDraft?.days?.length){toast(L('Escolhe pelo menos um dia.','Pick at least one day.'));haptic();}
   else if(a==='ge-save'){st.profile.gymExtra={...geDraft};geDraft=null;applyGymExtra();addNote(L('Treino de ginásio juntado ao plano.','Gym training added to the plan.'),'info');persist();openPlanSettings();render();toast(L('Ginásio juntado ao plano','Gym added to your plan'));}
   else if(a==='ge-off'){delete st.profile.gymExtra;geDraft=null;for(const wk of st.plan.weeks)wk.workouts=wk.workouts.filter(w=>!w.gymExtra||logFor(w));persist();openPlanSettings();render();toast(L('Ginásio retirado do plano','Gym removed from plan'));}
   else if(a==='ps')psOpen(b.dataset.v);
   else if(a==='rb'){const S=RB[b.dataset.ctx],k=b.dataset.k;S[k]=k==='more'||k==='browsing'?true:b.dataset.v;if(k==='dist'||k==='reg')S.more=false;haptic();rbRerender(b.dataset.ctx);}
   else if(a==='howto'){if(G){G.howBack=true;}const nm=b.dataset.v;if(G){const back=()=>renderGuide();openSheet(howHtml(nm)+`<button class="primary" data-act="how-back">${L('Voltar ao treino','Back to workout')}</button>`);}else{lastSheetBeforeHow=$('#sheetBg').classList.contains('open')?$('#sheet').innerHTML:'';openSheet(howHtml(nm)+(lastSheetBeforeHow?`<button class="ghost" data-act="how-back">‹ ${L('Voltar','Back')}</button>`:''));}}
   else if(a==='upd-go')doUpdate();
+  else if(a==='soon'){toast(L(`${b.dataset.v} chega em breve.`,`${b.dataset.v} is coming soon.`));haptic();}
   else if(a==='kudo')kudo(id,b.dataset.v);
   else if(a==='pr-share'){toast(L('A preparar a imagem…','Preparing image…'));prCard(b.dataset.v);}
   else if(a==='checkin'){ciDraft=null;openCheckin(id,false);}
@@ -3237,6 +3240,7 @@ document.addEventListener('click',e=>{
   else if(a==='xr-mode'){if(b.dataset.v==='free'){xeDraft=null;openSideExtra(xrSport==='hyrox'?'hx':'run');}else{xrMode='race';openAddRace();}}
   else if(a==='xe'){xeDraft[b.dataset.k]=b.dataset.v;openSideExtra(xeDraft.k);}
   else if(a==='xe-day'){const d=+b.dataset.v;xeDraft.days=xeDraft.days.includes(d)?xeDraft.days.filter(x=>x!==d):[...xeDraft.days,d].sort((x,y)=>x-y);openSideExtra(xeDraft.k);}
+  else if(a==='xe-save'&&!xeDraft?.days?.length){toast(L('Escolhe pelo menos um dia.','Pick at least one day.'));haptic();}
   else if(a==='xe-save'){const k=xeDraft.k;st.profile[k==='run'?'runExtra':'hxExtra']=k==='run'?{days:xeDraft.days,kind:xeDraft.kind}:{days:xeDraft.days,eq:xeDraft.eq};xeDraft=null;applySideExtras();addNote(k==='run'?L('Corrida juntada ao plano.','Running added to your plan.'):L('Treinos HYROX juntados ao plano.','HYROX training added to your plan.'),'info');persist();openPlanSettings();render();toast(L('Plano atualizado','Plan updated'));haptic();}
   else if(a==='xe-off'){const k=xeDraft.k;delete st.profile[k==='run'?'runExtra':'hxExtra'];xeDraft=null;applySideExtras();persist();openPlanSettings();render();toast(L('Removido do plano','Removed from plan'));}
   else if(a==='xr-open'){xrOpen=true;openAddRace();setTimeout(()=>$('#xrName')?.focus(),50);}
@@ -3248,7 +3252,7 @@ document.addEventListener('click',e=>{
   else if(a==='continue'){st.plan=genPlan(st.profile,TODAY,st.vdot);if(st.extraRaces?.length)applyExtraRaces();if(st.profile.gymExtra&&st.profile.goalType!=='gym')applyGymExtra();applySideExtras();addNote('Novo bloco de 12 semanas criado.','info');persist();render();toast('Plano pronto');}
   else if(a==='auth-go')authGo();
   else if(a==='auth-switch'){authMode=authMode==='in'?'up':'in';render();}
-  else if(a==='auth-forgot'){const e=($('#aEmail').value||'').trim();if(!e)return $('#aErr').textContent='Escreve o teu email primeiro.';sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname}).then(()=>toast('Enviámos um email para recuperares a palavra-passe.'));}
+  else if(a==='auth-forgot'){const e=($('#aEmail').value||'').trim();if(!e)return showErr('#aErr','Escreve o teu email primeiro.');sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname}).then(()=>toast('Enviámos um email para recuperares a palavra-passe.'));}
   else if(a==='newpass'){const p=$('#np').value;if(p.length<8)return toast('Mínimo 8 caracteres.');sb.auth.updateUser({password:p}).then(({error})=>{toast(error?'Não foi possível mudar a palavra-passe.':'Palavra-passe atualizada');closeSheet();});}
   else if(a==='demo'){mode='demo';try{localStorage.setItem('zone5.mode','demo');}catch(e){}st=readLocal();setSync('local');render();}
   else if(a==='logout'){if(mode==='cloud'&&sb){sb.auth.signOut();}else{try{localStorage.removeItem('zone5.mode');}catch(e){}mode=null;st=null;authMode='up';render();}}
