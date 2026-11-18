@@ -227,7 +227,7 @@ body.sheet-open{overflow:hidden}
 .tpick span{color:var(--muted);font-weight:700;font-size:14px}
 .wiz{display:flex;flex-direction:column;gap:6px;padding-top:4px}
 .wbar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}.wbar>div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .25s}
-.wnav{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;padding-top:4px}
+.wnav{position:sticky;bottom:0;z-index:4;display:flex;gap:8px;margin:0 -20px;padding:18px 20px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(to bottom,transparent,var(--bg) 22px)}
 .wnav>*{flex:1}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 @media (max-width:380px){.stats{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}.wtitle{font-size:26px}}
@@ -1620,7 +1620,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611172333';
+const APP_VER='202611181454';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2533,7 +2533,7 @@ const SPORTS=[['run','🏃','Corrida','Provas, começar, voltar ou manter'],['hy
 function sportPicker(cur,k,act,skip){return `<div class="sports">${SPORTS.filter(x=>!(skip||[]).includes(x[0])).map(([v,ic,t,d,soon])=>`<button type="button" class="sport" ${soon?'disabled':`${act?`data-act="${act}"`:`data-k="${k}"`} data-v="${v}"`} aria-pressed="${cur===v}"><span class="ic">${ic}</span><b>${tr(t)}</b>${soon?`<span class="tiny">${L('em breve','soon')}</span>`:d?`<span class="tiny muted">${tr(d)}</span>`:''}</button>`).join('')}</div>`;}
 function onboardHtml(){
   ob=ob||obDefaults();
-  const steps=obSteps(),cur=steps[ob.step]||'goal',idx=ob.step;
+  const steps=obSteps();if(!(ob.step>=0))ob.step=0;if(ob.step>steps.length-1)ob.step=0;const cur=steps[ob.step]||'goal',idx=ob.step;
   const chip=(k,v,l,on)=>`<button type="button" class="chip" data-k="${k}" data-v="${v}" aria-pressed="${on??String(ob[k])===String(v)}">${l}</button>`;
   let body='';
   if(cur==='goal'){
@@ -2740,7 +2740,7 @@ function obNav(a,v){
   if(a==='ob-day'){const d=Number(v);ob.runDays=ob.runDays.includes(d)?ob.runDays.filter(x=>x!==d):[...ob.runDays,d].sort((a,b)=>a-b);if(!ob.runDays.includes(ob.longDay)&&ob.runDays.length)ob.longDay=ob.runDays.includes(6)?6:ob.runDays.includes(5)?5:ob.runDays[ob.runDays.length-1];obRerender();return;}
   if(a==='ob-back'){ob.step=Math.max(0,ob.step-1);obRerender();window.scrollTo(0,0);return;}
   const m=obValidate();if(m)return err(m);
-  if(a==='ob-next'){ob.step++;obRerender();window.scrollTo(0,0);return;}
+  if(a==='ob-next'){ob.step=Math.min(ob.step+1,obSteps().length-1);obRerender();window.scrollTo(0,0);return;}
   if(a==='ob-go')obCreate();
 }
 async function obCreate(){
