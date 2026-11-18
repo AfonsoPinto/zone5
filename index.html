@@ -1018,7 +1018,8 @@ const GX={
   legext:{full:['Extensão de pernas na máquina','Leg extension'],basic:['Agachamento búlgaro leve','Light split squat'],home:['Agachamento búlgaro leve','Light split squat'],body:['Agachamento em parede','Wall sit']},
   crunch:{full:['Abdominal no cabo','Cable crunch'],basic:['Abdominal no cabo','Cable crunch'],home:['Hollow hold','Hollow hold'],body:['Hollow hold','Hollow hold']},
   carry:{full:['Farmers carry','Farmers carry'],basic:['Farmers carry','Farmers carry'],home:['Farmers carry','Farmers carry'],body:['Mountain climbers','Mountain climbers']}};
-function gxEN(){const add={};for(const k in GX){for(const e in GX[k]){const v=GX[k][e];if(Array.isArray(v))add[v[0]]=v[1];else for(const e2 in v)add[v[e2][0]]=v[e2][1];}}Object.assign(EN_EXACT,add);}
+const WU_EN={'Polichinelos':'Jumping jacks','Marcha no lugar':'March in place','Círculos de braços':'Arm circles','Bom dia sem peso':'Bodyweight good morning','Afundos alternados':'Alternating lunges'};
+function gxEN(){Object.assign(EN_EXACT,WU_EN);const add={};for(const k in GX){for(const e in GX[k]){const v=GX[k][e];if(Array.isArray(v))add[v[0]]=v[1];else for(const e2 in v)add[v[e2][0]]=v[e2][1];}}Object.assign(EN_EXACT,add);}
 const GYM_GOALS={strength:['💪','Ganhar força','Mais forte nos exercícios principais, com séries curtas e pesadas.'],muscle:['🧱','Ganhar massa muscular','Volume moderado, 8–12 repetições, para crescer.'],fit:['🔥','Perder gordura e ganhar condição','Circuitos com pouco descanso e um final de cardio.'],health:['🌿','Saúde e bem-estar','Força para o dia a dia, sem exageros. Ideal para voltar.']};
 const GT={ // sessões por tipo
   A:{t:'Corpo inteiro A',ex:['squat','pushH','pullH','hinge','core','arms1','calf']},
@@ -1548,11 +1549,14 @@ const HOW={
  'Bom dia sem peso':[['Mãos atrás da cabeça, joelhos ligeiramente fletidos.','Empurra a anca para trás com as costas direitas até sentires os posteriores esticar.','Volta a subir apertando os glúteos.'],'Arredondar as costas.',['Hands behind your head, knees soft.','Push your hips back with a flat back until you feel your hamstrings stretch.','Come back up squeezing your glutes.'],'Rounding your back.'],
  'Afundos alternados':[['De pé, pés à largura da anca.','Dá um passo à frente e desce até o joelho de trás quase tocar no chão.','Volta e troca de perna.'],'Joelho da frente a fugir para dentro.',['Stand with feet hip-width apart.','Step forward and lower until your back knee nearly touches the floor.','Step back and switch legs.'],'Front knee caving in.'],
  'Aberturas com halteres':[['Deitado no banco, halteres por cima do peito, cotovelos ligeiramente fletidos.','Abre os braços em arco até sentir o peito esticar.','Fecha como se abraçasses uma árvore.'],'Descer demasiado e forçar os ombros.',['Lie on the bench, dumbbells over your chest, elbows soft.','Open your arms in an arc until you feel a chest stretch.','Close as if hugging a tree.'],'Going too deep and straining your shoulders.']};
+const STR_ALIAS={'Lunge à retaguarda':'Afundos','Elevação de gémeos':'Gémeos','Peso morto a 1 perna':'Peso morto a uma perna com halter','Step-up num banco':'Step-up baixo'};
+const howKey=n=>STR_ALIAS[n]||n;
+const hasHow=n=>!!(HOW[howKey(n)]||XA.has(howKey(n)));
 function howHtml(name){
-  const h=HOW[name],ph=PHOTO[name],an=XA.has(name);
+  const k=howKey(name),h=HOW[k],ph=PHOTO[k],an=XA.has(k);
   const media=an||ph?`<div class="xa-wrap" data-view="${an?'anim':'photo'}">
     ${an&&ph?`<div class="seg xa-seg"><button data-act="xa-view" data-v="anim" aria-pressed="true">${L('Animação','Animation')}</button><button data-act="xa-view" data-v="photo" aria-pressed="false">${L('Fotos reais','Real photos')}</button></div>`:''}
-    ${an?`<div class="xa-anim">${XA.svg(name)}<div class="tiny muted" style="text-align:center"><span class="xa-dot"></span> ${L('Músculo principal','Main muscle')}</div></div>`:''}
+    ${an?`<div class="xa-anim">${XA.svg(k)}<div class="tiny muted" style="text-align:center"><span class="xa-dot"></span> ${L('Músculo principal','Main muscle')}</div></div>`:''}
     ${ph?`<div class="xa-photo"><div class="xa-flip"><img src="ex/${ph}-0.jpg" alt="${esc(tr(name))} – ${L('início','start')}" loading="lazy" onerror="this.closest('.xa-photo').remove()"><img class="b" src="ex/${ph}-1.jpg" alt="${esc(tr(name))} – ${L('fim','end')}" loading="lazy"></div><div class="tiny muted" style="text-align:center">${L('Alterna entre o início e o fim do movimento','Alternates between start and end of the movement')} · Free Exercise DB</div></div>`:''}
   </div>`:'';
   return `<div class="row between" style="flex-wrap:nowrap;align-items:flex-start"><h2>${esc(tr(name))}</h2><button class="link" data-act="${G?'how-back':'close'}">${L('Fechar','Close')}</button></div>
@@ -1620,7 +1624,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611181527';
+const APP_VER='202611181532';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2236,7 +2240,7 @@ function stepHtml(s,w,i){
   if(s.seq){const parts=[];for(const x of s.seq){if(x.kind==='run')parts.push(fmtKm(x.km));else if(x.kind==='st')parts.push(`${tr(x.t)} ${x.amt}`);}
     const one=s.seq.filter(x=>x.kind==='rest').length+1;const per=one>1?parts.slice(0,parts.length/one):parts;
     return `<li><span class="bar z${s.z}"></span><div><div class="t">${esc(tr(s.t))}</div><div class="p num">${per.map(esc).join(' → ')}${one>1?` · ${L('2 min de descanso entre voltas','2 min rest between rounds')}`:''}${s.seq.some(x=>x.kind==='run')?` · ${L('corrida a','runs at')} ${fmtPace(pz().P)}/km`:''}</div></div></li>`;}
-  if(s.z==='F')return `<li><span class="bar zF"></span><div><div class="t">${esc(s.t)}</div><div class="p num">${esc(s.d)}</div></div></li>`;
+  if(s.z==='F')return `<li><span class="bar zF"></span><div><div class="t">${esc(tr(s.t))}</div><div class="p num">${esc(tr(s.d||''))}</div>${w&&hasHow(s.t)?`<button class="link small howbtn" data-act="howto" data-v="${esc(s.t)}">ⓘ ${L('Como fazer','How to do it')}</button>`:''}</div></li>`;
   const p=pz();let extra='';
   if(s.z==='H'||s.z==='W'||s.restSec){}
   else if(s.reps&&s.repKm&&!s.repSec){extra=` · ≈ ${fmtTime(target(p,s.z)*s.repKm)} cada`;}
@@ -3110,7 +3114,7 @@ function records2(){
   return r;
 }
 function recordsHtml(compact){
-  const r=records2();
+  const r=records2();if(!r.nAll)return'';
   const lab={1:'1 km',5:'5 km',10:'10 km',21.0975:L('Meia','Half')};
   const cells=Object.keys(lab).filter(k=>r.best[k]).map(k=>`<div class="stat"><span class="v">${fmtTime(r.best[k].t)}</span><span class="l">${L('Melhor','Best')} ${lab[k]} · ${fmtDate(r.best[k].d)}</span></div>`).join('');
   const got=BADGES.filter(b=>b[3](r)),next=BADGES.filter(b=>!b[3](r)).slice(0,3);
