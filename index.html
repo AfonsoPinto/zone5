@@ -1630,7 +1630,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611191331';
+const APP_VER='202611191444';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -3650,6 +3650,7 @@ function glAddExSheet(q){
   openSheet(`<div class="row between"><h2>${L('Adicionar exercício','Add exercise')}</h2><button class="link" data-act="gl-back">${L('Voltar','Back')}</button></div>
   <input id="glQ" placeholder="${L('Procurar exercício','Search exercise')}" value="${esc(q||'')}" autocomplete="off">
   <div id="glPick">${Object.entries(groups).map(([gname,xs])=>`<div class="small"><b>${esc(gname)}</b></div><div class="swl">${xs.map(x=>`<button type="button" class="swi" data-act="gl-pick" data-v="${esc(x.n)}">${XA.has(x.n)?XA.svg(x.n,'xa xa-sw'):'<span class="xa-sw"></span>'}<span><b>${esc(tr(x.n))}</b></span></button>`).join('')}</div>`).join('')||`<div class="small muted">${L('Nenhum exercício encontrado.','No exercise found.')}</div>`}</div>`);
+  if(q===''){const sh=$('#sheet');if(sh)sh.scrollTop=0;}
   const qi=$('#glQ');if(qi){qi.oninput=()=>{const v=qi.value;clearTimeout(glAddExSheet._t);glAddExSheet._t=setTimeout(()=>{glAddExSheet(v);const n=$('#glQ');n.focus();n.setSelectionRange(v.length,v.length);},250);};}
 }
 function glPick(n){
@@ -3685,17 +3686,17 @@ function glGuide(){
 function liftChartHtml(n){
   const h=liftHist(n);if(!h.length)return'';
   const pts=h.map(e=>{const top=e.sets.reduce((a,q)=>q[0]>a[0]||(q[0]===a[0]&&q[1]>a[1])?q:a,e.sets[0]);return{d:e.d,kg:top[0],r:top[1],e:e1rm(top[0],top[1]),vol:e.sets.reduce((a,q)=>a+q[0]*q[1],0)};});
-  const W=340,H=150,p=28,ys=pts.map(x=>x.kg),mx=Math.max(...ys,1),mn=Math.min(...ys,mx-1);
+  const W=340,H=150,p=44,ys=pts.map(x=>x.kg),mx=Math.max(...ys,1),mn=Math.min(...ys,mx-1);
   const X=i=>pts.length===1?W/2:p+(W-p-10)*i/(pts.length-1),Y=v=>H-22-(H-40)*(v-mn)/Math.max(1,mx-mn);
   const line=pts.map((x,i)=>`${i?'L':'M'}${X(i).toFixed(1)},${Y(x.kg).toFixed(1)}`).join('');
   const first=pts[0],last=pts[pts.length-1],diff=last.kg-first.kg;
   const chart=pts.length<2?`<div class="card empty" style="padding:14px"><div style="font-size:26px">📈</div><div class="small muted">${L('O gráfico aparece a partir do segundo treino com este exercício.','The chart appears from your second workout with this exercise.')}</div></div>`:`<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="${L('Evolução do peso','Weight progress')}">
-   <text x="2" y="${Y(mx)+4}" fill="var(--muted)" font-size="11">${fmtKg(mx)}</text><text x="2" y="${Y(mn)+4}" fill="var(--muted)" font-size="11">${fmtKg(mn)}</text>
+   <text x="2" y="${Y(mx)+4}" fill="var(--muted)" font-size="11">${fmtKg(mx)}</text><text x="2" y="${Y(mn)-2}" fill="var(--muted)" font-size="11">${fmtKg(mn)}</text>
    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
    ${pts.map((x,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(x.kg).toFixed(1)}" r="4" fill="var(--accent)"/>`).join('')}
    <text x="${p}" y="${H-4}" fill="var(--muted)" font-size="11">${fmtDate(first.d)}</text><text x="${W-10}" y="${H-4}" fill="var(--muted)" font-size="11" text-anchor="end">${fmtDate(last.d)}</text></svg>`;
   return `${chart}
-  <div class="stats"><div class="stat"><span class="v">${fmtKg(last.kg)} kg</span><span class="l">${L('Última vez','Last time')} × ${last.r}</span></div><div class="stat"><span class="v">${diff>0?'+':''}${fmtKg(diff)} kg</span><span class="l">${L('desde o início','since the start')}</span></div><div class="stat"><span class="v">${Math.round(Math.max(...pts.map(x=>x.e)))}</span><span class="l">${L('1RM estimado (kg)','Estimated 1RM (kg)')}</span></div></div>
+  <div class="stats"><div class="stat"><span class="v">${fmtKg(last.kg)}</span><span class="l">${L('kg da última vez','kg last time')} × ${last.r}</span></div><div class="stat"><span class="v">${diff>0?'+':''}${fmtKg(diff)}</span><span class="l">${L('kg desde o início','kg since the start')}</span></div><div class="stat"><span class="v">${Math.round(Math.max(...pts.map(x=>x.e)))}</span><span class="l">${L('1RM estimado (kg)','Estimated 1RM (kg)')}</span></div></div>
   <div class="prl">${[...h].reverse().slice(0,8).map(e=>`<div class="prr"><span>${fmtDate(e.d)}</span><b class="num">${e.sets.map(q=>`${q[0]>0?fmtKg(q[0])+'×':''}${q[1]}`).join(' · ')}</b></div>`).join('')}</div>`;
 }
 function openLiftHist(n,back){
