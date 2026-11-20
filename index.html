@@ -1502,7 +1502,7 @@ const D={
  deadlift:{w:'bar',kp:'ff',ep:'ff',hl:'glute thigh back',F:[{hip:[94,146],t:58,f:[ST,ST2],h:[[126,174],[122,174]]},{hip:[114,104],t:0,f:[ST,ST2],h:{r:[3,58]}}]},
  hyperext:{props:P.incl(70,150,128,122)+P.box(40,176,40),kp:'dd',ep:'dd',hl:'back glute',F:[{hip:[118,118],t:168,f:[[52,168],[48,168]],h:{r:[6,8]},hd:10},{hip:[118,118],t:116,f:[[52,168],[48,168]],h:{r:[6,8]}}]},
  sapulldown:{w:'cable',cab:[190,16],props:P.col(190,16),kp:'ff',ep:'ff',hl:'back',F:[{hip:[106,104],t:22,f:[[118,193],[110,193]],h:{r:[42,-36]}},{hip:[106,104],t:22,f:[[118,193],[110,193]],h:{r:[6,57]}}]},
- shrug:{w:'db',kp:'ff',ep:'dd',hl:'delt back',dur:900,F:[{hip:[112,104],t:0,f:[[116,193],[110,193]],h:{r:[2,58]}},{hip:[112,104],t:0,tl:8,f:[[116,193],[110,193]],h:{r:[2,58]}}]},
+ shrug:{w:'db',kp:'ff',ep:'dd',hl:'delt back',dur:900,F:[{hip:[112,104],t:0,f:[[116,193],[110,193]],h:{r:[2,58]}},{hip:[112,104],t:0,tl:14,f:[[116,193],[110,193]],h:{r:[2,58]}}]},
  chestpress:{props:P.bench(70,152,56)+P.incl(76,150,70,92),kp:'uu',ep:'dd',hl:'chest uarm',F:[{hip:[92,150],t:-6,f:[[146,193],[142,193]],h:{r:[18,10]}},{hip:[92,150],t:-6,f:[[146,193],[142,193]],h:{r:[58,8]}}]},
  inclbar:inclp('bar'),
  pdips:{props:P.hbarP(90,160,120),kp:'bb',ep:'bb',hl:'chest uarm',F:[{hip:[110,122],t:10,f:{q:[-34,48]},h:[[124,120],[120,120]]},{hip:[104,150],t:16,f:{q:[-36,40]},h:[[124,120],[120,120]]}]},
@@ -1662,7 +1662,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611200929';
+const APP_VER='202611200935';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -3275,7 +3275,8 @@ document.addEventListener('click',e=>{
   else if(a==='gl-up'){const ei=+b.dataset.v,g=st.gl;if(ei>0){[g.ex[ei-1],g.ex[ei]]=[g.ex[ei],g.ex[ei-1]];glSave();}glRender();}
   else if(a==='gl-rm'){st.gl.ex.splice(+b.dataset.v,1);glSave();glRender();toast(L('Exercício removido','Exercise removed'));}
   else if(a==='gl-restset'){const [ei,x]=b.dataset.v.split(':').map(Number);st.gl.ex[ei].rest=x;glSave();glRender();}
-  else if(a==='gl-addex')glAddExSheet('');
+  else if(a==='gl-addex'){GLF={q:'',grp:'all',eq:'all'};glAddExSheet('');}
+  else if(a==='glf'){if(b.dataset.k==='reset')GLF={q:'',grp:'all',eq:'all'};else GLF[b.dataset.k]=b.dataset.v;glAddExSheet(null);const sh=$('#sheet');if(sh)sh.scrollTop=0;}
   else if(a==='gl-pick')glPick(b.dataset.v);
   else if(a==='gl-finish')glFinish(!!b.dataset.c);
   else if(a==='gl-guide')glGuide();
@@ -3693,12 +3694,36 @@ function glMenu(ei){
   ${it('gl-rm','🗑',L('Remover exercício','Remove exercise'))}
   </div><div class="small"><b>${L('Descanso entre séries','Rest between sets')}</b></div><div class="chips">${[45,60,90,120,150,180].map(x=>`<button type="button" class="chip" data-act="gl-restset" data-v="${ei}:${x}" aria-pressed="${e.rest===x}">${x} s</button>`).join('')}</div>`);
 }
+const EQ_L={machine:['Máquina','Machine'],cable:['Cabo','Cable'],bar:['Barra','Barbell'],db:['Halteres','Dumbbells'],kb:['Kettlebell','Kettlebell'],band:['Elástico','Band'],body:['Peso do corpo','Bodyweight']};
+function exEq(n){
+  if(/elástico|garrafas|mochila|toalha|mesa|cadeira/i.test(n))return /elástico/i.test(n)?'band':'body';
+  if(/Kettlebell|swing/i.test(n))return 'kb';
+  if(/máquina|Leg press|Peck|Hack|Smith|Chest press|assistidas|Abdução na|Adutores|Curl de pernas|Extensão de pernas|Hip thrust na|Gémeos sentado/i.test(n))return 'machine';
+  if(/Remada em T/.test(n))return 'bar';
+  if(/polia|cabo|Puxada|Pulldown|Crossover|Face pull|Pallof|corda/i.test(n))return 'cable';
+  if(isBar(n))return 'bar';
+  if(LIFT_BW.test(n))return 'body';
+  return 'db';
+}
+const GRP_ORDER=['Peito','Costas','Ombros','Braços','Pernas','Posterior e glúteos','Core','Corpo inteiro','Chest','Back','Shoulders','Arms','Legs','Hamstrings and glutes','Full body'];
+let GLF={q:'',grp:'all',eq:'all'};
+function glRecent(){const seen=new Map();for(const n in (st.lifts||{})){const h=st.lifts[n];if(h.length)seen.set(n,h[h.length-1].d);}return [...seen.entries()].sort((a,b)=>a[1]<b[1]?1:-1).map(x=>x[0]).slice(0,6);}
 function glAddExSheet(q){
-  const all=gxAllNames(),f=(q||'').trim().toLowerCase();const list=f?all.filter(x=>tr(x.n).toLowerCase().includes(f)||x.n.toLowerCase().includes(f)):all;
+  if(q!==undefined&&q!==null)GLF.q=q;
+  const all=gxAllNames().map(x=>({...x,eq:exEq(x.n)})),f=(GLF.q||'').trim().toLowerCase();
+  const list=all.filter(x=>(!f||tr(x.n).toLowerCase().includes(f)||x.n.toLowerCase().includes(f))&&(GLF.grp==='all'||x.g===GLF.grp)&&(GLF.eq==='all'||x.eq===GLF.eq));
   const groups={};for(const x of list)(groups[x.g]=groups[x.g]||[]).push(x);
+  const gnames=[...new Set(all.map(x=>x.g))].sort((a,b)=>GRP_ORDER.indexOf(a)-GRP_ORDER.indexOf(b));
+  const rec=!f&&GLF.grp==='all'?glRecent().map(n=>all.find(x=>x.n===n)).filter(x=>x&&(GLF.eq==='all'||x.eq===GLF.eq)):[];
+  const item=x=>`<button type="button" class="swi" data-act="gl-pick" data-v="${esc(x.n)}">${XA.has(x.n)?XA.svg(x.n,'xa xa-sw'):'<span class="xa-sw"></span>'}<span><b>${esc(tr(x.n))}</b><span class="tiny muted">${L(...EQ_L[x.eq])}${liftHist(x.n).length?' · '+L('Última vez','Last time')+': '+esc(liftLast(x.n)):''}</span></span></button>`;
+  const chip=(k,v,l)=>`<button type="button" class="chip" data-act="glf" data-k="${k}" data-v="${esc(v)}" aria-pressed="${GLF[k]===v}">${esc(l)}</button>`;
   openSheet(`<div class="row between"><h2>${L('Adicionar exercício','Add exercise')}</h2><button class="link" data-act="gl-back">${L('Voltar','Back')}</button></div>
-  <input id="glQ" placeholder="${L('Procurar exercício','Search exercise')}" value="${esc(q||'')}" autocomplete="off">
-  <div id="glPick">${Object.entries(groups).map(([gname,xs])=>`<div class="small"><b>${esc(gname)}</b></div><div class="swl">${xs.map(x=>`<button type="button" class="swi" data-act="gl-pick" data-v="${esc(x.n)}">${XA.has(x.n)?XA.svg(x.n,'xa xa-sw'):'<span class="xa-sw"></span>'}<span><b>${esc(tr(x.n))}</b></span></button>`).join('')}</div>`).join('')||`<div class="small muted">${L('Nenhum exercício encontrado.','No exercise found.')}</div>`}</div>`);
+  <input id="glQ" placeholder="${L('Procurar exercício','Search exercise')}" value="${esc(GLF.q||'')}" autocomplete="off">
+  <div class="chips scrollx">${chip('grp','all',L('Todos','All'))}${gnames.map(g=>chip('grp',g,g)).join('')}</div>
+  <div class="chips scrollx">${chip('eq','all',L('Qualquer material','Any equipment'))}${Object.keys(EQ_L).filter(k=>all.some(x=>x.eq===k)).map(k=>chip('eq',k,L(...EQ_L[k]))).join('')}</div>
+  ${rec.length?`<div class="small"><b>${L('Usados recentemente','Recently used')}</b></div><div class="swl">${rec.map(item).join('')}</div>`:''}
+  <div id="glPick">${Object.entries(groups).sort((a,b)=>GRP_ORDER.indexOf(a[0])-GRP_ORDER.indexOf(b[0])).map(([gname,xs])=>`<div class="small"><b>${esc(gname)}</b> <span class="tiny muted">${xs.length}</span></div><div class="swl">${xs.map(item).join('')}</div>`).join('')||`<div class="card empty"><div class="small muted">${L('Nenhum exercício com estes filtros.','No exercise matches these filters.')}</div><button class="link" data-act="glf" data-k="reset" data-v="">${L('Limpar filtros','Clear filters')}</button></div>`}</div>`);
+  document.querySelectorAll('#sheet .chips.scrollx').forEach(c=>{const on=c.querySelector('[aria-pressed="true"]');if(on)c.scrollLeft=Math.max(0,on.offsetLeft-c.clientWidth/2+on.clientWidth/2);});
   if(q===''){const sh=$('#sheet');if(sh)sh.scrollTop=0;}
   const qi=$('#glQ');if(qi){qi.oninput=()=>{const v=qi.value;clearTimeout(glAddExSheet._t);glAddExSheet._t=setTimeout(()=>{glAddExSheet(v);const n=$('#glQ');n.focus();n.setSelectionRange(v.length,v.length);},250);};}
 }
@@ -3757,7 +3782,7 @@ function freeWorkout(){
   const wk=weekOf(TODAY);if(!wk){toast(L('Cria primeiro um plano.','Create a plan first.'));return;}
   const w={id:'free-'+Date.now().toString(36),date:TODAY,type:'F',gym:true,free:true,title:L('Treino livre','Free workout'),min:45,km:0,steps:[],focus:{z:'G'}};
   wk.workouts.push(w);wk.workouts.sort((a,b)=>a.date<b.date?-1:1);
-  st.gl={wid:w.id,t0:Date.now(),ex:[],restEnd:0,restFor:''};persist();glRender();clearInterval(GLT);GLT=setInterval(glTick,500);setTimeout(()=>glAddExSheet(''),200);
+  st.gl={wid:w.id,t0:Date.now(),ex:[],restEnd:0,restFor:''};persist();glRender();clearInterval(GLT);GLT=setInterval(glTick,500);setTimeout(()=>{GLF={q:'',grp:'all',eq:'all'};glAddExSheet('');},200);
 }
 function glResumeHtml(){
   const g=st.gl,w=glW();if(!g||!w)return'';if(Date.now()-g.t0>8*3600e3)return'';
