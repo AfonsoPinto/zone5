@@ -1662,7 +1662,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611200935';
+const APP_VER='202611211906';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -1896,6 +1896,7 @@ async function boot(){
   if(!mode)setSync('off');
   {const q=new URLSearchParams(location.search),sv=q.get('strava');if(sv){q.delete('strava');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:'')+location.hash);setTimeout(()=>toast(sv==='ok'?L('Strava ligado. A importar corridas…','Strava connected. Importing runs…'):sv==='scope'?L('Para ligar, autoriza o acesso às atividades.','To connect, allow access to your activities.'):sv==='cancel'?L('Ligação ao Strava cancelada.','Strava connection cancelled.'):L('Não foi possível ligar ao Strava.',"Couldn't connect to Strava.")),600);if(sv==='ok')localStorage.removeItem('zone5.svSync');}}
   if(st&&st.profile&&st.tips===undefined)st.tips=1;
+  if(st?.plan&&st.logs){let ch=false;for(const l of st.logs){if(!l.wid)continue;const w=allW().find(x=>x.id===l.wid);if(w&&w.date!==l.date&&Math.abs(daysBetween(l.date,w.date))<=6&&alignLogDay(l,w))ch=true;}if(ch)persist();}
   if(st&&st.profile){setTimeout(stravaTick,1500);checkFatigue();if(lightenAfter({date:addDays(mondayOf(TODAY),-1)}))persist();loadWeather();}
   render();
   setTimeout(maybeAutoSync,3000);
@@ -2260,7 +2261,9 @@ async function gLeave(){await sb.from('group_members').delete().eq('group_id',gr
 
 /* ---------- helpers de estado ---------- */
 const allW=()=>st.plan.weeks.flatMap(w=>w.workouts);
-const logFor=w=>st.logs.find(l=>l.date===w.date&&l.wid===w.id)||st.logs.find(l=>l.date===w.date&&!l.wid&&!l.extra);
+const logFor=w=>st.logs.find(l=>l.wid===w.id&&(l.date===w.date||Math.abs(daysBetween(l.date,w.date))<=6))||st.logs.find(l=>l.date===w.date&&!l.wid&&!l.extra);
+/* treino feito noutro dia da mesma semana: passa para o dia em que foi feito (e troca com o que lá estava) */
+function alignLogDay(log,w){if(!w||!log||log.date===w.date)return false;const wk=weekOf(w.date);if(!wk||weekOf(log.date)!==wk)return false;const other=wk.workouts.find(x=>x!==w&&x.date===log.date&&!x.race&&!st.logs.some(l=>l.wid===x.id)&&(x.type==='F')===(w.type==='F'));if(other)other.date=w.date;w.origDate=w.origDate||w.date;w.date=log.date;wk.workouts.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);return true;}
 const popt=()=>({km:st.profile.raceKm,goalTime:st.profile.goalTime});
 const pz=()=>{const r=paces(st.vdot,st.profile.goal||'10k',popt());if(st.profile.goalType==='hyrox')r.P=hxPace(r.P);return r;};
 const gKm=()=>st.profile.goalType&&st.profile.goalType!=='race'?5:(st.profile.raceKm||GOALS[st.profile.goal].km);
@@ -2857,7 +2860,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();if(e.ke
 
 function openLog(wid,extra){
   const w=wid?allW().find(x=>x.id===wid):null;
-  draft={wid:w?w.id:null,extra:!!extra,date:w?w.date:TODAY,mode:'gpx',gpx:null};
+  draft={wid:w?w.id:null,extra:!!extra,date:w?(w.date>TODAY?TODAY:w.date):TODAY,mode:'gpx',gpx:null};
   renderLog();
 }
 function renderLog(){
@@ -2918,7 +2921,7 @@ function prepAnalysis(a){
   }
 }
 function commitLog(log,w){
-  if(w){log.wid=w.id;log.wtype=w.type;st.logs=st.logs.filter(l=>l.wid!==w.id);}else log.extra=true;
+  if(w){log.wid=w.id;log.wtype=w.type;st.logs=st.logs.filter(l=>l.wid!==w.id);alignLogDay(log,w);}else log.extra=true;
   log.eval=evaluate(log,w,st.vdot,st.profile.goal,popt());
   if(log.eval.newVdot){const o=st.vdot;st.vdot=Math.round(log.eval.newVdot*10)/10;st.vdotHist.push({d:log.date,v:st.vdot,why:w.title});addNote(`${w.title}: ${fmtTime(log.time)}. Ritmos recalculados (forma ${o.toFixed(1)} → ${st.vdot.toFixed(1)}).`,st.vdot>=o?'up':'down');}
   st.logs.push(log);
@@ -3116,7 +3119,7 @@ function gpsToLog(w){
   a.src='gps';draft={wid:w.id,extra:false,date:TODAY,mode:'gpx',gpx:null,rpe:6};prepAnalysis(a);return true;
 }
 setInterval(guideTick,250);
-function finishGuide(){if(G?.wuOnly){G=null;toast(L('Aquecimento feito. Bom treino!','Warm-up done. Have a great session!'));glRender();return;}const id=G.w.id,w=G.w;hxSaveTimes();const prs=saveLifts();if(w.type==='F'){if(!logFor(w))st.logs.push({date:w.date<=TODAY?w.date:TODAY,wid:w.id,wtype:'F',dist:0,time:0,rpe:null});{const lg=logFor(w);if(lg){if(G.sets?.length){lg.lifts=G.sets.length;lg.sets=G.sets.length;lg.vol=Math.round(G.sets.reduce((a,x)=>a+(x.kg||0)*(x.reps||0),0));const by={};for(const x of G.sets)(by[x.n]=by[x.n]||[]).push([x.kg||0,x.reps||0]);lg.gym=Object.entries(by).map(([n,s])=>({n,s}));}if(G.t0)lg.time=Math.round((Date.now()-G.t0)/1000);if(prs.length)lg.prs=prs;}}say(L('Treino concluído. Bom trabalho.','Workout complete. Great job.'));try{G.lock?.release();}catch(e){}G=null;persist();render();celebrate(logFor(w)||{date:TODAY,dist:0,time:0},w);return;}say('Treino concluído. Bom trabalho.');gpsStop();const hasGps=gpsToLog(w);try{G.lock?.release();}catch(e){}G=null;if(hasGps){renderLog();toast('Treino gravado. Confirma o esforço e guarda.');return;}openSheet(`<h2>Treino concluído</h2><div class="small muted">Quando a corrida estiver no Strava, exporta o GPX e regista-a para a Zone5 a analisar.</div><div class="btns"><button class="primary" data-act="log" data-id="${id}">Registar agora</button><button class="ghost" data-act="close">Mais tarde</button></div>`);}
+function finishGuide(){if(G?.wuOnly){G=null;toast(L('Aquecimento feito. Bom treino!','Warm-up done. Have a great session!'));glRender();return;}const id=G.w.id,w=G.w;hxSaveTimes();const prs=saveLifts();if(w.type==='F'){if(!logFor(w)){const nl={date:w.date<=TODAY?w.date:TODAY,wid:w.id,wtype:'F',dist:0,time:0,rpe:null};st.logs.push(nl);alignLogDay(nl,w);}{const lg=logFor(w);if(lg){if(G.sets?.length){lg.lifts=G.sets.length;lg.sets=G.sets.length;lg.vol=Math.round(G.sets.reduce((a,x)=>a+(x.kg||0)*(x.reps||0),0));const by={};for(const x of G.sets)(by[x.n]=by[x.n]||[]).push([x.kg||0,x.reps||0]);lg.gym=Object.entries(by).map(([n,s])=>({n,s}));}if(G.t0)lg.time=Math.round((Date.now()-G.t0)/1000);if(prs.length)lg.prs=prs;}}say(L('Treino concluído. Bom trabalho.','Workout complete. Great job.'));try{G.lock?.release();}catch(e){}G=null;persist();render();celebrate(logFor(w)||{date:TODAY,dist:0,time:0},w);return;}say('Treino concluído. Bom trabalho.');gpsStop();const hasGps=gpsToLog(w);try{G.lock?.release();}catch(e){}G=null;if(hasGps){renderLog();toast('Treino gravado. Confirma o esforço e guarda.');return;}openSheet(`<h2>Treino concluído</h2><div class="small muted">Quando a corrida estiver no Strava, exporta o GPX e regista-a para a Zone5 a analisar.</div><div class="btns"><button class="primary" data-act="log" data-id="${id}">Registar agora</button><button class="ghost" data-act="close">Mais tarde</button></div>`);}
 
 /* ---------- Recordes ---------- */
 function records(){
@@ -3216,7 +3219,7 @@ document.addEventListener('click',e=>{
   else if(a==='skip'){st.skipped=st.skipped||[];st.skipped.push(id);persist();closeSheet();render();}
   else if(a==='sugg-yes'){applyRecovery();persist();render();toast('Semana aliviada');}
   else if(a==='sugg-no'){st.dismissed=st.dismissed||[];st.dismissed.push(st.suggest.week);st.suggest=null;persist();render();}
-  else if(a==='fdone'){const w=allW().find(x=>x.id===id);const lg={date:w.date<=TODAY?w.date:TODAY,wid:w.id,wtype:'F',dist:0,time:0,rpe:5};st.logs.push(lg);persist();render();if(w.gym||w.hx)celebrate(lg,w);else{closeSheet();toast('Força feita. Boa!');}}
+  else if(a==='fdone'){const w=allW().find(x=>x.id===id);const lg={date:w.date<=TODAY?w.date:TODAY,wid:w.id,wtype:'F',dist:0,time:0,rpe:5};st.logs.push(lg);alignLogDay(lg,w);persist();render();if(w.gym||w.hx)celebrate(lg,w);else{closeSheet();toast('Força feita. Boa!');}}
   else if(a==='move')openMove(id);
   else if(a==='cant')openCant(id);
   else if(a==='cant-short')cantShort(id);
@@ -3741,7 +3744,7 @@ function glFinish(force){
   const fake={w,sets};const oldG=G;G=fake;const prs=saveLifts();G=oldG;
   const time=Math.round((Date.now()-g.t0)/1000),vol=Math.round(sets.reduce((a,x)=>a+(x.kg||0)*(x.reps||0),0));
   if(w.free){w.steps=g.ex.map(e=>({t:e.n,z:'G',sets:e.sets.filter(s=>s.done&&!s.wu).length||e.sets.length,reps:e.spec,rest:e.rest,d:`${e.sets.length} × ${e.spec}`}));w.min=Math.max(10,Math.round(time/60));}
-  let lg=logFor(w);if(!lg){lg={date:w.date<=TODAY?w.date:TODAY,wid:w.id,wtype:'F',dist:0,time:0,rpe:null};st.logs.push(lg);}
+  let lg=logFor(w);if(!lg){lg={date:w.date<=TODAY?w.date:TODAY,wid:w.id,wtype:'F',dist:0,time:0,rpe:null};st.logs.push(lg);alignLogDay(lg,w);}
   Object.assign(lg,{time,vol,sets:sets.length,lifts:sets.length,gym:g.ex.map(e=>({n:e.n,s:e.sets.filter(s=>s.done&&!s.wu).map(s=>[s.kg||0,s.reps||0])})).filter(x=>x.s.length)});if(prs.length)lg.prs=prs;
   st.gl=null;clearInterval(GLT);try{GL_LOCK?.release();}catch(e){}GL_LOCK=null;
   say(L('Treino concluído. Bom trabalho.','Workout complete. Great job.'));persist();render();celebrate(lg,w);
