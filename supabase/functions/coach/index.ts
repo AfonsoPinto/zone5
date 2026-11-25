@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
           contents: [{ role: "user", parts: [{ text: ctxStr }] }],
-          generationConfig: { temperature: 0.6, maxOutputTokens: 900 },
+          generationConfig: { temperature: 0.6, maxOutputTokens: 4096 },
         }),
       });
       const j = await r.json();
