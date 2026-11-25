@@ -180,6 +180,11 @@ details.why>summary{display:inline-flex;align-items:center;gap:4px;font-size:14p
 .kv{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.kv>div{background:var(--soft);border-radius:14px;padding:10px 8px;display:flex;flex-direction:column;gap:2px;text-align:center}.kv.kv2{grid-template-columns:1fr 1fr}.kv.kv2 b{font-size:22px}.kv b{font-family:var(--display);font-size:19px;font-variant-numeric:tabular-nums}.kv span{font-size:11.5px;color:var(--muted);font-weight:600}
 .sportchip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--soft);border:1px solid var(--line);font-weight:700;font-size:14px}
 @media (max-width:370px){#syncTxt{display:none}.sync{padding:8px}}
+.lphoto{display:block;width:100%;padding:0;border:none;border-radius:16px;overflow:hidden;min-height:0;background:var(--soft);aspect-ratio:4/3}.lphoto img{width:100%;height:100%;object-fit:cover;display:block}.lphoto.sm{aspect-ratio:16/9}
+.phbox{display:flex;flex-direction:column;gap:8px}.phprev{position:relative;border-radius:16px;overflow:hidden;aspect-ratio:16/9;background:var(--soft)}.phprev img{width:100%;height:100%;object-fit:cover}.phprev button{position:absolute;top:8px;right:8px;width:36px;height:36px;min-height:0;padding:0;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:#fff}
+.avwrap{position:relative;border:none;background:none;padding:0;min-height:0;border-radius:50%}.avwrap .cam{position:absolute;right:-2px;bottom:-2px;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;border:3px solid var(--bg)}.avwrap .cam .ico{width:15px;height:15px}
+.navav.img{background:none;overflow:hidden}.navav.img img{width:100%;height:100%;object-fit:cover}
+.gav{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;overflow:hidden;background:var(--surface2);border:1px solid var(--line);font-size:12px;font-weight:800;color:var(--muted)}.gav img{width:100%;height:100%;object-fit:cover}
 .hitem{display:flex;flex-direction:column;gap:8px}
 @media (min-width:381px){.stats>.stat:last-child:nth-child(3n+2){grid-column:span 2}.stats>.stat:last-child:nth-child(3n+1):not(:first-child){grid-column:span 3}}
 .stat .l{line-height:1.25}
@@ -1232,8 +1237,10 @@ async function shareCard(log,w){
   const isF=log.wtype==='F'||!log.dist,race=w?.race,hx=w?.hx,gym=w?.gym;
   // fundo
   c.fillStyle='#0b0e17';c.fillRect(0,0,W,H);
-  let g=c.createRadialGradient(W*0.9,H*0.05,0,W*0.9,H*0.05,W*0.9);g.addColorStop(0,race?'rgba(255,184,0,.38)':'rgba(255,90,60,.34)');g.addColorStop(1,'rgba(255,90,60,0)');c.fillStyle=g;c.fillRect(0,0,W,H);
-  g=c.createRadialGradient(0,H,0,0,H,W*0.8);g.addColorStop(0,gym?'rgba(167,139,250,.22)':hx?'rgba(45,212,191,.2)':'rgba(61,220,151,.16)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.fillRect(0,0,W,H);
+  let phImg=null;if(log.photo){const u=await PHO.url(log.photo);if(u)phImg=await new Promise(r=>{const im=new Image();im.onload=()=>r(im);im.onerror=()=>r(null);im.src=u;});}
+  let g;if(phImg){const sc=Math.max(W/phImg.width,H/phImg.height),dw=phImg.width*sc,dh=phImg.height*sc;c.drawImage(phImg,(W-dw)/2,(H-dh)/2,dw,dh);g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(5,7,12,.8)');g.addColorStop(.3,'rgba(5,7,12,.2)');g.addColorStop(.55,'rgba(5,7,12,.25)');g.addColorStop(1,'rgba(5,7,12,.94)');c.fillStyle=g;c.fillRect(0,0,W,H);}else{
+  g=c.createRadialGradient(W*0.9,H*0.05,0,W*0.9,H*0.05,W*0.9);g.addColorStop(0,race?'rgba(255,184,0,.38)':'rgba(255,90,60,.34)');g.addColorStop(1,'rgba(255,90,60,0)');c.fillStyle=g;c.fillRect(0,0,W,H);
+  g=c.createRadialGradient(0,H,0,0,H,W*0.8);g.addColorStop(0,gym?'rgba(167,139,250,.22)':hx?'rgba(45,212,191,.2)':'rgba(61,220,151,.16)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.fillRect(0,0,W,H);}
   // marca
   c.font=`900 54px ${D}`;c.fillStyle='#fff';c.textBaseline='alphabetic';c.fillText('ZONE',72,120);const zw=c.measureText('ZONE').width;c.fillStyle='#ff5a3c';c.fillText('5',72+zw,120);
   // etiqueta
@@ -1245,7 +1252,7 @@ async function shareCard(log,w){
   c.font=`900 92px ${D}`;c.fillStyle='#fff';let y=wrapText(c,tr(w?w.title.replace(/^Prova: /,''):L('Corrida','Run')),72,320,W-144,100,2);
   // zona central: percurso, parciais ou exercícios
   const top=y+10,bot=H-430;
-  if(log.route&&log.route.length>5){
+  if(phImg){}else if(log.route&&log.route.length>5){
     const lat=log.route.map(p=>p[0]),lon=log.route.map(p=>p[1]),k=Math.cos(lat[0]*Math.PI/180);
     const minX=Math.min(...lon)*k,maxX=Math.max(...lon)*k,minY=Math.min(...lat),maxY=Math.max(...lat);
     const bw=W-200,bh=bot-top-20,s=Math.min(bw/Math.max(1e-6,maxX-minX),bh/Math.max(1e-6,maxY-minY));
@@ -1693,7 +1700,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251657';
+const APP_VER='202611251706';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -1895,7 +1902,7 @@ async function persist(){
   try{
     const {error}=await sb.from('user_state').upsert({user_id:user.id,state:st,updated_at:new Date(st.updated).toISOString()});
     if(error)throw error;
-    setSync('ok');pushStats();pushPublic();clearTimeout(persist._pt);persist._pt=setTimeout(pushSync,4000);
+    setSync('ok');pushStats();pushPublic();if(st.phPend?.length&&!PHO.fl){PHO.fl=1;PHO.flush().finally(()=>PHO.fl=0);}clearTimeout(persist._pt);persist._pt=setTimeout(pushSync,4000);
   }catch(e){setSync('local');}
   saving=false;
   if(pend){pend=false;persist();}
@@ -2006,12 +2013,14 @@ async function loadSharedRaces(){
   try{const {data}=await sb.from('races').select('id,name,city,cc,date,km,terrain').gte('date',TODAY).order('date').limit(300);
     const seen=new Set(RACES.map(r=>r.name.toLowerCase()+'|'+r.date));EXTRA_RACES=[];for(const r of data||[]){const k=r.name.trim().toLowerCase()+'|'+r.date;if(seen.has(k))continue;seen.add(k);EXTRA_RACES.push({id:'db-'+r.id,name:r.name,city:r.city||'',cc:r.cc||'',date:r.date,km:Number(r.km),terrain:r.terrain||'flat',shared:true});}}catch(e){}
 }
-let lastPub='';
+let lastPub='',noAvatarCol=false;
+function grpAv(uid,name){let a=(grp.pubs||[]).find(x=>x.user_id===uid)?.avatar||(uid===user?.id?st.profile.photo:null);if(a&&!/^data:image\/(jpeg|png|webp);base64,/.test(a))a=null;return a?`<span class="gav"><img src="${esc(a)}" alt=""></span>`:`<span class="gav">${esc(initials(name))}</span>`;}
 async function pushPublic(){
   if(mode!=='cloud'||!st?.profile)return;
   const p=st.profile,isR=p.goalType==='race'||p.goalType==='hyrox'&&p.raceDate,row={user_id:user.id,race_name:isR?p.raceName:({start:'🌱 Começar a correr',back:'🔁 Voltar a correr',maintain:'⚡ Manter a forma',hyrox:'🏋️ HYROX',gym:'💪 Ginásio'})[p.goalType]||null,race_date:isR?p.raceDate:null,race_km:p.goalType==='race'?p.raceKm:null,updated_at:new Date().toISOString()};
-  const key=JSON.stringify([row.race_name,row.race_date,row.race_km]);if(key===lastPub)return;
-  try{const {error}=await sb.from('public_profile').upsert(row);if(!error)lastPub=key;}catch(e){}
+  if(!noAvatarCol)row.avatar=p.photo||null;
+  const key=JSON.stringify([row.race_name,row.race_date,row.race_km,(p.photo||'').length]);if(key===lastPub)return;
+  try{let {error}=await sb.from('public_profile').upsert(row);if(error&&row.avatar!==undefined){noAvatarCol=true;delete row.avatar;({error}=await sb.from('public_profile').upsert(row));}if(!error)lastPub=key;}catch(e){}
 }
 function groupRacesHtml(){
   const rows=(grp.pubs||[]).filter(x=>x.race_date&&x.race_date>=TODAY);
@@ -2244,7 +2253,7 @@ async function loadGroup(){
       const cur=mondayOf(TODAY);
       const {data:ss}=await sb.from('weekly_stats').select('user_id,week_start,km,runs,planned').in('user_id',grp.members.map(m=>m.user_id)).in('week_start',[cur,addDays(cur,-7)]);
       grp.stats=ss||[];
-      try{const {data:pp}=await sb.from('public_profile').select('user_id,race_name,race_date,race_km').in('user_id',grp.members.map(m=>m.user_id));grp.pubs=pp||[];}catch(e){grp.pubs=[];}
+      try{const ids=grp.members.map(m=>m.user_id);let {data:pp,error}=await sb.from('public_profile').select('user_id,race_name,race_date,race_km,avatar').in('user_id',ids);if(error)({data:pp}=await sb.from('public_profile').select('user_id,race_name,race_date,race_km').in('user_id',ids));grp.pubs=pp||[];}catch(e){grp.pubs=[];}
       await loadFeed();
     }
     grp.err='';
@@ -2269,7 +2278,7 @@ function grupoHtml(){
   return `<div class="row between"><h2>${esc(g.name)}</h2>${grp.groups.length>1?`<select id="gSel" style="width:auto">${grp.groups.map(x=>`<option value="${x.id}" ${x.id===g.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:''}</div>
   <section class="card"><div class="seg"><button data-act="g-week" data-v="cur" aria-pressed="${grp.week==='cur'}">Esta semana</button><button data-act="g-week" data-v="prev" aria-pressed="${grp.week==='prev'}">Semana passada</button></div>
   <div class="seg"><button data-act="g-sort" data-v="pct" aria-pressed="${byPct}">${L('Plano cumprido','Plan completed')}</button><button data-act="g-sort" data-v="km" aria-pressed="${!byPct}">${L('Quilómetros','Kilometres')}</button></div>
-  <div>${rows.map((r,i)=>`<div class="rank ${r.user_id===user.id?'me':''}"><span class="pos">${i+1}</span><div><b>${esc(r.display_name)}</b>${r.user_id===user.id?' <span class="tiny muted">(tu)</span>':''}${goalOf(r.user_id)?`<div class="tiny muted">${esc(tr(goalOf(r.user_id)))}</div>`:''}<div class="rbar"><div style="width:${byPct?pct(r)*100:r.km/mx*100}%"></div></div><span class="tiny muted">${r.planned?`${r.runs}/${r.planned} treinos do plano`:'sem plano esta semana'}${byPct&&r.km?' · '+nf(r.km)+' km':''}</span></div><span class="num" style="font-family:var(--display);font-size:22px;font-weight:700">${byPct?(r.planned?Math.round(pct(r)*100)+'%':'–'):nf(r.km)+' km'}</span></div>`).join('')}</div>
+  <div>${rows.map((r,i)=>`<div class="rank ${r.user_id===user.id?'me':''}"><span class="pos">${i+1}</span><div class="row" style="gap:10px;flex-wrap:nowrap;align-items:flex-start">${grpAv(r.user_id,r.display_name)}<div style="min-width:0;flex:1"><b>${esc(r.display_name)}</b>${r.user_id===user.id?' <span class="tiny muted">(tu)</span>':''}${goalOf(r.user_id)?`<div class="tiny muted">${esc(tr(goalOf(r.user_id)))}</div>`:''}<div class="rbar"><div style="width:${byPct?pct(r)*100:r.km/mx*100}%"></div></div><span class="tiny muted">${r.planned?`${r.runs}/${r.planned} treinos do plano`:'sem plano esta semana'}${byPct&&r.km?' · '+nf(r.km)+' km':''}</span></div></div><span class="num" style="font-family:var(--display);font-size:22px;font-weight:700">${byPct?(r.planned?Math.round(pct(r)*100)+'%':'–'):nf(r.km)+' km'}</span></div>`).join('')}</div>
   <button class="link" data-act="g-reload">Atualizar</button></section>
   ${feedHtml()}
   ${groupRacesHtml()}
@@ -2348,7 +2357,36 @@ function racePlanHtml(w){
   <div class="num small muted">${marks.map(k=>`${k} km · ${fmtTime(pace*k)}`).join(' &nbsp;·&nbsp; ')}</div>
   <div class="small muted">${fuel}</div></div>`;
 }
-const IC={share:'<path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',edit:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>',list:'<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".8"/><circle cx="4" cy="12" r=".8"/><circle cx="4" cy="18" r=".8"/>',smile:'<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4 4 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>',cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M9 15l6 0"/>',run:'<circle cx="15" cy="4.5" r="2"/><path d="M8 21l3-6 3 2v5M6 12l3-4 4 1 2 4 3 1"/>',dumb:'<path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/>',users:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3.3 2.7-5 6-5s6 1.7 6 5M15 14.5c3 0 6 1.3 6 4.5"/>',plus:'<path d="M12 5v14M5 12h14"/>',back:'<path d="M15 5l-7 7 7 7"/>',out:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
+/* ---------- Fotografias (IndexedDB no telemóvel + Supabase Storage na conta) ---------- */
+const PHO={db:null,urls:{},
+  open(){return this.db||(this.db=new Promise((res,rej)=>{try{const r=indexedDB.open('z5photos',1);r.onupgradeneeded=()=>r.result.createObjectStore('p');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}}));},
+  async put(k,b){try{const db=await this.open();await new Promise((res,rej)=>{const t=db.transaction('p','readwrite');t.objectStore('p').put(b,k);t.oncomplete=res;t.onerror=()=>rej(t.error);});}catch(e){}if(this.urls[k])URL.revokeObjectURL(this.urls[k]);this.urls[k]=URL.createObjectURL(b);},
+  async get(k){try{const db=await this.open();return await new Promise(res=>{const r=db.transaction('p').objectStore('p').get(k);r.onsuccess=()=>res(r.result||null);r.onerror=()=>res(null);});}catch(e){return null;}},
+  async rm(k){if(!k)return;try{const db=await this.open();db.transaction('p','readwrite').objectStore('p').delete(k);}catch(e){}if(this.urls[k]){URL.revokeObjectURL(this.urls[k]);delete this.urls[k];}
+    if(mode==='cloud'&&sb){try{await sb.storage.from('photos').remove([user.id+'/'+k+'.jpg']);}catch(e){}}},
+  async url(k){if(this.urls[k])return this.urls[k];let b=await this.get(k);
+    if(!b&&mode==='cloud'&&sb){try{const {data}=await sb.storage.from('photos').download(user.id+'/'+k+'.jpg');if(data){b=data;try{const db=await this.open();db.transaction('p','readwrite').objectStore('p').put(b,k);}catch(e){}}}catch(e){}}
+    if(b&&!this.urls[k])this.urls[k]=URL.createObjectURL(b);return this.urls[k]||null;},
+  async up(k){if(mode!=='cloud'||!sb||!k)return;const b=await this.get(k);if(!b)return;
+    try{const {error}=await sb.storage.from('photos').upload(user.id+'/'+k+'.jpg',b,{upsert:true,contentType:'image/jpeg'});if(error)throw error;st.phPend=(st.phPend||[]).filter(x=>x!==k);}
+    catch(e){st.phPend=st.phPend||[];if(!st.phPend.includes(k))st.phPend.push(k);}},
+  async flush(){for(const k of [...(st?.phPend||[])])await this.up(k);}
+};
+const phKey=()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+async function shrinkImg(file,max,q=.82,square=false){
+  let src;try{src=await createImageBitmap(file,{imageOrientation:'from-image'});}catch(e){src=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=URL.createObjectURL(file);});}
+  const w0=src.width,h0=src.height;let sx=0,sy=0,sw=w0,sh=h0;if(square){const m=Math.min(w0,h0);sx=(w0-m)/2;sy=(h0-m)/2;sw=sh=m;}
+  const sc=Math.min(1,max/Math.max(sw,sh)),cv=document.createElement('canvas');cv.width=Math.round(sw*sc);cv.height=Math.round(sh*sc);
+  cv.getContext('2d').drawImage(src,sx,sy,sw,sh,0,0,cv.width,cv.height);
+  return square?cv.toDataURL('image/jpeg',q):await new Promise(r=>cv.toBlob(r,'image/jpeg',q));}
+function pickImage(cb){const i=document.createElement('input');i.type='file';i.accept='image/*';i.style.display='none';document.body.appendChild(i);
+  i.onchange=async()=>{const f=i.files&&i.files[0];i.remove();if(!f)return;try{await cb(f);}catch(e){toast(L('Não foi possível usar esta fotografia.','Could not use this photo.'));}};i.click();}
+new MutationObserver(()=>{document.querySelectorAll('img[data-ph]:not([data-ld])').forEach(im=>{im.dataset.ld=1;PHO.url(im.dataset.ph).then(u=>{if(u)im.src=u;else im.closest('.lphoto')?.remove();});});}).observe(document.documentElement,{childList:true,subtree:true});
+async function addLogPhoto(i){const l=st.logs[i];if(!l)return;pickImage(async f=>{const b=await shrinkImg(f,1600);const k=phKey();await PHO.put(k,b);const old=l.photo;l.photo=k;persist();render();if(old)PHO.rm(old);toast(L('Fotografia adicionada','Photo added'));PHO.up(k).then(persist);});}
+function openPhoto(i){const l=st.logs[i];if(!l?.photo)return;openSheet(`<div class="row between"><h2>${L('Fotografia','Photo')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div><img data-ph="${l.photo}" alt="" style="width:100%;border-radius:18px;background:var(--soft);min-height:200px;object-fit:contain"><div class="btns"><button data-act="ph-add" data-v="${i}">${L('Trocar','Replace')}</button><button class="ghost" data-act="ph-del" data-v="${i}" style="color:var(--bad)">${L('Remover','Remove')}</button></div>`);}
+const phHtml=(l,big)=>l.photo?`<button class="lphoto${big?'':' sm'}" data-act="ph-view" data-v="${st.logs.indexOf(l)}" aria-label="${L('Ver fotografia','View photo')}"><img data-ph="${l.photo}" alt=""></button>`:'';
+const avatarHtml=(cls='')=>st.profile.photo?`<span class="avatar ${cls}" style="background:none;overflow:hidden"><img src="${st.profile.photo}" alt="" style="width:100%;height:100%;object-fit:cover"></span>`:null;
+const IC={share:'<path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',edit:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>',list:'<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".8"/><circle cx="4" cy="12" r=".8"/><circle cx="4" cy="18" r=".8"/>',smile:'<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4 4 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>',cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M9 15l6 0"/>',run:'<circle cx="15" cy="4.5" r="2"/><path d="M8 21l3-6 3 2v5M6 12l3-4 4 1 2 4 3 1"/>',dumb:'<path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/>',users:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3.3 2.7-5 6-5s6 1.7 6 5M15 14.5c3 0 6 1.3 6 4.5"/>',plus:'<path d="M12 5v14M5 12h14"/>',cam:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>',back:'<path d="M15 5l-7 7 7 7"/>',out:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
 const ico=k=>`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${IC[k]}</svg>`;
 function workoutCard(w,hero){
   const s=status(w),l=logFor(w);
@@ -2381,14 +2419,14 @@ function workoutCard(w,hero){
     ${l?logActs(l):''}
   </section>`;
 }
-function logActs(l){const i=st.logs.indexOf(l);return `<div class="acts">${l.wtype==='F'&&l.gym?.length?`<button class="act" data-act="gym-detail" data-v="${i}">${ico('list')}${L('Detalhe','Details')}</button>`:''}<button class="act" data-act="share-img" data-v="${i}">${ico('share')}${L('Partilhar','Share')}</button>${l.wtype!=='F'&&l.dist>0?`<button class="act" data-act="editlog" data-v="${i}">${ico('edit')}${L('Editar','Edit')}</button>`:''}</div>`;}
+function logActs(l){const i=st.logs.indexOf(l);return `<div class="acts">${l.wtype==='F'&&l.gym?.length?`<button class="act" data-act="gym-detail" data-v="${i}">${ico('list')}${L('Detalhe','Details')}</button>`:''}${l.photo?'':`<button class="act" data-act="ph-add" data-v="${i}">${ico('cam')}${L('Foto','Photo')}</button>`}<button class="act" data-act="share-img" data-v="${i}">${ico('share')}${L('Partilhar','Share')}</button>${l.wtype!=='F'&&l.dist>0?`<button class="act" data-act="editlog" data-v="${i}">${ico('edit')}${L('Editar','Edit')}</button>`:''}</div>`;}
 function logSummary(l,inCard){
-  const sb=inCard?'':logActs(l);
-  if(l.wtype==='F'&&l.sets){const i=st.logs.indexOf(l);return `<div class="note up"><div class="num"><b>${l.time?fmtTime(l.time)+' · ':''}${nf(l.vol||0)} kg · ${l.sets} ${L('séries','sets')}</b></div>${l.prs?.length?`<div>🏆 ${l.prs.map(p=>`${esc(tr(p.n))} ${fmtKg(p.kg)} kg × ${p.reps}`).join(' · ')}</div>`:''}</div>${sb}`;}
-  if(l.wtype==='F')return `<div class="note up">${L('Sessão feita.','Session done.')}</div>${sb}`;
+  const sb=inCard?'':logActs(l);const ph=phHtml(l,inCard);
+  if(l.wtype==='F'&&l.sets){const i=st.logs.indexOf(l);return `${ph}<div class="note up"><div class="num"><b>${l.time?fmtTime(l.time)+' · ':''}${nf(l.vol||0)} kg · ${l.sets} ${L('séries','sets')}</b></div>${l.prs?.length?`<div>🏆 ${l.prs.map(p=>`${esc(tr(p.n))} ${fmtKg(p.kg)} kg × ${p.reps}`).join(' · ')}</div>`:''}</div>${sb}`;}
+  if(l.wtype==='F')return `${ph}<div class="note up">${L('Sessão feita.','Session done.')}</div>${sb}`;
   const ex=[l.avgHr?`${l.avgHr} bpm`:'',l.rpe?`${L('esforço','effort')} ${l.rpe}/10`:'',l.source==='strava'?'Strava':''].filter(Boolean).join(' · ');
-  if(inCard)return `<div class="note ${l.eval?.cls||'info'}">${ex?`<div class="num small muted">${ex}</div>`:''}<div>${esc(l.eval?.msg||'')}</div></div>${l.ai?`<div class="note info"><span class="tiny muted">Treinador IA</span><br>${esc(l.ai)}</div>`:''}${sb}`;
-  return `<div class="note ${l.eval?.cls||'info'}"><div class="num"><b>${nf(Math.round(l.dist*100)/100)} km</b> · ${fmtTime(l.time)} · ${fmtPace(l.time/l.dist)}/km${l.avgHr?` · ${l.avgHr} bpm`:''} ${l.rpe?` · esforço ${l.rpe}/10`:''}${l.source==='strava'?' · Strava':''}</div><div>${esc(l.eval?.msg||'')}</div></div>${l.ai?`<div class="note info"><span class="tiny muted">Treinador IA</span><br>${esc(l.ai)}</div>`:''}${sb}`;
+  if(inCard)return `${ph}<div class="note ${l.eval?.cls||'info'}">${ex?`<div class="num small muted">${ex}</div>`:''}<div>${esc(l.eval?.msg||'')}</div></div>${l.ai?`<div class="note info"><span class="tiny muted">Treinador IA</span><br>${esc(l.ai)}</div>`:''}${sb}`;
+  return `${ph}<div class="note ${l.eval?.cls||'info'}"><div class="num"><b>${nf(Math.round(l.dist*100)/100)} km</b> · ${fmtTime(l.time)} · ${fmtPace(l.time/l.dist)}/km${l.avgHr?` · ${l.avgHr} bpm`:''} ${l.rpe?` · esforço ${l.rpe}/10`:''}${l.source==='strava'?' · Strava':''}</div><div>${esc(l.eval?.msg||'')}</div></div>${l.ai?`<div class="note info"><span class="tiny muted">Treinador IA</span><br>${esc(l.ai)}</div>`:''}${sb}`;
 }
 
 /* ---------- Adaptação ---------- */
@@ -2436,7 +2474,7 @@ function render(){
   if(!st||!st.profile){$('#tabs').hidden=true;app.innerHTML=onboardHtml();bindOnboard();return;}
   $('#tabs').hidden=false;
   if(!['hoje','plano','progresso','grupo','ajustes','perfil'].includes(tab))tab='hoje';
-  {const ini=mode==='cloud'||st.profile.nick?initials(myName()):'',n=$('#navMe');if(n&&n.dataset.ini!==ini){n.dataset.ini=ini;n.innerHTML=ini?`<b class="navav">${esc(ini)}</b>`:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>';}}
+  {const ini=(st.profile.photo?'img:'+st.profile.photo.length:'')||(mode==='cloud'||st.profile.nick?initials(myName()):''),n=$('#navMe');if(n&&n.dataset.ini!==ini){n.dataset.ini=ini;n.innerHTML=st.profile.photo?`<b class="navav img"><img src="${st.profile.photo}" alt=""></b>`:ini?`<b class="navav">${esc(ini)}</b>`:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>';}}
   document.querySelectorAll('nav.tabs a').forEach(a=>a.setAttribute('aria-current',a.dataset.tab===tab||(tab==='ajustes'&&a.dataset.tab==='perfil')?'page':'false'));
   if(render._t!==tab){app.classList.remove('vin');void app.offsetWidth;app.classList.add('vin');render._t=tab;}
   app.innerHTML=tab==='perfil'?perfilHtml():tab==='hoje'?hojeHtml():tab==='plano'?planoHtml():tab==='progresso'?progHtml():tab==='grupo'?grupoHtml():ajustesHtml();
@@ -2556,7 +2594,7 @@ function perfilHtml(){
   const preds=showRun?[[5,'5 km'],[10,'10 km'],[21.0975,L('Meia','Half')],[42.195,L('Maratona','Marathon')]].map(([k,l])=>`<div><b>${fmtTime(predict(st.vdot,k*1000))}</b><span>${l}</span></div>`).join(''):'';
   const shoes=typeof activeShoes==='function'?activeShoes():[];
   return `<div class="row between"><h2>${L('Perfil','Profile')}</h2><button class="mini" style="flex:none" data-act="me-set" aria-label="${L('Ajustes','Settings')}">${ico('gear')}${L('Ajustes','Settings')}</button></div>
-  <div class="phead"><div class="avatar big">${initials(nm)||`<svg class="ico" style="width:38px;height:38px" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>`}</div>
+  <div class="phead"><button class="avwrap" data-act="me-photo" aria-label="${L('Fotografia de perfil','Profile photo')}">${avatarHtml('big')||`<span class="avatar big">${initials(nm)||`<svg class="ico" style="width:38px;height:38px" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>`}</span>`}<span class="cam">${ico('cam')}</span></button>
     <h2>${nm?esc(nm):L('O teu perfil','Your profile')}</h2>
     <div class="small muted">${mode==='cloud'?esc(user.email):L('Modo experiência · dados só neste dispositivo','Trial mode · data only on this device')}</div>
     ${since?`<div class="tiny muted">${L('Na Zone5 desde','On Zone5 since')} ${M[+since.slice(5,7)-1]} ${since.slice(0,4)}</div>`:''}
@@ -2574,6 +2612,8 @@ function perfilHtml(){
   ${showRun?`<section class="card"><div class="row between"><h3>${L('Sapatilhas','Shoes')}</h3><button class="mini" style="flex:none" data-act="me-shoes">${ico('gear')}${L('Gerir','Manage')}</button></div>${shoes.length?shoes.map(x=>`<div class="row between"><span>👟 ${esc(x.name)}</span><span class="small muted num">${nf(Math.round(typeof shoeKm==='function'?shoeKm(x):0))} km</span></div>`).join(''):`<div class="small muted">${L('Ainda sem sapatilhas registadas.','No shoes added yet.')}</div>`}</section>`:''}
   <div class="acts"><button class="act" data-act="me-set">${ico('gear')}${L('Ajustes','Settings')}</button>${mode==='cloud'?`<button class="act" data-act="logout" style="color:var(--bad)">${ico('out')}${L('Terminar sessão','Sign out')}</button>`:(sb?`<button class="act" data-act="logout">${ico('users')}${L('Criar conta','Create account')}</button>`:'')}</div>`;
 }
+function openMePhoto(){if(!st.profile.photo){pickImage(async f=>{st.profile.photo=await shrinkImg(f,256,.8,true);persist();lastPub='';pushPublic();render();toast(L('Fotografia de perfil atualizada','Profile photo updated'));});return;}
+  openSheet(`<div class="row between"><h2>${L('Fotografia de perfil','Profile photo')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div><div style="display:flex;justify-content:center">${avatarHtml('big')}</div><button class="primary" data-act="me-photo-pick">${L('Escolher outra','Choose another')}</button><button class="ghost" data-act="me-photo-del" style="color:var(--bad)">${L('Remover fotografia','Remove photo')}</button>`);}
 function openMeName(){const nm=mode==='cloud'||st.profile.nick?myName():'';openSheet(`<div class="row between"><h2>${L('O teu nome','Your name')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div><label for="meNm">${L('Nome','Name')}<input id="meNm" value="${esc(nm)}" maxlength="40" autocomplete="name" placeholder="${L('Ex.: Afonso Pinto','E.g. Alex Smith')}"></label><div class="small muted">${mode==='cloud'?L('É assim que apareces no grupo.','This is how you appear in groups.'):L('Usado na saudação e nos teus cartões.','Used in your greeting and cards.')}</div><div class="small" id="meErr" style="color:var(--bad)"></div><button class="primary" data-act="me-name-save">${L('Guardar','Save')}</button>`);setTimeout(()=>$('#meNm')?.focus(),200);}
 async function saveMeName(){const n=$('#meNm').value.trim();if(!n){$('#meErr').textContent=L('Escreve o teu nome.','Enter your name.');return;}
   if(mode==='cloud'){const {data,error}=await sb.auth.updateUser({data:{name:n}});if(error)return toast(L('Não foi possível guardar o nome.','Could not save your name.'));if(data?.user)user=data.user;}
@@ -2881,7 +2921,7 @@ async function obCreate(){
   const keep=st?.profile;
   if(!keep)st={v:1,logs:[],notes:[],vdotHist:[],skipped:[],dismissed:[],tips:1};
   const changedRef=!keep||keep.refTime!==profile.refTime||keep.refDist!==profile.refDist||(!profile.refTime&&keep.level!==profile.level);
-  if(keep){if(keep.nick&&!profile.nick)profile.nick=keep.nick;if(keep.body&&!profile.body)profile.body=keep.body;}
+  if(keep){if(keep.photo&&!profile.photo)profile.photo=keep.photo;if(keep.nick&&!profile.nick)profile.nick=keep.nick;if(keep.body&&!profile.body)profile.body=keep.body;}
   st.profile=profile;
   if(changedRef){st.vdot=Math.round(v*10)/10;st.vdotHist.push({d:TODAY,v:st.vdot,why:'tempo de referência'});}
   st.plan=genPlan(profile,TODAY,st.vdot);
@@ -2947,9 +2987,11 @@ function openLog(wid,extra){
   draft={wid:w?w.id:null,extra:!!extra,date:w?(w.date>TODAY?TODAY:w.date):TODAY,mode:'gpx',gpx:null};
   renderLog();
 }
+function logPhHtml(){if(!draft)return'';if(draft.phUrl||draft.phKey)return `<div class="phprev"><img ${draft.phUrl?`src="${draft.phUrl}"`:`data-ph="${draft.phKey}"`} alt=""><button type="button" data-act="log-ph-del" aria-label="${L('Remover fotografia','Remove photo')}">✕</button></div>`;
+  return `<button type="button" class="addbtn" data-act="log-ph">${ico('cam')}${L('Adicionar fotografia (opcional)','Add a photo (optional)')}</button>`;}
 function openLogEdit(i){
   const l=st.logs[i];if(!l)return;
-  draft={wid:l.wid||null,extra:!!l.extra,date:l.date,mode:'man',gpx:null,rpe:l.rpe||5,edit:i,pre:{dist:l.dist,time:l.time,fast:l.fast||null,shoe:l.shoe||''}};
+  draft={wid:l.wid||null,extra:!!l.extra,date:l.date,mode:'man',gpx:null,rpe:l.rpe||5,edit:i,phKey:l.photo||null,pre:{dist:l.dist,time:l.time,fast:l.fast||null,shoe:l.shoe||''}};
   renderLog();
 }
 function renderLog(){
@@ -2969,7 +3011,7 @@ function renderLog(){
   }
   const rpe=draft.rpe||5;
   const opts=w?'':`<label for="mWid">Associar a<select id="mWid"><option value="">Corrida extra</option>${allW().filter(x=>!logFor(x)&&Math.abs(daysBetween(x.date,TODAY))<=7).map(x=>`<option value="${x.id}">${DOW[dow(x.date)]} ${fmtDate(x.date)} · ${esc(x.title)}</option>`).join('')}</select></label>`;
-  openSheet(head+body+`<label for="rpe"><span>Esforço sentido: <b id="rpeV">${rpe}</b>/10</span><input type="range" id="rpe" min="1" max="10" value="${rpe}" style="padding:0"></label><div class="tiny muted">1–3 muito fácil · 4–6 confortável · 7–8 duro · 9–10 máximo</div>${opts}${activeShoes().length?`<label for="mShoe">Sapatilhas<select id="mShoe"><option value="">—</option>${activeShoes().map(x=>`<option value="${x.id}" ${x.id===(draft.pre?draft.pre.shoe:st.shoeDefault)?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>`:''}<div class="small" id="logErr" style="color:var(--bad)"></div><button class="primary" data-act="log-save">${draft.edit!=null?L('Guardar alterações','Save changes'):'Guardar e analisar'}</button>${draft.edit!=null?`<button class="ghost" data-act="log-del-i" data-v="${draft.edit}" style="color:var(--bad)">${L('Apagar registo','Delete log')}</button>`:''}`);
+  openSheet(head+body+`<label for="rpe"><span>Esforço sentido: <b id="rpeV">${rpe}</b>/10</span><input type="range" id="rpe" min="1" max="10" value="${rpe}" style="padding:0"></label><div class="tiny muted">1–3 muito fácil · 4–6 confortável · 7–8 duro · 9–10 máximo</div>${opts}${activeShoes().length?`<label for="mShoe">Sapatilhas<select id="mShoe"><option value="">—</option>${activeShoes().map(x=>`<option value="${x.id}" ${x.id===(draft.pre?draft.pre.shoe:st.shoeDefault)?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>`:''}<div class="phbox" id="phBox">${logPhHtml()}</div><div class="small" id="logErr" style="color:var(--bad)"></div><button class="primary" data-act="log-save">${draft.edit!=null?L('Guardar alterações','Save changes'):'Guardar e analisar'}</button>${draft.edit!=null?`<button class="ghost" data-act="log-del-i" data-v="${draft.edit}" style="color:var(--bad)">${L('Apagar registo','Delete log')}</button>`:''}`);
   $('#rpe').oninput=e=>{draft.rpe=+e.target.value;$('#rpeV').textContent=e.target.value;};
   document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{draft.mode=b.dataset.mode;renderLog();});
   const gi=$('#gpxIn');if(gi)gi.onchange=ev=>readGpx(ev.target.files[0]);
@@ -3034,7 +3076,8 @@ function saveLog(){
   log.rpe=draft.rpe||5;
   {const so=$('#mShoe');const v=so?so.value:st.shoeDefault;if(v)log.shoe=v;}
   const w=draft.wid?allW().find(x=>x.id===draft.wid):null;
-  if(draft.edit!=null){const old=st.logs[draft.edit];if(old){const same=Math.abs((old.dist||0)-log.dist)<0.02*Math.max(1,log.dist)&&Math.abs((old.time||0)-log.time)<5;
+  if(draft.phBlob){const k=phKey(),b=draft.phBlob;log.photo=k;PHO.put(k,b).then(()=>PHO.up(k)).then(persist);}else if(draft.phKey)log.photo=draft.phKey;
+  if(draft.edit!=null){const old=st.logs[draft.edit];if(old?.photo&&old.photo!==log.photo)PHO.rm(old.photo);if(old){const same=Math.abs((old.dist||0)-log.dist)<0.02*Math.max(1,log.dist)&&Math.abs((old.time||0)-log.time)<5;
     for(const k of ['aid','stravaId','stravaName','elev','avgHr','route','source'])if(old[k]!=null&&log[k]==null)log[k]=old[k];
     if(same)for(const k of ['splits','best','fast'])if(old[k]!=null&&log[k]==null)log[k]=old[k];
     if(old.source&&old.source!=='manual'&&!same)log.edited=true;
@@ -3311,7 +3354,7 @@ document.addEventListener('click',e=>{
   else if(a==='close')closeSheet();
   else if(a==='gpx-clear'){draft.gpx=null;renderLog();}
   else if(a==='open')openWorkout(id);
-  else if(a==='dellog'){const w=allW().find(x=>x.id===id);{const lg=logFor(w);if(lg?.aid)(st.feedDel=st.feedDel||[]).push(lg.aid);}st.logs=st.logs.filter(l=>l!==logFor(w));persist();closeSheet();render();toast('Registo apagado');}
+  else if(a==='dellog'){const w=allW().find(x=>x.id===id);{const lg=logFor(w);if(lg?.photo)PHO.rm(lg.photo);if(lg?.aid)(st.feedDel=st.feedDel||[]).push(lg.aid);}st.logs=st.logs.filter(l=>l!==logFor(w));persist();closeSheet();render();toast('Registo apagado');}
   else if(a==='skip'){st.skipped=st.skipped||[];st.skipped.push(id);persist();closeSheet();render();}
   else if(a==='sugg-yes'){applyRecovery();persist();render();toast('Semana aliviada');}
   else if(a==='sugg-no'){st.dismissed=st.dismissed||[];st.dismissed.push(st.suggest.week);st.suggest=null;persist();render();}
@@ -3348,6 +3391,14 @@ document.addEventListener('click',e=>{
   else if(a.startsWith('ob-'))obNav(a,b.dataset.v);
   else if(a==='ps-open')openPlanSettings();
   else if(a==='me-back')location.hash='#perfil';
+  else if(a==='ph-add'){closeSheet();addLogPhoto(+b.dataset.v);}
+  else if(a==='ph-view')openPhoto(+b.dataset.v);
+  else if(a==='ph-del'){const l=st.logs[+b.dataset.v];if(l?.photo){PHO.rm(l.photo);delete l.photo;persist();}closeSheet();render();toast(L('Fotografia removida','Photo removed'));}
+  else if(a==='log-ph'){pickImage(async f=>{const bl=await shrinkImg(f,1600);if(!draft)return;draft.phBlob=bl;if(draft.phUrl)URL.revokeObjectURL(draft.phUrl);draft.phUrl=URL.createObjectURL(bl);$('#phBox').innerHTML=logPhHtml();});}
+  else if(a==='log-ph-del'){if(draft){draft.phBlob=null;draft.phKey=null;draft.phUrl=null;}$('#phBox').innerHTML=logPhHtml();}
+  else if(a==='me-photo')openMePhoto();
+  else if(a==='me-photo-pick'){closeSheet();pickImage(async f=>{st.profile.photo=await shrinkImg(f,256,.8,true);persist();lastPub='';pushPublic();render();toast(L('Fotografia de perfil atualizada','Profile photo updated'));});}
+  else if(a==='me-photo-del'){delete st.profile.photo;persist();lastPub='';pushPublic();closeSheet();render();}
   else if(a==='me-name')openMeName();
   else if(a==='me-name-save')saveMeName();
   else if(a==='me-body')openMeBody();
@@ -3365,7 +3416,7 @@ document.addEventListener('click',e=>{
   else if(a==='howto'){if(G){G.howBack=true;}const nm=b.dataset.v;if(G||st?.gl&&$('#glClock')){const back=()=>renderGuide();openSheet(howHtml(nm)+`<button class="primary" data-act="how-back">${L('Voltar ao treino','Back to workout')}</button>`);}else{lastSheetBeforeHow=$('#sheetBg').classList.contains('open')?$('#sheet').innerHTML:'';openSheet(howHtml(nm)+(lastSheetBeforeHow?`<button class="ghost" data-act="how-back">‹ ${L('Voltar','Back')}</button>`:''));}}
   else if(a==='upd-go')doUpdate();
   else if(a==='editlog')openLogEdit(+b.dataset.v);
-  else if(a==='log-del-i'){const l=st.logs[+b.dataset.v];if(l){if(l.aid)(st.feedDel=st.feedDel||[]).push(l.aid);st.logs=st.logs.filter(x=>x!==l);adapt();persist();}draft=null;closeSheet();render();toast(L('Registo apagado','Log deleted'));}
+  else if(a==='log-del-i'){const l=st.logs[+b.dataset.v];if(l){if(l.photo)PHO.rm(l.photo);if(l.aid)(st.feedDel=st.feedDel||[]).push(l.aid);st.logs=st.logs.filter(x=>x!==l);adapt();persist();}draft=null;closeSheet();render();toast(L('Registo apagado','Log deleted'));}
   else if(a==='gl-wu'){const w=glW();if(!w)return;const seg=segments(w).filter(x=>x.wu);if(!seg.length)return;G={w,seg,i:0,left:seg[0].sec,up:0,times:[],run:true,last:Date.now(),beeped:-1,total:seg.reduce((a,x)=>a+x.sec,0),wuOnly:true};beep(990,0.3);say(`${seg[0].label}. ${seg[0].sub}`);renderGuide();}
   else if(a==='gl-note'){const ei=+b.dataset.v,e=st.gl.ex[ei];openSheet(`<div class="row between"><h2>${L('Nota','Note')}</h2><button class="link" data-act="gl-back">${L('Voltar','Back')}</button></div><div class="small muted">${esc(tr(e.n))}. ${L('Fica guardada e aparece sempre que fizeres este exercício.','It’s saved and shows every time you do this exercise.')}</div><textarea id="glNote" rows="3" maxlength="140" placeholder="${L('Ex.: banco no 4, pega neutra','E.g. bench on 4, neutral grip')}">${esc(st.exNotes?.[e.n]||'')}</textarea><button class="primary" data-act="gl-note-save" data-v="${ei}">${L('Guardar','Save')}</button>`);setTimeout(()=>$('#glNote')?.focus(),100);}
   else if(a==='gl-note-save'){const e=st.gl.ex[+b.dataset.v],t=($('#glNote').value||'').trim();st.exNotes=st.exNotes||{};if(t)st.exNotes[e.n]=t;else delete st.exNotes[e.n];glSave();glRender();toast(t?L('Nota guardada','Note saved'):L('Nota apagada','Note removed'));}
