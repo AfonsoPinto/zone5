@@ -1662,7 +1662,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611211906';
+const APP_VER='202611251353';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2348,7 +2348,7 @@ function workoutCard(w,hero){
   </section>`;
 }
 function logSummary(l){
-  const sb=`<button class="ghost chip shbtn" data-act="share-img" data-v="${st.logs.indexOf(l)}">↗ ${L('Partilhar','Share')}</button>`;
+  const sb=`<button class="ghost chip shbtn" data-act="share-img" data-v="${st.logs.indexOf(l)}">↗ ${L('Partilhar','Share')}</button>`+(l.wtype!=='F'&&l.dist>0?`<button class="ghost chip shbtn" data-act="editlog" data-v="${st.logs.indexOf(l)}">✎ ${L('Editar','Edit')}</button>`:'');
   if(l.wtype==='F'&&l.sets){const i=st.logs.indexOf(l);return `<div class="note up"><div class="num"><b>${l.time?fmtTime(l.time)+' · ':''}${nf(l.vol||0)} kg · ${l.sets} ${L('séries','sets')}</b></div>${l.prs?.length?`<div>🏆 ${l.prs.map(p=>`${esc(tr(p.n))} ${fmtKg(p.kg)} kg × ${p.reps}`).join(' · ')}</div>`:''}</div><div class="row" style="gap:8px">${l.gym?.length?`<button class="ghost chip shbtn" data-act="gym-detail" data-v="${i}">${L('Ver detalhe','See details')}</button>`:''}${sb}</div>`;}
   if(l.wtype==='F')return `<div class="note up">${L('Sessão feita.','Session done.')}</div>${sb}`;
   return `<div class="note ${l.eval?.cls||'info'}"><div class="num"><b>${nf(Math.round(l.dist*100)/100)} km</b> · ${fmtTime(l.time)} · ${fmtPace(l.time/l.dist)}/km${l.avgHr?` · ${l.avgHr} bpm`:''} ${l.rpe?` · esforço ${l.rpe}/10`:''}${l.source==='strava'?' · Strava':''}</div><div>${esc(l.eval?.msg||'')}</div></div>${l.ai?`<div class="note info"><span class="tiny muted">Treinador IA</span><br>${esc(l.ai)}</div>`:''}${sb}`;
@@ -2863,10 +2863,15 @@ function openLog(wid,extra){
   draft={wid:w?w.id:null,extra:!!extra,date:w?(w.date>TODAY?TODAY:w.date):TODAY,mode:'gpx',gpx:null};
   renderLog();
 }
+function openLogEdit(i){
+  const l=st.logs[i];if(!l)return;
+  draft={wid:l.wid||null,extra:!!l.extra,date:l.date,mode:'man',gpx:null,rpe:l.rpe||5,edit:i,pre:{dist:l.dist,time:l.time,fast:l.fast||null,shoe:l.shoe||''}};
+  renderLog();
+}
 function renderLog(){
   const w=draft.wid?allW().find(x=>x.id===draft.wid):null;
   const isQ=w&&(w.type==='Q'||w.type==='R')&&w.focus.z!=='E';
-  const head=`<div class="row between"><h2>Registar ${w?esc(lc1(w.title)):'corrida'}</h2><button class="link" data-act="close">Fechar</button></div>
+  const head=`<div class="row between"><h2>${draft.edit!=null?L('Editar','Edit')+' '+(w?esc(lc1(tr(w.title))):L('corrida','run')):'Registar '+(w?esc(lc1(w.title)):'corrida')}</h2><button class="link" data-act="close">Fechar</button></div>
   <div class="seg"><button type="button" data-mode="gpx" aria-pressed="${draft.mode==='gpx'}">Ficheiro GPX</button><button type="button" data-mode="man" aria-pressed="${draft.mode==='man'}">À mão</button></div>`;
   let body='';
   if(draft.mode==='gpx'){
@@ -2874,18 +2879,18 @@ function renderLog(){
     else{const a=draft.gpx;body=`<div class="stats"><div class="stat"><span class="v">${nf(Math.round(a.dist*100)/100)}</span><span class="l">km</span></div><div class="stat"><span class="v">${fmtTime(a.moving||a.elapsed)}</span><span class="l">tempo em movimento</span></div><div class="stat"><span class="v">${fmtPace((a.moving||a.elapsed)/a.dist)}</span><span class="l">ritmo médio</span></div></div>
       <div class="small muted">${fmtDate(a.date)}${a.avgHr?` · FC média ${a.avgHr} bpm`:''}${a.fast?` · partes rápidas ${fmtPace(a.fast)}/km`:''}</div>${a.splits.length>1?splitsHtml(a.splits):''}${a.src==='gps'?'<div class="tiny muted">Gravado com o GPS do telemóvel.</div>':'<button class="link" data-act="gpx-clear">Escolher outro ficheiro</button>'}`;}
   }else{
-    body=`<div class="grid2"><label for="mDist">Distância (km)<input id="mDist" inputmode="decimal" value="${w?nf(w.km):''}"></label></div><label>Tempo${timePick('mTime',w?Math.round(w.km*(target(pz(),'E')||360)):1800,true)}</label>
+    body=`<div class="grid2"><label for="mDist">Distância (km)<input id="mDist" inputmode="decimal" value="${draft.pre?nf(Math.round(draft.pre.dist*100)/100):w?nf(w.km):''}"></label></div><label>Tempo${timePick('mTime',draft.pre?draft.pre.time:w?Math.round(w.km*(target(pz(),'E')||360)):1800,true)}</label>
     <label for="mDate">Data<input type="date" id="mDate" value="${draft.date}" max="${TODAY}"></label>
-    ${isQ?`<label class="row" style="flex-direction:row;align-items:center;gap:8px;font-weight:500"><input type="checkbox" id="mFastOn" style="width:auto;min-height:0"> Sei o ritmo nas partes rápidas</label><div id="mFastBox" hidden><label>Ritmo médio nas partes rápidas${pacePick('mFast',target(pz(),w.focus.z))}</label></div>`:''}`;
+    ${isQ?`<label class="row" style="flex-direction:row;align-items:center;gap:8px;font-weight:500"><input type="checkbox" id="mFastOn" style="width:auto;min-height:0" ${draft.pre?.fast?'checked':''}> Sei o ritmo nas partes rápidas</label><div id="mFastBox" ${draft.pre?.fast?'':'hidden'}><label>Ritmo médio nas partes rápidas${pacePick('mFast',draft.pre?.fast||target(pz(),w.focus.z))}</label></div>`:''}`;
   }
   const rpe=draft.rpe||5;
   const opts=w?'':`<label for="mWid">Associar a<select id="mWid"><option value="">Corrida extra</option>${allW().filter(x=>!logFor(x)&&Math.abs(daysBetween(x.date,TODAY))<=7).map(x=>`<option value="${x.id}">${DOW[dow(x.date)]} ${fmtDate(x.date)} · ${esc(x.title)}</option>`).join('')}</select></label>`;
-  openSheet(head+body+`<label for="rpe"><span>Esforço sentido: <b id="rpeV">${rpe}</b>/10</span><input type="range" id="rpe" min="1" max="10" value="${rpe}" style="padding:0"></label><div class="tiny muted">1–3 muito fácil · 4–6 confortável · 7–8 duro · 9–10 máximo</div>${opts}${activeShoes().length?`<label for="mShoe">Sapatilhas<select id="mShoe"><option value="">—</option>${activeShoes().map(x=>`<option value="${x.id}" ${x.id===st.shoeDefault?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>`:''}<div class="small" id="logErr" style="color:var(--bad)"></div><button class="primary" data-act="log-save">Guardar e analisar</button>`);
+  openSheet(head+body+`<label for="rpe"><span>Esforço sentido: <b id="rpeV">${rpe}</b>/10</span><input type="range" id="rpe" min="1" max="10" value="${rpe}" style="padding:0"></label><div class="tiny muted">1–3 muito fácil · 4–6 confortável · 7–8 duro · 9–10 máximo</div>${opts}${activeShoes().length?`<label for="mShoe">Sapatilhas<select id="mShoe"><option value="">—</option>${activeShoes().map(x=>`<option value="${x.id}" ${x.id===(draft.pre?draft.pre.shoe:st.shoeDefault)?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>`:''}<div class="small" id="logErr" style="color:var(--bad)"></div><button class="primary" data-act="log-save">${draft.edit!=null?L('Guardar alterações','Save changes'):'Guardar e analisar'}</button>${draft.edit!=null?`<button class="ghost" data-act="log-del-i" data-v="${draft.edit}" style="color:var(--bad)">${L('Apagar registo','Delete log')}</button>`:''}`);
   $('#rpe').oninput=e=>{draft.rpe=+e.target.value;$('#rpeV').textContent=e.target.value;};
   document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{draft.mode=b.dataset.mode;renderLog();});
   const gi=$('#gpxIn');if(gi)gi.onchange=ev=>readGpx(ev.target.files[0]);
   const fo=$('#mFastOn');if(fo)fo.onchange=()=>{$('#mFastBox').hidden=!fo.checked;};
-  {const md=$('#mDist'),box=$('#mTime');if(md&&box){let touched=false;box.querySelectorAll('select').forEach(x=>x.addEventListener('change',()=>touched=true));
+  {const md=$('#mDist'),box=$('#mTime');if(md&&box){let touched=!!draft.pre;box.querySelectorAll('select').forEach(x=>x.addEventListener('change',()=>touched=true));
     md.oninput=()=>{if(touched)return;const d=parseFloat(String(md.value).replace(',','.'));if(d>0&&d<100){const t=Math.round(d*(pz().E[0]||360)/30)*30;box.outerHTML=timePick('mTime',t,true);const nb=$('#mTime');nb.querySelectorAll('select').forEach(x=>x.addEventListener('change',()=>touched=true));}};}}
 }
 async function readGpx(f){
@@ -2945,6 +2950,13 @@ function saveLog(){
   log.rpe=draft.rpe||5;
   {const so=$('#mShoe');const v=so?so.value:st.shoeDefault;if(v)log.shoe=v;}
   const w=draft.wid?allW().find(x=>x.id===draft.wid):null;
+  if(draft.edit!=null){const old=st.logs[draft.edit];if(old){const same=Math.abs((old.dist||0)-log.dist)<0.02*Math.max(1,log.dist)&&Math.abs((old.time||0)-log.time)<5;
+    for(const k of ['aid','stravaId','stravaName','elev','avgHr','route','source'])if(old[k]!=null&&log[k]==null)log[k]=old[k];
+    if(same)for(const k of ['splits','best','fast'])if(old[k]!=null&&log[k]==null)log[k]=old[k];
+    if(old.source&&old.source!=='manual'&&!same)log.edited=true;
+    st.logs=st.logs.filter(x=>x!==old);}
+    commitLog(log,w);
+    draft=null;persist();closeSheet();render();toast(L('Registo atualizado','Log updated'));return;}
   commitLog(log,w);
   persist();render();celebrate(log,w);
 }
@@ -3260,6 +3272,8 @@ document.addEventListener('click',e=>{
   else if(a==='rb'){const S=RB[b.dataset.ctx],k=b.dataset.k;S[k]=k==='more'||k==='browsing'?true:b.dataset.v;if(k==='dist'||k==='reg')S.more=false;haptic();rbRerender(b.dataset.ctx);}
   else if(a==='howto'){if(G){G.howBack=true;}const nm=b.dataset.v;if(G||st?.gl&&$('#glClock')){const back=()=>renderGuide();openSheet(howHtml(nm)+`<button class="primary" data-act="how-back">${L('Voltar ao treino','Back to workout')}</button>`);}else{lastSheetBeforeHow=$('#sheetBg').classList.contains('open')?$('#sheet').innerHTML:'';openSheet(howHtml(nm)+(lastSheetBeforeHow?`<button class="ghost" data-act="how-back">‹ ${L('Voltar','Back')}</button>`:''));}}
   else if(a==='upd-go')doUpdate();
+  else if(a==='editlog')openLogEdit(+b.dataset.v);
+  else if(a==='log-del-i'){const l=st.logs[+b.dataset.v];if(l){if(l.aid)(st.feedDel=st.feedDel||[]).push(l.aid);st.logs=st.logs.filter(x=>x!==l);adapt();persist();}draft=null;closeSheet();render();toast(L('Registo apagado','Log deleted'));}
   else if(a==='gl-wu'){const w=glW();if(!w)return;const seg=segments(w).filter(x=>x.wu);if(!seg.length)return;G={w,seg,i:0,left:seg[0].sec,up:0,times:[],run:true,last:Date.now(),beeped:-1,total:seg.reduce((a,x)=>a+x.sec,0),wuOnly:true};beep(990,0.3);say(`${seg[0].label}. ${seg[0].sub}`);renderGuide();}
   else if(a==='gl-note'){const ei=+b.dataset.v,e=st.gl.ex[ei];openSheet(`<div class="row between"><h2>${L('Nota','Note')}</h2><button class="link" data-act="gl-back">${L('Voltar','Back')}</button></div><div class="small muted">${esc(tr(e.n))}. ${L('Fica guardada e aparece sempre que fizeres este exercício.','It’s saved and shows every time you do this exercise.')}</div><textarea id="glNote" rows="3" maxlength="140" placeholder="${L('Ex.: banco no 4, pega neutra','E.g. bench on 4, neutral grip')}">${esc(st.exNotes?.[e.n]||'')}</textarea><button class="primary" data-act="gl-note-save" data-v="${ei}">${L('Guardar','Save')}</button>`);setTimeout(()=>$('#glNote')?.focus(),100);}
   else if(a==='gl-note-save'){const e=st.gl.ex[+b.dataset.v],t=($('#glNote').value||'').trim();st.exNotes=st.exNotes||{};if(t)st.exNotes[e.n]=t;else delete st.exNotes[e.n];glSave();glRender();toast(t?L('Nota guardada','Note saved'):L('Nota apagada','Note removed'));}
