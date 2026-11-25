@@ -170,6 +170,7 @@ details.why>summary{display:inline-flex;align-items:center;gap:4px;font-size:14p
 .emptyst{align-items:center;text-align:center;padding:28px 20px;gap:10px}.emptyst .eic{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 14%,var(--soft));color:var(--accent)}.emptyst .eic .ico{width:30px;height:30px}.emptyst .primary{align-self:stretch}
 .legend{display:flex;gap:14px;font-size:12.5px;color:var(--muted)}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .addbtn{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1.5px dashed var(--line);color:var(--muted)}.addbtn .ico{color:var(--accent)}
+.navme{display:grid;place-items:center;width:21px;height:21px}.navme svg{width:21px;height:21px}.navav{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:9.5px;font-weight:800;letter-spacing:0;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:var(--display)}
 .avatar{width:38px;height:38px;min-height:0;padding:0;border-radius:50%;border:2px solid color-mix(in srgb,var(--accent) 55%,var(--line));background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:var(--display);font-weight:800;font-size:14px;letter-spacing:.02em;display:grid;place-items:center;flex:none}
 .avatar[aria-current=page]{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
 .avatar.big{width:84px;height:84px;font-size:30px;border-width:3px}
@@ -275,7 +276,7 @@ body.sheet-open{overflow:hidden}
       <svg viewBox="0 0 32 32" aria-hidden="true"><defs><radialGradient id="lg5" cx=".85" cy=".1" r=".9"><stop offset="0" stop-color="#5a2018"/><stop offset=".6" stop-color="#140c10"/><stop offset="1" stop-color="#07080d"/></radialGradient></defs><rect x="1" y="1" width="30" height="30" rx="8" fill="url(#lg5)"/><rect x="6" y="19" width="3.2" height="6" rx="1.4" fill="#5c5c60"/><rect x="10.6" y="16" width="3.2" height="9" rx="1.4" fill="#86868a"/><rect x="15.2" y="13" width="3.2" height="12" rx="1.4" fill="#b2b2b5"/><rect x="19.8" y="10" width="3.2" height="15" rx="1.4" fill="#e2e2e4"/><rect x="24.4" y="6" width="3.2" height="19" rx="1.4" fill="#ff5a3c"/></svg>
       <h1>Zone<span style="color:var(--accent)">5</span></h1>
     </div>
-    <div class="row" style="gap:8px;flex-wrap:nowrap"><div class="sync" id="sync"><span class="dot" id="syncDot"></span><span id="syncTxt">A ligar…</span></div><button class="avatar" id="meBtn" data-act="me" aria-label="Perfil" hidden></button></div>
+    <div class="sync" id="sync"><span class="dot" id="syncDot"></span><span id="syncTxt">A ligar…</span></div>
   </header>
   <main id="app"></main>
 </div>
@@ -285,7 +286,7 @@ body.sheet-open{overflow:hidden}
     <a href="#plano" data-tab="plano"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Plano</a>
     <a href="#progresso" data-tab="progresso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16M6 15l4-4 3 3 5-6"/></svg>Progresso</a>
     <a href="#grupo" data-tab="grupo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3.3 2.7-5 6-5s6 1.7 6 5M15 14.5c3 0 6 1.3 6 4.5"/></svg>Grupo</a>
-    <a href="#ajustes" data-tab="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 7h14M5 17h14"/><circle cx="9" cy="7" r="2.2" fill="var(--surface)"/><circle cx="15" cy="17" r="2.2" fill="var(--surface)"/></svg>Ajustes</a>
+    <a href="#perfil" data-tab="perfil"><span id="navMe" class="navme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg></span>Perfil</a>
   </div>
 </nav>
 <div class="sheet-bg" id="sheetBg"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
@@ -1692,7 +1693,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251652';
+const APP_VER='202611251657';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -1735,7 +1736,7 @@ function trNode(root){
 }
 Object.assign(EN_EXACT,{
 '(tu)':'(you)','A seguir:':'Up next:','Afinação':'Sharpening','Agachamento':'Squat','Ainda não tenho conta':"I don't have an account",'Ainda não tenho prova marcada':"I don't have a race booked yet",
-'Ajustes':'Settings','Ajustes do treinador':'Coach adjustments','Alterar objetivo, data ou dias':'Change goal, date or days','Apagar':'Delete','Apagar o calendário Zone5':'Delete the Zone5 calendar','Apagar o calendário Zone5?':'Delete the Zone5 calendar?',
+'Ajustes':'Settings','Perfil':'Profile','Ajustes do treinador':'Coach adjustments','Alterar objetivo, data ou dias':'Change goal, date or days','Apagar':'Delete','Apagar o calendário Zone5':'Delete the Zone5 calendar','Apagar o calendário Zone5?':'Delete the Zone5 calendar?',
 'Apagar plano e registos':'Delete plan and logs','Apagar registo':'Delete log','Apagar tudo':'Delete everything','Apagar tudo?':'Delete everything?',
 'Apago o calendário "Zone5 · treinos" da tua conta Google. Os teus outros calendários não são tocados.':'This deletes the "Zone5 · training" calendar from your Google account. Your other calendars are not touched.',
 'Aplicar':'Apply','Associar a':'Link to','Atualiza quando registas uma prova ou um teste, ou quando duas sessões de qualidade seguidas ficam acima ou abaixo do alvo.':'Updates when you log a race or a test, or when two quality sessions in a row land above or below target.',
@@ -2431,12 +2432,12 @@ let tab=(location.hash||'#hoje').slice(1);
 function render(){
   TODAY=localToday();
   const app=$('#app');
-  if(!mode){$('#tabs').hidden=true;$('#meBtn').hidden=true;app.innerHTML=authHtml();return;}
-  if(!st||!st.profile){$('#tabs').hidden=true;$('#meBtn').hidden=true;app.innerHTML=onboardHtml();bindOnboard();return;}
+  if(!mode){$('#tabs').hidden=true;app.innerHTML=authHtml();return;}
+  if(!st||!st.profile){$('#tabs').hidden=true;app.innerHTML=onboardHtml();bindOnboard();return;}
   $('#tabs').hidden=false;
   if(!['hoje','plano','progresso','grupo','ajustes','perfil'].includes(tab))tab='hoje';
-  {const a=$('#meBtn');a.hidden=false;const ini=mode==='cloud'||st.profile.nick?initials(myName()):'';a.innerHTML=ini||`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>`;a.setAttribute('aria-current',tab==='perfil'?'page':'false');a.setAttribute('aria-label',L('Perfil','Profile'));}
-  document.querySelectorAll('nav.tabs a').forEach(a=>a.setAttribute('aria-current',a.dataset.tab===tab?'page':'false'));
+  {const ini=mode==='cloud'||st.profile.nick?initials(myName()):'',n=$('#navMe');if(n&&n.dataset.ini!==ini){n.dataset.ini=ini;n.innerHTML=ini?`<b class="navav">${esc(ini)}</b>`:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>';}}
+  document.querySelectorAll('nav.tabs a').forEach(a=>a.setAttribute('aria-current',a.dataset.tab===tab||(tab==='ajustes'&&a.dataset.tab==='perfil')?'page':'false'));
   if(render._t!==tab){app.classList.remove('vin');void app.offsetWidth;app.classList.add('vin');render._t=tab;}
   app.innerHTML=tab==='perfil'?perfilHtml():tab==='hoje'?hojeHtml():tab==='plano'?planoHtml():tab==='progresso'?progHtml():tab==='grupo'?grupoHtml():ajustesHtml();
   if(tab==='ajustes'){settify();bindAjustes();}
@@ -2554,7 +2555,7 @@ function perfilHtml(){
   const showRun=gt!=='gym'||p.runExtra?.days?.length;
   const preds=showRun?[[5,'5 km'],[10,'10 km'],[21.0975,L('Meia','Half')],[42.195,L('Maratona','Marathon')]].map(([k,l])=>`<div><b>${fmtTime(predict(st.vdot,k*1000))}</b><span>${l}</span></div>`).join(''):'';
   const shoes=typeof activeShoes==='function'?activeShoes():[];
-  return `<button class="back" data-act="me-back">${ico('back')}${L('Voltar','Back')}</button>
+  return `<div class="row between"><h2>${L('Perfil','Profile')}</h2><button class="mini" style="flex:none" data-act="me-set" aria-label="${L('Ajustes','Settings')}">${ico('gear')}${L('Ajustes','Settings')}</button></div>
   <div class="phead"><div class="avatar big">${initials(nm)||`<svg class="ico" style="width:38px;height:38px" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>`}</div>
     <h2>${nm?esc(nm):L('O teu perfil','Your profile')}</h2>
     <div class="small muted">${mode==='cloud'?esc(user.email):L('Modo experiência · dados só neste dispositivo','Trial mode · data only on this device')}</div>
@@ -2590,7 +2591,7 @@ function saveMeBody(){const b=st.profile.body=st.profile.body||{};const sx=$('#m
   persist();closeSheet();render();toast(L('Dados guardados','Saved'));}
 function ajustesHtml(){
   const p=st.profile,P=pz();
-  return `<h2>Ajustes</h2>
+  return `<button class="back" data-act="me-back">${ico('back')}${L('Perfil','Profile')}</button><h2>Ajustes</h2>
   <section class="card"><h3>Os teus ritmos</h3><table class="table"><thead><tr><th>Zona</th><th>Ritmo por km</th><th>Para quê</th></tr></thead><tbody>
   <tr><td>${zonePill('E')}</td><td>${fmtPace(P.E[0])}–${fmtPace(P.E[1])}</td><td class="small">Fáceis e longos</td></tr>
   <tr><td>${zonePill('M')}</td><td>${fmtPace(P.M)}</td><td class="small">Blocos de maratona</td></tr>
@@ -3346,8 +3347,7 @@ document.addEventListener('click',e=>{
   else if(a==='rm-off')remindOff();
   else if(a.startsWith('ob-'))obNav(a,b.dataset.v);
   else if(a==='ps-open')openPlanSettings();
-  else if(a==='me'){if(tab==='perfil'){location.hash='#'+(window.meFrom||'hoje');}else{window.meFrom=tab;location.hash='#perfil';}}
-  else if(a==='me-back')location.hash='#'+(window.meFrom||'hoje');
+  else if(a==='me-back')location.hash='#perfil';
   else if(a==='me-name')openMeName();
   else if(a==='me-name-save')saveMeName();
   else if(a==='me-body')openMeBody();
