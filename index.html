@@ -192,6 +192,8 @@ details.why>summary{display:inline-flex;align-items:center;gap:4px;font-size:14p
 .rd2{display:flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:var(--surface2);flex:none;line-height:1}.rd2 b{font-family:var(--display);font-size:17px}.rd2 span{font-size:10.5px;color:var(--muted);text-transform:uppercase;font-weight:700}
 .prio{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}.prio.pA{background:var(--accent);color:#fff}.prio.pB{background:color-mix(in srgb,var(--warn) 25%,var(--soft));color:var(--warn)}.prio.pC{background:var(--soft);color:var(--muted);border:1px solid var(--line)}
 ul.adv{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14.5px}.aicard{border-color:color-mix(in srgb,var(--zR) 45%,var(--line));background:linear-gradient(160deg,color-mix(in srgb,var(--zR) 12%,var(--surface)),var(--surface))}
+.aiload{display:inline-flex;gap:3px;vertical-align:middle;margin-right:4px}.aiload i{width:6px;height:6px;border-radius:50%;background:var(--zR);animation:aib 1s infinite ease-in-out}.aiload i:nth-child(2){animation-delay:.15s}.aiload i:nth-child(3){animation-delay:.3s}@keyframes aib{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:none}}.aicur{color:var(--zR);animation:blink 1s steps(2) infinite}@keyframes blink{50%{opacity:0}}
+.props{display:flex;flex-direction:column;gap:8px}.prop{flex-direction:row!important;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:14px;background:var(--soft);border:1px solid var(--line);font-weight:400}.prop input{width:20px;height:20px;min-height:0;margin-top:2px;flex:none}.prop>span{display:flex;flex-direction:column;gap:2px}.cl2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .hitem{display:flex;flex-direction:column;gap:8px}
 @media (min-width:381px){.stats>.stat:last-child:nth-child(3n+2){grid-column:span 2}.stats>.stat:last-child:nth-child(3n+1):not(:first-child){grid-column:span 3}}
 .stat .l{line-height:1.25}
@@ -917,30 +919,101 @@ function racesListHtml(){
 }
 function openRaceSheet(id){
   const p=st.profile,main=id==='main',r=main?{id:'main',name:p.raceName||gLabel(),date:p.raceDate,km:p.goalType==='hyrox'?null:gKm(),hx:p.goalType==='hyrox',ai:st.mainAi}:(st.extraRaces||[]).find(x=>x.id===id);if(!r)return;
-  const pr=main?'A':(r.prio||'B'),d=daysBetween(TODAY,r.date),aiOn=mode==='cloud'&&!!sb;
+  const pr=main?'A':(r.prio||'B'),d=daysBetween(TODAY,r.date),aiOk=aiOn();
   openSheet(`<div class="row between"><span class="eyebrow">${DOW[dow(r.date)]} ${fmtDate(r.date)} · ${d===0?L('hoje','today'):d===1?L('amanhã','tomorrow'):d+' '+L('dias','days')}</span><button class="link" data-act="close">${L('Fechar','Close')}</button></div>
   <h2>${esc(r.name)}</h2><div class="small muted">${r.hx?'HYROX':nf(Math.round(r.km*10)/10)+' km'}${main?' · '+L('objetivo principal do plano','main goal of your plan'):''}</div>
   ${main?'':`<div class="small"><b>${L('Prioridade','Priority')}</b></div><div class="seg">${['A','B','C'].map(k=>`<button data-act="race-prio" data-id="${esc(r.id)}" data-v="${k}" aria-pressed="${pr===k}">${k} · ${PRIO[k][0]()}</button>`).join('')}</div><div class="tiny muted">${PRIO[pr][1]()}</div>`}
   <div class="card" style="background:var(--soft);border:none;gap:8px"><b>${L('Recomendações','Recommendations')}</b><ul class="adv">${raceAdvice(r,main).map(x=>`<li>${x}</li>`).join('')}</ul></div>
   <div class="card aicard" style="gap:8px"><div class="row between"><b>✨ ${L('Treinador IA','AI coach')}</b>${r.ai?`<span class="tiny muted">${fmtDate(r.ai.d)}</span>`:''}</div>
-    <div id="aiBox" class="small">${r.ai?aiFmt(r.ai.t):aiOn?L('Uma análise feita por IA a partir do teu plano, dos teus treinos recentes e desta prova.','An AI analysis based on your plan, recent training and this race.'):L('Disponível com conta (o modo experiência não liga à IA).','Available with an account (trial mode doesn’t connect to AI).')}</div>
-    ${aiOn?`<button class="${r.ai?'ghost':'primary'}" data-act="race-ai" data-v="${esc(r.id)}">${r.ai?L('Pedir nova análise','Ask again'):L('Pedir análise à IA','Ask the AI coach')}</button>`:''}</div>
+    <div id="aiBox" class="small">${r.ai?aiFmt(r.ai.t):aiOk?L('Uma análise feita por IA a partir do teu plano, dos teus treinos recentes e desta prova.','An AI analysis based on your plan, recent training and this race.'):L('Disponível com conta (o modo experiência não liga à IA).','Available with an account (trial mode doesn’t connect to AI).')}</div>
+    ${aiOk?`<button class="${r.ai?'ghost':'primary'}" data-act="race-ai" data-v="${esc(r.id)}">${r.ai?L('Pedir nova análise','Ask again'):L('Pedir análise à IA','Ask the AI coach')}</button>`:''}</div>
   ${main?`<button class="ghost" data-act="ps-open">${L('Mudar objetivo principal','Change main goal')}</button>`:`<div class="btns"><button class="ghost" data-act="race-promote" data-v="${esc(r.id)}">${L('Tornar objetivo principal','Make it my main goal')}</button><button class="ghost" data-act="xr-del" data-id="${esc(r.id)}" style="color:var(--bad)">${L('Remover','Remove')}</button></div>`}`);
 }
 const aiFmt=t=>esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^\s*[-•*]\s+/gm,'• ').replace(/\n/g,'<br>');
+// ---------- Treinador IA (partilhado por todas as modalidades) ----------
+const aiOn=()=>mode==='cloud'&&!!sb;
+// mostra o progresso enquanto espera e o texto à medida que chega
+function aiLive(boxSel){const box=$(boxSel);const steps=[L('A ler os teus treinos…','Reading your training…'),L('A olhar para o plano…','Looking at your plan…'),L('A pensar nas recomendações…','Thinking through recommendations…'),L('Quase…','Almost there…')];let i=0,got=false;
+  const show=()=>{if(!got&&box)box.innerHTML=`<span class="aiload"><i></i><i></i><i></i></span> <span class="muted">${steps[Math.min(i,steps.length-1)]}</span>`;};show();const t=setInterval(()=>{i++;show();},2600);
+  return{chunk(txt){got=true;const b=$(boxSel);const vis=txt.split('###')[0];if(b)b.innerHTML=aiFmt(vis)+(vis.length<txt.length?`<div class="tiny muted" style="margin-top:6px"><span class="aiload"><i></i><i></i><i></i></span> ${L('A preparar propostas para o plano…','Preparing plan suggestions…')}</div>`:'<span class="aicur">▍</span>');},stop(){clearInterval(t);}};}
+async function aiCall(kind,ctx,live){const {data}=await sb.auth.getSession();const tok=data?.session?.access_token;if(!tok)throw new Error('auth');
+  try{const res=await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/${CONFIG.COACH_FN||'coach'}`,{method:'POST',headers:{Authorization:'Bearer '+tok,apikey:CONFIG.SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({kind,ctx:{lang:LANG,today:TODAY,...ctx}})});
+    const ct=res.headers.get('content-type')||'';
+    if(!res.ok||ct.includes('json')){const j=await res.json().catch(()=>({}));if(res.ok&&j.text)return String(j.text).slice(0,3000);throw new Error(j.error||('http '+res.status));}
+    let out='';if(res.body&&res.body.getReader){const rd=res.body.getReader(),dec=new TextDecoder();while(true){const {value,done}=await rd.read();if(done)break;out+=dec.decode(value,{stream:true});live?.chunk(out);}}else out=await res.text();
+    out=out.trim();if(out.startsWith('{"')){try{const j=JSON.parse(out);if(j.error)throw new Error(j.error);if(j.text)out=j.text;}catch(e){if(/limit|auth|ai:/.test(e.message))throw e;}}if(!out)throw new Error('empty');return out.slice(0,4000);}
+  finally{live?.stop();}}
+function aiErrMsg(e){const m=String(e?.message||e);try{reportErr&&reportErr('coach: '+m);}catch(_){}
+  return /limit|429/i.test(m)?L('Chegaste ao limite de análises de hoje. Tenta amanhã.','You’ve reached today’s analysis limit. Try tomorrow.'):/404|not found|not configured|503/i.test(m)?L('O treinador IA ainda não está ligado.','The AI coach isn’t set up yet.'):L('Não foi possível falar com a IA agora. Tenta daqui a pouco.','Couldn’t reach the AI right now. Try again shortly.');}
+function athleteCtx(){const p=st.profile,P=pz(),run=p.goalType!=='gym'||p.runExtra?.days?.length;
+  return{goalType:p.goalType,goal:p.goalType==='gym'?p.gymGoal:p.goalType==='race'?(p.raceName||gLabel())+' '+p.raceDate:p.goalType==='hyrox'?'HYROX '+(p.raceDate||'sem prova'):p.goalType,level:p.level,daysPerWeek:(p.runDays||[]).length,
+    run:run?{vdot:st.vdot,paces:{easy:fmtPace(P.E[0]),threshold:fmtPace(P.T),interval:fmtPace(P.I)},pred5k:fmtTime(predict(st.vdot,5000)),pred10k:fmtTime(predict(st.vdot,10000))}:null,
+    gym:(p.goalType==='gym'||p.gymExtra?.days?.length)?{goal:p.gymGoal||null,equipment:p.gymEq||null,minutes:p.gymMin||p.gymExtra?.min||null,limits:p.gymLimits||[],focus:p.gymFocus||[]}:null,
+    hyrox:(p.goalType==='hyrox'||p.hxExtra?.days?.length)?{division:p.hxDiv||'om',predicted:fmtTime(hxPredict(st.vdot)),stations:Object.fromEntries(HX_ST.map(k=>[HX_NAME[k],hxBest(k)?fmtTime(hxBest(k)):null]))}:null,
+    age:p.body?.age||null,sex:p.body?.sex||null,weightKg:(st.weights||[]).slice(-1)[0]?.kg||p.body?.w||null};}
+function recentCtx(n=14){return [...st.logs].filter(l=>l.dist>0||l.wtype==='F').sort((a,b)=>a.date<b.date?1:-1).slice(0,n).map(l=>{const w=l.wid?allW().find(x=>x.id===l.wid):null;
+  return{d:l.date,kind:logKind(l),title:w?.title||(l.dist>0?'Corrida':'Treino'),km:l.dist?Math.round(l.dist*10)/10:undefined,time:l.time?fmtTime(l.time):undefined,pace:l.dist?fmtPace(l.time/l.dist):undefined,rpe:l.rpe||undefined,volKg:l.vol||undefined,sets:l.sets||undefined,prs:l.prs?.map(p=>`${p.n} ${p.kg}kg×${p.reps}`)};});}
+function liftsCtx(){return Object.entries(st.lifts||{}).map(([n,h])=>{const best=e=>Math.max(0,...e.sets.map(q=>e1rm(q[0],q[1])));const f=h[0],l=h[h.length-1];return{name:n,sessions:h.length,first:f?.d,last:l?.d,e1rmFirst:f?Math.round(best(f)):0,e1rmLast:l?Math.round(best(l)):0,lastSets:l?.sets?.map(q=>`${q[0]}×${q[1]}`).join(' ')};}).sort((a,b)=>a.last<b.last?1:-1).slice(0,12);}
+function weeksCtx(until){return st.plan.weeks.filter(w=>addDays(w.start,6)>=addDays(TODAY,-14)&&(!until||w.start<=until)).slice(0,10).map(w=>({start:w.start,phase:w.phase,km:Math.round(w.workouts.reduce((a,x)=>a+(x.km||0),0)),done:w.workouts.filter(x=>logFor(x)).length,planned:w.workouts.length,sessions:w.workouts.map(x=>`${x.date.slice(5)} ${x.title}${x.km?' '+Math.round(x.km)+'km':''}${logFor(x)?' ✓':''}`).join('; ')}));}
+// ---------- Treinador IA: análise + propostas aplicáveis ao plano ----------
+function upcomingCtx(days=21){const end=addDays(TODAY,days);return allW().filter(w=>w.date>=TODAY&&w.date<=end).sort((a,b)=>a.date<b.date?-1:1).map(w=>({date:w.date,title:w.title,kind:w.gym?'gym':w.hx?'hyrox':w.type==='F'?'strength':'run',type:w.type,km:w.km||undefined,min:w.min||undefined,race:!!w.race||undefined,light:!!w.light||undefined,done:!!logFor(w)||undefined,skipped:st.skipped?.includes(w.id)||undefined}));}
+function goalsCtx(){const p=st.profile;return{main:{type:p.goalType,race:p.raceName||null,date:p.raceDate||null,km:p.goalType==='race'?gKm():null,goalTime:p.goalTime?fmtTime(p.goalTime):null},
+  races:(st.extraRaces||[]).filter(r=>r.date>=TODAY).map(r=>({id:r.id,name:r.name,date:r.date,km:r.km||null,hyrox:!!r.hx,prio:r.prio||'B',inPlan:!!weekOf(r.date)})),
+  sideSports:{gym:p.gymExtra?.days?.length?p.gymExtra:null,run:p.runExtra?.days?.length?p.runExtra:null,hyrox:p.hxExtra?.days?.length?p.hxExtra:null}};}
+function parseCoach(t){const [txt,js]=String(t).split(/###\s*JSON\s*###/i);let props=[];if(js){try{const m=js.replace(/```(json)?/g,'').trim();const o=JSON.parse(m.slice(m.indexOf('{'),m.lastIndexOf('}')+1));props=Array.isArray(o.proposals)?o.proposals:[];}catch(e){}}
+  return{text:(txt||'').trim(),props:props.map(validProp).filter(Boolean).slice(0,5)};}
+function validProp(p){if(!p||typeof p!=='object')return null;const why=String(p.why||'').slice(0,200),wAt=d=>allW().find(w=>w.date===d&&!logFor(w)&&!w.race&&!st.skipped?.includes(w.id));const inR=d=>typeof d==='string'&&d>=TODAY&&d<=addDays(TODAY,28);
+  switch(p.action){
+    case'lighten':case'easy':case'rest':{if(!inR(p.date))return null;const w=wAt(p.date);if(!w||(p.action==='easy'&&(w.type==='E'||w.type==='F')))return null;const lab={lighten:L('Versão mais leve','Lighter version'),easy:L('Trocar por treino fácil','Swap for an easy run'),rest:L('Descansar','Rest')}[p.action];return{action:p.action,date:p.date,why,label:`${lab}: ${DOW[dow(p.date)]} ${fmtDate(p.date)} · ${tr(w.title)}`};}
+    case'volume_week':{const wk=st.plan.weeks.find(w=>w.start===p.week_start||(p.week_start&&weekOf(p.week_start)===w));const pct=clamp(Math.round(+p.pct||0),-30,10);if(!wk||wk.start<mondayOf(TODAY)||!pct)return null;return{action:'volume_week',week_start:wk.start,pct,why,label:`${pct<0?L('Aliviar','Ease'):L('Reforçar','Build')} ${L('a semana de','the week of')} ${fmtDate(wk.start)} (${pct>0?'+':''}${pct}% ${L('volume','volume')})`};}
+    case'paces':{if(!allW().some(w=>w.type!=='F'&&w.date>=TODAY))return null;const d=clamp(Math.round((+p.delta||0)*10)/10,-1.5,1.5);if(!d)return null;const nv=st.vdot+d;return{action:'paces',delta:d,why,label:`${d>0?L('Ritmos mais rápidos','Faster paces'):L('Ritmos mais calmos','Easier paces')}: ${L('fácil','easy')} ${fmtPace(paces(st.vdot,st.profile.goal||'10k',popt()).E[0])} → ${fmtPace(paces(nv,st.profile.goal||'10k',popt()).E[0])}/km`};}
+    case'race_prio':{const r=(st.extraRaces||[]).find(x=>x.id===p.race_id);if(!r||!['A','B','C'].includes(p.prio)||r.prio===p.prio)return null;return{action:'race_prio',race_id:r.id,prio:p.prio,why,label:`${esc(r.name)}: ${L('prioridade','priority')} ${r.prio||'B'} → ${p.prio}`};}
+  }return null;}
+function scaleWeek(wk,f){for(const w of wk.workouts){if(logFor(w)||w.race)continue;
+  if(w.type==='E'||w.type==='L'){for(const s of w.steps){if(s.km){s.km=r05(s.km*f);s.t=s.t.replace(/^[\d.,]+ km/,`${nf(s.km)} km`);}}}
+  else if(w.type==='Q'){for(const s of w.steps){if(s.reps){s.reps=Math.max(2,Math.round(s.reps*(f<1?Math.max(.6,f):Math.min(1.15,f))));s.t=s.t.replace(/^\d+ ×/,`${s.reps} ×`);}}}
+  else if(w.gym&&f<1){for(const s of w.steps)if(s.z==='G'&&s.sets){s.sets=Math.max(2,s.sets-1);s.d=String(s.d).replace(/^\d+ ×/,`${s.sets} ×`);}}
+  if(w.steps?.some(s=>s.km))w.km=Math.round(stepsKm(w.steps)*10)/10;}wk.adjusted=true;}
+function applyProps(props){st.aiUndo={plan:JSON.stringify(st.plan),vdot:st.vdot,skipped:[...(st.skipped||[])],xr:JSON.stringify(st.extraRaces||[]),d:TODAY};let n=0;
+  for(const p of props){const w=p.date?allW().find(x=>x.date===p.date&&!logFor(x)&&!x.race):null;
+    if(p.action==='lighten'&&w&&lightenW(w))n++;
+    else if(p.action==='easy'&&w){softenW(w,'ai');n++;}
+    else if(p.action==='rest'&&w){st.skipped=st.skipped||[];st.skipped.push(w.id);n++;}
+    else if(p.action==='volume_week'){const wk=st.plan.weeks.find(x=>x.start===p.week_start);if(wk){scaleWeek(wk,1+p.pct/100);n++;}}
+    else if(p.action==='paces'){const o=st.vdot;st.vdot=Math.round((st.vdot+p.delta)*10)/10;st.vdotHist.push({d:TODAY,v:st.vdot,why:'treinador IA'});n++;}
+    else if(p.action==='race_prio'){const r=(st.extraRaces||[]).find(x=>x.id===p.race_id);if(r){unapplyRace(r.id);r.prio=p.prio;applyExtraRaces();n++;}}}
+  if(n)addNote(L(`Treinador IA: ${n} ${n===1?'alteração aplicada':'alterações aplicadas'} ao plano. ${props.map(p=>p.label.replace(/<[^>]+>/g,'')).join(' · ')}`,`AI coach: ${n} ${n===1?'change':'changes'} applied. ${props.map(p=>p.label.replace(/<[^>]+>/g,'')).join(' · ')}`),'info');
+  return n;}
+function undoAi(){const u=st.aiUndo;if(!u)return;st.plan=JSON.parse(u.plan);st.vdot=u.vdot;st.skipped=u.skipped;st.extraRaces=JSON.parse(u.xr);delete st.aiUndo;if(st.aiPlan)st.aiPlan.applied=false;addNote(L('Alterações do treinador IA desfeitas.','AI coach changes undone.'),'info');persist();render();toast(L('Plano reposto','Plan restored'));}
+function coachBody(){const a=st.aiPlan;if(!a)return `<div id="aiCoach" class="small">${L('Analiso os teus últimos treinos face a todos os teus objetivos e provas, em qualquer modalidade, e proponho ajustes ao plano. Só mudo alguma coisa se aceitares.','I review your recent training against all your goals and races, in any sport, and suggest plan changes. Nothing changes unless you accept.')}</div>`;
+  return `<div id="aiCoach" class="small">${aiFmt(a.t)}</div>${a.props?.length?`<div class="small" style="margin-top:4px"><b>${L('Propostas para o plano','Plan suggestions')}</b></div><div class="props">${a.props.map((p,i)=>`<label class="prop"><input type="checkbox" data-pi="${i}" ${a.applied?'disabled checked':'checked'}><span><b>${p.label}</b>${p.why?`<span class="small muted">${esc(p.why)}</span>`:''}</span></label>`).join('')}</div>
+  ${a.applied?`<div class="small" style="color:var(--good)">✓ ${L('Aplicado ao plano','Applied to your plan')}${st.aiUndo?` · <button class="link small" data-act="ai-undo">${L('Desfazer','Undo')}</button>`:''}</div>`:`<div class="btns"><button class="primary" data-act="ai-apply">${L('Atualizar os próximos treinos','Update upcoming workouts')}</button><button class="ghost" data-act="ai-skip">${L('Agora não','Not now')}</button></div>`}`:`<div class="tiny muted">${L('Sem alterações propostas: o plano está alinhado com o que tens feito.','No changes suggested: your plan matches how you’ve been training.')}</div>`}`;}
+function openCoach(){const a=st.aiPlan,on=aiOn();
+  openSheet(`<div class="row between"><h2>✨ ${L('Treinador IA','AI coach')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div>${a?`<div class="tiny muted">${L('Análise de','Analysis from')} ${fmtDate(a.d)}</div>`:''}<div id="coachBox">${coachBody()}</div>${on?`<button class="${a?'link small':'primary'}" ${a?'style="align-self:center"':''} data-act="ai-plan">${a?'↻ '+L('Nova análise','New analysis'):L('Analisar os últimos treinos','Analyse my recent training')}</button>`:''}`);}
+async function askPlanAI(){const btn=document.querySelector('[data-act=ai-plan]');if(btn){btn.disabled=true;btn.textContent=L('A analisar…','Analysing…');}$('#coachBox').innerHTML='<div id="aiCoach" class="small"></div>';const live=aiLive('#aiCoach');
+  try{const t=await aiCall('plan',{athlete:athleteCtx(),goals:goalsCtx(),recent:recentCtx(20),lifts:liftsCtx(),upcoming:upcomingCtx(21),weeks:weeksCtx(),checkins:(st.checkins||[]).slice(-7)},live);
+    const r=parseCoach(t);st.aiPlan={t:r.text,props:r.props,d:TODAY,applied:false};persist();openCoach();render();}
+  catch(e){$('#aiCoach').innerHTML=`<span style="color:var(--bad)">${aiErrMsg(e)}</span>`;if(btn){btn.disabled=false;btn.textContent=L('Tentar outra vez','Try again');}}}
+function coachHomeHtml(){if(!aiOn()&&!st.aiPlan)return'';const a=st.aiPlan,first=a?a.t.split('\n').map(x=>x.replace(/^\s*[-•*]\s*/,'').replace(/\*\*/g,'')).find(x=>x.trim())||'':'';
+  return `<section class="card aicard coachh"><div class="row between" style="flex-wrap:nowrap"><div style="min-width:0"><b>✨ ${L('Treinador IA','AI coach')}</b><div class="small muted cl2">${a?esc(first):L('Analisa os teus últimos treinos e ajusta o plano aos teus objetivos.','Reviews your recent training and tunes the plan to your goals.')}</div></div><button class="mini" style="flex:none" data-act="ai-open">${a?(a.props?.length&&!a.applied?L(`${a.props.length} propostas`,`${a.props.length} suggestions`):L('Ver','Open')):L('Analisar','Analyse')}</button></div></section>`;}
+async function askReviewAI(){const box=$('#aiRev'),btn=document.querySelector('[data-act=ai-review]');if(btn){btn.disabled=true;btn.textContent=L('A analisar…','Analysing…');}const live=aiLive('#aiRev');
+  try{const t=await aiCall('review',{athlete:athleteCtx(),recent:recentCtx(20),lifts:liftsCtx(),weeks:weeksCtx(),weights:(st.weights||[]).slice(-8),records:(()=>{const r=records2();return{best:Object.fromEntries(Object.entries(r.best).map(([k,v])=>[k+'km',fmtTime(v.t)])),longestKm:r.longest?Math.round(r.longest.dist*10)/10:null,streak:r.streak};})()},live);
+    st.aiReview={t,d:TODAY};persist();render();}catch(e){if(box)box.innerHTML=`<span style="color:var(--bad)">${aiErrMsg(e)}</span>`;if(btn)btn.disabled=false;}}
+async function askWorkoutAI(i){const l=st.logs[i];if(!l)return;const box=$('#aiLog'),btn=document.querySelector('[data-act=ai-log]');if(btn){btn.disabled=true;btn.textContent=L('A analisar…','Analysing…');}const live=aiLive('#aiLog');
+  const w=l.wid?allW().find(x=>x.id===l.wid):null;
+  try{const t=await aiCall('workout',{athlete:athleteCtx(),workout:{date:l.date,kind:logKind(l),planned:w?{title:w.title,km:w.km,steps:(w.steps||[]).map(s=>s.t+(s.sets?` ${s.sets}×${s.reps}`:''))}:null,done:{km:l.dist||undefined,time:l.time?fmtTime(l.time):undefined,pace:l.dist?fmtPace(l.time/l.dist):undefined,avgHr:l.avgHr||undefined,rpe:l.rpe||undefined,splits:l.splits?.map(fmtPace),fastPace:l.fast?fmtPace(l.fast):undefined,volKg:l.vol||undefined,sets:l.sets||undefined,prs:l.prs?.map(p=>`${p.n} ${p.kg}kg×${p.reps}`),lifts:(l.gym||[]).slice?.(0,12)},appVerdict:l.eval?.msg||null},recent:recentCtx(8)},live);
+    l.ai=t;l.aiD=TODAY;persist();openLogDetail(i);}catch(e){if(box)box.innerHTML=`<span style="color:var(--bad)">${aiErrMsg(e)}</span>`;if(btn)btn.disabled=false;}}
 async function askRaceAI(id){
   const p=st.profile,main=id==='main',r=main?{name:p.raceName||gLabel(),date:p.raceDate,km:p.goalType==='hyrox'?null:gKm(),hx:p.goalType==='hyrox'}:(st.extraRaces||[]).find(x=>x.id===id);if(!r)return;
-  const box=$('#aiBox'),btn=document.querySelector('[data-act=race-ai]');if(box)box.innerHTML=`<span class="muted">${L('A analisar o teu plano…','Analysing your plan…')}</span>`;if(btn)btn.disabled=true;
+  const box=$('#aiBox'),btn=document.querySelector('[data-act=race-ai]');if(btn){btn.disabled=true;btn.textContent=L('A analisar…','Analysing…');}const live=aiLive('#aiBox');
   const recent=[...st.logs].filter(l=>l.dist>0||l.wtype==='F').sort((a,b)=>a.date<b.date?1:-1).slice(0,12).map(l=>({d:l.date,km:l.dist?Math.round(l.dist*10)/10:0,t:l.time?fmtTime(l.time):'',pace:l.dist?fmtPace(l.time/l.dist):'',rpe:l.rpe||null,k:logKind(l)}));
   const wks=st.plan.weeks.filter(w=>w.start<=r.date&&addDays(w.start,6)>=TODAY).slice(0,12).map(w=>({start:w.start,phase:w.phase,km:Math.round(w.workouts.reduce((a,x)=>a+(x.km||0),0)),sessions:w.workouts.map(x=>`${x.date.slice(5)} ${x.title}${x.km?' '+Math.round(x.km)+'km':''}`).join('; ')}));
-  const ctx={lang:LANG,today:TODAY,race:{name:r.name,date:r.date,km:r.km,hyrox:!!r.hx,priority:main?'A (main)':(r.prio||'B'),predicted:fmtTime(r.hx?hxPredict(st.vdot):predict(st.vdot,r.km*1000))},
+  const ctx={race:{name:r.name,date:r.date,km:r.km,hyrox:!!r.hx,priority:main?'A (main)':(r.prio||'B'),predicted:fmtTime(r.hx?hxPredict(st.vdot):predict(st.vdot,r.km*1000))},
     main:p.raceDate&&!main?{name:p.raceName,date:p.raceDate,km:gKm()}:null,others:(st.extraRaces||[]).filter(x=>x.id!==id&&x.date>=TODAY).map(x=>({name:x.name,date:x.date,km:x.km,prio:x.prio})),
     athlete:{level:p.level,goalType:p.goalType,daysPerWeek:(p.runDays||[]).length,vdot:st.vdot,paces:{easy:fmtPace(pz().E[0]),threshold:fmtPace(pz().T),interval:fmtPace(pz().I)},age:p.body?.age||null,sex:p.body?.sex||null},recent,weeks:wks,adviceShown:raceAdvice(r,main).map(x=>x.replace(/<[^>]+>/g,''))};
-  try{const {data}=await sb.auth.getSession();const tok=data?.session?.access_token;if(!tok)throw new Error('auth');
-    const res=await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/${CONFIG.COACH_FN||'coach'}`,{method:'POST',headers:{Authorization:'Bearer '+tok,apikey:CONFIG.SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({kind:'race',ctx})});
-    const j=await res.json().catch(()=>({}));if(!res.ok||!j.text)throw new Error(j.error||('http '+res.status));
-    const ai={t:String(j.text).slice(0,3000),d:TODAY};if(main)st.mainAi=ai;else r.ai=ai;persist();openRaceSheet(id);}
-  catch(e){const m=String(e.message||e);if(box)box.innerHTML=`<span style="color:var(--bad)">${/limit|429/i.test(m)?L('Chegaste ao limite de análises de hoje. Tenta amanhã.','You’ve reached today’s analysis limit. Try tomorrow.'):/404|not found/i.test(m)?L('O treinador IA ainda não está ligado.','The AI coach isn’t set up yet.'):L('Não foi possível falar com a IA agora. Tenta daqui a pouco.','Couldn’t reach the AI right now. Try again shortly.')}</span>`;if(btn)btn.disabled=false;try{reportErr&&reportErr('coach: '+m);}catch(_){} }
+  ctx.athlete=athleteCtx();ctx.lifts=r.hx?liftsCtx():undefined;
+  try{const t=await aiCall('race',ctx,live);const ai={t,d:TODAY};if(main)st.mainAi=ai;else r.ai=ai;persist();openRaceSheet(id);}
+  catch(e){if(box)box.innerHTML=`<span style="color:var(--bad)">${aiErrMsg(e)}</span>`;if(btn)btn.disabled=false;}
 }
 function removeExtraRace(rid){
   st.extraRaces=(st.extraRaces||[]).filter(r=>r.id!==rid);
@@ -1769,7 +1842,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251824';
+const APP_VER='202611251848';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2447,13 +2520,13 @@ function workoutCard(w,hero){
   </section>`;
 }
 function logActs(l){const i=st.logs.indexOf(l);return `<div class="acts">${l.wtype==='F'&&l.gym?.length?`<button class="act" data-act="gym-detail" data-v="${i}">${ico('list')}${L('Detalhe','Details')}</button>`:''}${l.photo?'':`<button class="act" data-act="ph-add" data-v="${i}">${ico('cam')}${L('Foto','Photo')}</button>`}<button class="act" data-act="share-img" data-v="${i}">${ico('share')}${L('Partilhar','Share')}</button>${l.wtype!=='F'&&l.dist>0?`<button class="act" data-act="editlog" data-v="${i}">${ico('edit')}${L('Editar','Edit')}</button>`:''}</div>`;}
-function logSummary(l,inCard){
+function logSummary(l,inCard,noAi){
   const sb=inCard?'':logActs(l);const ph=phHtml(l,inCard);
   if(l.wtype==='F'&&l.sets){const i=st.logs.indexOf(l);return `${ph}<div class="note up"><div class="num"><b>${l.time?fmtTime(l.time)+' · ':''}${nf(l.vol||0)} kg · ${l.sets} ${L('séries','sets')}</b></div>${l.prs?.length?`<div>🏆 ${l.prs.map(p=>`${esc(tr(p.n))} ${fmtKg(p.kg)} kg × ${p.reps}`).join(' · ')}</div>`:''}</div>${sb}`;}
   if(l.wtype==='F')return `${ph}<div class="note up">${L('Sessão feita.','Session done.')}</div>${sb}`;
   const ex=[l.avgHr?`${l.avgHr} bpm`:'',l.rpe?`${L('esforço','effort')} ${l.rpe}/10`:'',l.source==='strava'?'Strava':''].filter(Boolean).join(' · ');
-  if(inCard)return `${ph}<div class="note ${l.eval?.cls||'info'}">${ex?`<div class="num small muted">${ex}</div>`:''}<div>${esc(l.eval?.msg||'')}</div></div>${l.ai?`<div class="note info"><span class="tiny muted">Treinador IA</span><br>${esc(l.ai)}</div>`:''}${sb}`;
-  return `${ph}<div class="note ${l.eval?.cls||'info'}"><div class="num"><b>${nf(Math.round(l.dist*100)/100)} km</b> · ${fmtTime(l.time)} · ${fmtPace(l.time/l.dist)}/km${l.avgHr?` · ${l.avgHr} bpm`:''} ${l.rpe?` · esforço ${l.rpe}/10`:''}${l.source==='strava'?' · Strava':''}</div><div>${esc(l.eval?.msg||'')}</div></div>${l.ai?`<div class="note info"><span class="tiny muted">Treinador IA</span><br>${esc(l.ai)}</div>`:''}${sb}`;
+  if(inCard)return `${ph}<div class="note ${l.eval?.cls||'info'}">${ex?`<div class="num small muted">${ex}</div>`:''}<div>${esc(l.eval?.msg||'')}</div></div>${l.ai&&!noAi?`<div class="note info"><span class="tiny muted">✨ ${L('Treinador IA','AI coach')}</span><br>${aiFmt(l.ai)}</div>`:''}${sb}`;
+  return `${ph}<div class="note ${l.eval?.cls||'info'}"><div class="num"><b>${nf(Math.round(l.dist*100)/100)} km</b> · ${fmtTime(l.time)} · ${fmtPace(l.time/l.dist)}/km${l.avgHr?` · ${l.avgHr} bpm`:''} ${l.rpe?` · esforço ${l.rpe}/10`:''}${l.source==='strava'?' · Strava':''}</div><div>${esc(l.eval?.msg||'')}</div></div>${l.ai&&!noAi?`<div class="note info"><span class="tiny muted">✨ ${L('Treinador IA','AI coach')}</span><br>${aiFmt(l.ai)}</div>`:''}${sb}`;
 }
 
 /* ---------- Adaptação ---------- */
@@ -2534,6 +2607,7 @@ function hojeHtml(){
   else if(next){out+=`<section class="card"><div class="small muted">Hoje é dia de descanso.</div></section><div class="eyebrow">Próximo treino</div>`+workoutCard(next,true);}
   else out+=`<section class="card hero"><h2>Plano concluído</h2><div class="small">${p.goalType==='start'?'Já corres 30 minutos seguidos. O próximo passo natural é um plano de 5 km.':'Bom trabalho. Escolhe o próximo objetivo para continuares a evoluir.'}</div><div class="btns">${(()=>{const nx=(st.extraRaces||[]).filter(r=>r.date>TODAY).sort((a,b)=>a.date<b.date?-1:1)[0];return nx?`<button class="primary" data-act="race-promote" data-v="${esc(nx.id)}">${L('Preparar','Prepare for')} ${esc(nx.name)}</button>`:'';})()}${p.goalType==='maintain'?'<button class="primary" data-act="continue">Continuar mais 12 semanas</button>':''}<button class="${p.goalType==='maintain'?'':'primary'}" data-act="newplan">Escolher novo objetivo</button></div></section>`;
   for(const x of ws.filter(w=>w.date===TODAY&&w!==todayW))out+=workoutCard(x,false);
+  out+=coachHomeHtml();
   out+=alertsHtml(AL);
   const fresh=nLogs()===0;
   out+=`<section class="card"><div class="row between"><span class="eyebrow">Semana ${wk?wk.n:''} · ${wk?PH[wk.phase]+(wk.recovery?' (recuperação)':''):''}</span><span class="num small muted">${p.goalType==='gym'?(wk?wk.workouts.filter(w=>logFor(w)).length+' / '+wk.workouts.length+' '+L('treinos','workouts'):''):nf(Math.round(done*10)/10)+' / '+nf(Math.round(plan))+' km'}</span></div><div class="week">${strip}</div></section>`;
@@ -2572,8 +2646,14 @@ function progHtml(){
   const p=st.profile,logs=st.logs.filter(l=>l.dist>0||l.wtype==='F'),gymOnly=p.goalType==='gym'&&!logs.some(l=>l.dist>0);
   const H=`<h2>${L('Progresso','Progress')}</h2>`;
   if(!logs.length)return `${H}<section class="card emptyst"><div class="eic">${ico('run')}</div><h3>${L('A tua evolução aparece aqui','Your progress shows up here')}</h3><div class="small muted">${L('Regista o primeiro treino e começas a ver números, gráficos e recordes.','Log your first workout to start seeing numbers, charts and records.')}</div></section>${p.goalType==='hyrox'?hxProgHtml():''}`;
-  return H+progSummaryHtml(logs,gymOnly)+progConsistHtml()+progVolumeHtml(gymOnly)+(p.goalType==='hyrox'?hxProgHtml():'')+(p.goalType!=='gym'||st.vdotHist.length>1?progPredHtml():'')+progRecordsHtml()+(p.goalType==='gym'||(st.weights||[]).length?weightHtml():'')+progHistHtml(logs);
+  return H+progSummaryHtml(logs,gymOnly)+progAiHtml()+progConsistHtml()+progVolumeHtml(gymOnly)+(p.goalType==='hyrox'?hxProgHtml():'')+(p.goalType!=='gym'||st.vdotHist.length>1?progPredHtml():'')+progRecordsHtml()+(p.goalType==='gym'||(st.weights||[]).length?weightHtml():'')+progHistHtml(logs);
 }
+function progAiHtml(){return coachHomeHtml();}
+function progAiHtmlOld(){const a=st.aiReview,on=aiOn();if(!on&&!a)return'';
+  const fresh=a&&daysBetween(a.d,TODAY)<7;
+  return `<section class="card aicard"><div class="row between"><h3>✨ ${L('Treinador IA','AI coach')}</h3>${a?`<span class="tiny muted">${fmtDate(a.d)}</span>`:''}</div>
+  <div id="aiRev" class="small">${a?aiFmt(a.t):L('Uma análise dos teus treinos (corrida, ginásio e HYROX): o que está a correr bem, o que afinar e o foco para as próximas semanas.','An analysis of your training (running, gym and HYROX): what’s going well, what to fine-tune and the focus for the coming weeks.')}</div>
+  ${on?`<button class="${a?'ghost':'primary'}" data-act="ai-review">${a?(fresh?L('Atualizar análise','Refresh analysis'):L('Nova análise','New analysis')):L('Analisar os meus treinos','Analyse my training')}</button>`:''}</section>`;}
 function progSummaryHtml(logs,gymOnly){
   const d=new Date(TODAY+'T12:00:00');let a,b,lab;
   if(progPer==='week'){a=mondayOf(TODAY);b=addDays(a,-7);lab=L('semana passada','last week');}
@@ -2646,7 +2726,7 @@ function progHistHtml(logs){
   return `<section class="card"><div class="row between"><h3>${L('Histórico','History')}</h3><span class="small muted">${xs.length} ${L('treinos','workouts')}</span></div><div class="hlist">${out}</div>${xs.length>histN?`<button class="ghost" data-act="hist-more">${L('Ver mais','Load more')}</button>`:''}</section>`;
 }
 function openLogDetail(i){const l=st.logs[i];if(!l)return;const w=l.wid?allW().find(x=>x.id===l.wid):null;
-  openSheet(`<div class="row between"><span class="eyebrow">${DOW[dow(l.date)]} ${fmtDate(l.date)}${l.source==='gpx'?' · GPX':l.source==='strava'?' · Strava':''}</span><button class="link" data-act="close">${L('Fechar','Close')}</button></div><h2>${esc(l.extra?L('Corrida extra','Extra run'):tr(w?.title||(l.dist>0?L('Corrida','Run'):L('Treino','Workout'))))}</h2>${l.dist>0?`<div class="metrics"><div class="metric"><b>${nf(Math.round(l.dist*100)/100)}</b><span>km</span></div><div class="metric"><b>${fmtTime(l.time)}</b><span>${L('tempo','time')}</span></div><div class="metric"><b>${fmtPace(l.time/l.dist)}</b><span>${L('ritmo médio','avg pace')}</span></div></div>`:''}${logSummary(l,l.dist>0)}${l.splits&&l.splits.length>1?splitsHtml(l.splits):''}${logActs(l)}`);}
+  openSheet(`<div class="row between"><span class="eyebrow">${DOW[dow(l.date)]} ${fmtDate(l.date)}${l.source==='gpx'?' · GPX':l.source==='strava'?' · Strava':''}</span><button class="link" data-act="close">${L('Fechar','Close')}</button></div><h2>${esc(l.extra?L('Corrida extra','Extra run'):tr(w?.title||(l.dist>0?L('Corrida','Run'):L('Treino','Workout'))))}</h2>${l.dist>0?`<div class="metrics"><div class="metric"><b>${nf(Math.round(l.dist*100)/100)}</b><span>km</span></div><div class="metric"><b>${fmtTime(l.time)}</b><span>${L('tempo','time')}</span></div><div class="metric"><b>${fmtPace(l.time/l.dist)}</b><span>${L('ritmo médio','avg pace')}</span></div></div>`:''}${logSummary(l,l.dist>0,true)}${l.splits&&l.splits.length>1?splitsHtml(l.splits):''}${aiOn()||l.ai?`<div class="card aicard" style="gap:8px"><b>✨ ${L('Comentário do treinador IA','AI coach comment')}</b><div id="aiLog" class="small">${l.ai?aiFmt(l.ai):L('O que correu bem neste treino e o que ajustar no próximo.','What went well in this workout and what to adjust next time.')}</div>${aiOn()?`<button class="${l.ai?'ghost':''}" data-act="ai-log" data-v="${i}">${l.ai?L('Pedir outro comentário','Ask again'):L('Pedir comentário','Ask for a comment')}</button>`:''}</div>`:''}${logActs(l)}`);}
 function progHtml2(){
   const p=st.profile,g={km:gKm(),label:p.goalType==='hyrox'?'5 km':gLabel()};
   const H=st.vdotHist.slice(-20);
@@ -3499,6 +3579,12 @@ document.addEventListener('click',e=>{
   else if(a==='race-open')openRaceSheet(b.dataset.v);
   else if(a==='race-prio')setRacePrio(b.dataset.id,b.dataset.v);
   else if(a==='race-ai')askRaceAI(b.dataset.v);
+  else if(a==='ai-review'||a==='ai-open')openCoach();
+  else if(a==='ai-plan')askPlanAI();
+  else if(a==='ai-apply'){const a2=st.aiPlan;if(!a2)return;const sel=[...document.querySelectorAll('.prop input[data-pi]')].filter(x=>x.checked).map(x=>a2.props[+x.dataset.pi]);if(!sel.length)return toast(L('Escolhe pelo menos uma proposta.','Pick at least one suggestion.'));const n=applyProps(sel);a2.applied=true;a2.props=sel;persist();render();openCoach();toast(n?L('Próximos treinos atualizados','Upcoming workouts updated'):L('Nada a alterar','Nothing to change'));}
+  else if(a==='ai-skip'){closeSheet();}
+  else if(a==='ai-undo'){undoAi();closeSheet();}
+  else if(a==='ai-log')askWorkoutAI(+b.dataset.v);
   else if(a==='race-promote')promoteRace(b.dataset.v);
   else if(a==='prog-per'){progPer=b.dataset.v;render();}
   else if(a==='hist-more'){histN+=20;render();}
