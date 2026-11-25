@@ -222,6 +222,7 @@ h2{font-size:25px}
 .restday{flex-direction:row;align-items:center;gap:14px}
 button.aih-props{width:100%;border:none;text-align:left;min-height:0;color:var(--ink)}
 details.wud>summary{cursor:pointer;list-style:none;color:var(--muted);font-weight:700;padding:2px 0}details.wud>summary::-webkit-details-marker{display:none}
+.notifc{border:1px solid color-mix(in srgb,var(--warn) 40%,transparent)!important;background:linear-gradient(160deg,color-mix(in srgb,var(--warn) 12%,var(--surface)),var(--surface))!important}.nbell{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-size:22px;flex:none;background:color-mix(in srgb,var(--warn) 22%,var(--soft))}
 .hitem{display:flex;flex-direction:column;gap:8px}
 @media (min-width:381px){.stats>.stat:last-child:nth-child(3n+2){grid-column:span 2}.stats>.stat:last-child:nth-child(3n+1):not(:first-child){grid-column:span 3}}
 .stat .l{line-height:1.25}
@@ -1460,7 +1461,7 @@ function shareLogIdx(i){const l=st.logs[i];if(!l)return;const w=l.wid?allW().fin
 const NUDGES=[
   ['wx','🌦️',()=>L('Ativa a meteorologia para veres a previsão nos treinos e seres avisado de chuva no dia do longo.','Turn on weather to see the forecast on your workouts and get warned about rain on long-run day.'),()=>!st.wxLoc&&nLogs()>=1&&st.profile.goalType!=='gym','#ajustes:Meteorologia',L('Ativar','Turn on')],
   ['shoes','👟',()=>L('Regista as tuas sapatilhas e eu aviso-te quando estiverem gastas.','Add your running shoes and I’ll tell you when they’re worn out.'),()=>!(st.shoes||[]).length&&nLogs()>=2&&st.profile.goalType!=='gym','#ajustes:Sapatilhas',L('Adicionar','Add')],
-  ['remind','🔔',()=>L('Queres uma notificação no telemóvel nos dias de treino?','Want a phone notification on training days?'),()=>CONFIG.VAPID_PUBLIC_KEY&&mode==='cloud'&&!st.remind?.on&&nLogs()>=3,'#ajustes:Notificações',L('Ligar','Turn on')],
+  ['remind','🔔',()=>L('Queres uma notificação no telemóvel nos dias de treino?','Want a phone notification on training days?'),()=>false&&CONFIG.VAPID_PUBLIC_KEY&&mode==='cloud'&&!st.remind?.on&&nLogs()>=3,'#ajustes:Notificações',L('Ligar','Turn on')],
   ['gcal','📅',()=>L('Põe os treinos no teu Google Calendar, com a hora que preferires.','Put your workouts in Google Calendar, at the time you like.'),()=>!st.gcal?.last&&nLogs()>=4,'#ajustes:Google Calendar',L('Ligar','Connect')]];
 const nLogs=()=>st.logs.filter(l=>l.wid||l.dist>0).length;
 function nudgeHtml(){
@@ -1875,7 +1876,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251958';
+const APP_VER='202611252002';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2278,19 +2279,27 @@ async function pushSync(){
     let {error}=await sb.from('push_subs').upsert(row,{onConflict:'endpoint'});
     if(error&&row.weekly!==undefined){noWeeklyCol=true;delete row.weekly;await sb.from('push_subs').upsert(row,{onConflict:'endpoint'});}}catch(e){}
 }
-async function remindOn(){
-  if(!pushReady())return toast(L('Os lembretes precisam de conta e da app instalada no ecrã principal.','Reminders need an account and the app installed on your home screen.'));
+async function remindOn(silent){
+  if(!pushReady())return silent?0:toast(L('Os lembretes precisam de conta e da app instalada no ecrã principal.','Reminders need an account and the app installed on your home screen.'));
   try{
-    const perm=await Notification.requestPermission();if(perm!=='granted')return toast(L('Sem autorização para notificações.','Notifications not allowed.'));
+    const perm=silent?Notification.permission:await Notification.requestPermission();if(perm!=='granted'){st.notifAsk=TODAY;persist();render();return silent?0:toast(L('Sem autorização. Podes ativar mais tarde nos Ajustes do iPhone → Zone5 → Notificações.','Not allowed. You can enable them later in iPhone Settings → Zone5 → Notifications.'));}
     const reg=await navigator.serviceWorker.ready;
     const sub=(await reg.pushManager.getSubscription())||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64(CONFIG.VAPID_PUBLIC_KEY)});
-    st.remind={...(st.remind||{}),on:true,hour:st.remind?.hour??8};persist();await pushSync();render();toast(L('Notificações ligadas','Notifications on'));
-  }catch(e){toast(L('Não foi possível ligar os lembretes neste dispositivo.',"Couldn't turn on reminders on this device."));}
+    st.remind={...(st.remind||{}),on:true,hour:st.remind?.hour??8};persist();await pushSync();render();if(!silent)toast(L('Notificações ligadas','Notifications on'));
+  }catch(e){if(!silent)toast(L('Não foi possível ligar os lembretes neste dispositivo.',"Couldn't turn on reminders on this device."));}
 }
 async function remindOff(){
   try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(sub){await sb.from('push_subs').delete().eq('endpoint',sub.endpoint);await sub.unsubscribe();}}catch(e){}
-  st.remind={...(st.remind||{}),on:false,hour:st.remind?.hour??8};persist();render();toast(L('Notificações desligadas','Notifications off'));
+  st.remind={...(st.remind||{}),on:false,manual:true,hour:st.remind?.hour??8};persist();render();toast(L('Notificações desligadas','Notifications off'));
 }
+let autoRm=false;
+function notifCardHtml(){
+  if(!pushReady()||st.remind?.on||typeof Notification==='undefined')return'';
+  const isIOS=/iPhone|iPad/.test(navigator.userAgent),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  if(isIOS&&!standalone)return'';
+  if(Notification.permission==='granted'&&st.remind===undefined&&!autoRm){autoRm=true;setTimeout(()=>remindOn(true),300);return'';}
+  if(Notification.permission==='denied'||st.remind?.on===false&&st.remind?.manual||st.notifAsk&&daysBetween(st.notifAsk,TODAY)<7)return'';
+  return `<section class="card notifc"><div class="row" style="flex-wrap:nowrap;gap:12px;align-items:flex-start"><span class="nbell">🔔</span><div><b>${L('Ativa as notificações','Turn on notifications')}</b><div class="small muted">${L('Avisamos-te do treino do dia, do resumo da semana e de quem te dá kudos. Podes mudar a hora ou desligar quando quiseres.','We’ll remind you of today’s workout, send a weekly summary and tell you who gave you kudos. Change the time or turn off anytime.')}</div></div></div><div class="btns"><button class="primary" data-act="rm-on">${L('Ativar','Turn on')}</button><button class="ghost" data-act="notif-later">${L('Agora não','Not now')}</button></div></section>`;}
 function remindHtml(){
   const isIOS=/iPhone|iPad/.test(navigator.userAgent),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
   const r=st.remind||{};
@@ -2645,6 +2654,7 @@ function hojeHtml(){
   if(st.suggest){AL.push(`<section class="card suggest"><h3>Sugestão: aliviar a próxima semana</h3><div class="small">${esc(st.suggest.why)} Recomendo reduzir a semana de ${fmtDate(st.suggest.week)} em cerca de 20%.</div><div class="btns"><button class="primary" data-act="sugg-yes">Aplicar</button><button class="ghost" data-act="sugg-no">Ignorar</button></div></section>`);}
   if(st.gcal?.pending&&st.gcal?.last)AL.push(`<section class="card"><div class="row between"><span class="small">O plano mudou. O teu Google Calendar está por atualizar.</span><button data-act="gc-now">Atualizar</button></div></section>`);
   AL.push(stravaCardsHtml(),wxSuggestHtml(),shoeAlertHtml(),recapHtml());
+  out+=notifCardHtml();
   out+=aiHeroHtml();
   out+=nudgeHtml();
   const nxH=`<div class="sec"><b>${L('Próximo treino','Next workout')}</b><span class="small muted">${next?DOW[dow(next.date)]+' '+fmtDate(next.date):''}</span></div>`;
@@ -3609,6 +3619,7 @@ document.addEventListener('click',e=>{
   else if(a==='wx-here')wxHere();
   else if(a==='wx-off'){st.wxLoc=null;WX=null;try{localStorage.removeItem('zone5.wx');}catch(e){}persist();render();}
   else if(a==='rm-on')remindOn();
+  else if(a==='notif-later'){st.notifAsk=TODAY;persist();render();}
   else if(a==='sv-on')stravaConnect();
   else if(a==='sv-off')stravaDisconnect();
   else if(a==='sv-sync'){toast(L('A sincronizar…','Syncing…'));stravaTick(true);}
