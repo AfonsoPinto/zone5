@@ -1700,7 +1700,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251706';
+const APP_VER='202611251757';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -1902,7 +1902,7 @@ async function persist(){
   try{
     const {error}=await sb.from('user_state').upsert({user_id:user.id,state:st,updated_at:new Date(st.updated).toISOString()});
     if(error)throw error;
-    setSync('ok');pushStats();pushPublic();if(st.phPend?.length&&!PHO.fl){PHO.fl=1;PHO.flush().finally(()=>PHO.fl=0);}clearTimeout(persist._pt);persist._pt=setTimeout(pushSync,4000);
+    setSync('ok');pushStats();pushPublic();if(PHO.todo().length&&!PHO.fl){PHO.fl=1;PHO.flush().finally(()=>PHO.fl=0);}clearTimeout(persist._pt);persist._pt=setTimeout(pushSync,4000);
   }catch(e){setSync('local');}
   saving=false;
   if(pend){pend=false;persist();}
@@ -2363,15 +2363,23 @@ const PHO={db:null,urls:{},
   async put(k,b){try{const db=await this.open();await new Promise((res,rej)=>{const t=db.transaction('p','readwrite');t.objectStore('p').put(b,k);t.oncomplete=res;t.onerror=()=>rej(t.error);});}catch(e){}if(this.urls[k])URL.revokeObjectURL(this.urls[k]);this.urls[k]=URL.createObjectURL(b);},
   async get(k){try{const db=await this.open();return await new Promise(res=>{const r=db.transaction('p').objectStore('p').get(k);r.onsuccess=()=>res(r.result||null);r.onerror=()=>res(null);});}catch(e){return null;}},
   async rm(k){if(!k)return;try{const db=await this.open();db.transaction('p','readwrite').objectStore('p').delete(k);}catch(e){}if(this.urls[k]){URL.revokeObjectURL(this.urls[k]);delete this.urls[k];}
-    if(mode==='cloud'&&sb){try{await sb.storage.from('photos').remove([user.id+'/'+k+'.jpg']);}catch(e){}}},
+    if(mode==='cloud'&&sb){try{await sb.storage.from('photos').remove(phPaths(k));}catch(e){}}},
   async url(k){if(this.urls[k])return this.urls[k];let b=await this.get(k);
-    if(!b&&mode==='cloud'&&sb){try{const {data}=await sb.storage.from('photos').download(user.id+'/'+k+'.jpg');if(data){b=data;try{const db=await this.open();db.transaction('p','readwrite').objectStore('p').put(b,k);}catch(e){}}}catch(e){}}
+    if(!b&&mode==='cloud'&&sb){try{const {data}=await sb.storage.from('photos').download(phPath(k,phVisOf(k)));if(data){b=data;try{const db=await this.open();db.transaction('p','readwrite').objectStore('p').put(b,k);}catch(e){}}}catch(e){}}
     if(b&&!this.urls[k])this.urls[k]=URL.createObjectURL(b);return this.urls[k]||null;},
   async up(k){if(mode!=='cloud'||!sb||!k)return;const b=await this.get(k);if(!b)return;
-    try{const {error}=await sb.storage.from('photos').upload(user.id+'/'+k+'.jpg',b,{upsert:true,contentType:'image/jpeg'});if(error)throw error;st.phPend=(st.phPend||[]).filter(x=>x!==k);}
+    try{const v=phVisOf(k);const {error}=await sb.storage.from('photos').upload(phPath(k,v),b,{upsert:true,contentType:'image/jpeg'});if(error)throw error;st.phPend=(st.phPend||[]).filter(x=>x!==k);st.phUp=st.phUp||{};st.phUp[k]=v;
+      const old=['p','f','a'].filter(x=>x!==v).map(x=>phPath(k,x));sb.storage.from('photos').remove(old).catch(()=>{});syncFeed();}
     catch(e){st.phPend=st.phPend||[];if(!st.phPend.includes(k))st.phPend.push(k);}},
-  async flush(){for(const k of [...(st?.phPend||[])])await this.up(k);}
+  async setVis(k,v){const l=st.logs.find(x=>x.photo===k);if(!l)return;const was=st.phUp?.[k];l.phVis=v;persist();
+    if(mode==='cloud'&&sb&&was&&was!==v){try{const {error}=await sb.storage.from('photos').move(phPath(k,was),phPath(k,v));if(error)throw error;st.phUp[k]=v;persist();syncFeed();return;}catch(e){}}
+    if(mode==='cloud'&&sb)await this.up(k);},
+  todo(){return [...new Set([...(st?.phPend||[]),...(st?.logs||[]).filter(l=>l.photo&&!st.phUp?.[l.photo]).map(l=>l.photo)])];},
+  async flush(){for(const k of this.todo())await this.up(k);}
 };
+const phVisOf=k=>(st?.logs||[]).find(l=>l.photo===k)?.phVis||'f';
+const phPath=(k,v)=>`${user.id}/${v==='f'?'f/':v==='a'?'a/':''}${k}.jpg`;
+const phPaths=k=>['p','f','a'].map(v=>phPath(k,v));
 const phKey=()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 async function shrinkImg(file,max,q=.82,square=false){
   let src;try{src=await createImageBitmap(file,{imageOrientation:'from-image'});}catch(e){src=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=URL.createObjectURL(file);});}
@@ -2381,9 +2389,12 @@ async function shrinkImg(file,max,q=.82,square=false){
   return square?cv.toDataURL('image/jpeg',q):await new Promise(r=>cv.toBlob(r,'image/jpeg',q));}
 function pickImage(cb){const i=document.createElement('input');i.type='file';i.accept='image/*';i.style.display='none';document.body.appendChild(i);
   i.onchange=async()=>{const f=i.files&&i.files[0];i.remove();if(!f)return;try{await cb(f);}catch(e){toast(L('Não foi possível usar esta fotografia.','Could not use this photo.'));}};i.click();}
-new MutationObserver(()=>{document.querySelectorAll('img[data-ph]:not([data-ld])').forEach(im=>{im.dataset.ld=1;PHO.url(im.dataset.ph).then(u=>{if(u)im.src=u;else im.closest('.lphoto')?.remove();});});}).observe(document.documentElement,{childList:true,subtree:true});
-async function addLogPhoto(i){const l=st.logs[i];if(!l)return;pickImage(async f=>{const b=await shrinkImg(f,1600);const k=phKey();await PHO.put(k,b);const old=l.photo;l.photo=k;persist();render();if(old)PHO.rm(old);toast(L('Fotografia adicionada','Photo added'));PHO.up(k).then(persist);});}
-function openPhoto(i){const l=st.logs[i];if(!l?.photo)return;openSheet(`<div class="row between"><h2>${L('Fotografia','Photo')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div><img data-ph="${l.photo}" alt="" style="width:100%;border-radius:18px;background:var(--soft);min-height:200px;object-fit:contain"><div class="btns"><button data-act="ph-add" data-v="${i}">${L('Trocar','Replace')}</button><button class="ghost" data-act="ph-del" data-v="${i}" style="color:var(--bad)">${L('Remover','Remove')}</button></div>`);}
+const FPH={};async function feedPhUrl(p){if(FPH[p])return FPH[p];try{const {data}=await sb.storage.from('photos').createSignedUrl(p,3600);if(data?.signedUrl)return FPH[p]=data.signedUrl;}catch(e){}return null;}
+new MutationObserver(()=>{document.querySelectorAll('img[data-fph]:not([data-ld])').forEach(im=>{im.dataset.ld=1;feedPhUrl(im.dataset.fph).then(u=>{if(u)im.src=u;else im.closest('.lphoto')?.remove();});});document.querySelectorAll('img[data-ph]:not([data-ld])').forEach(im=>{im.dataset.ld=1;PHO.url(im.dataset.ph).then(u=>{if(u)im.src=u;else im.closest('.lphoto')?.remove();});});}).observe(document.documentElement,{childList:true,subtree:true});
+async function addLogPhoto(i){const l=st.logs[i];if(!l)return;pickImage(async f=>{const b=await shrinkImg(f,1600);const k=phKey();await PHO.put(k,b);const old=l.photo;l.photo=k;l.phVis=l.phVis||'f';persist();render();if(old)PHO.rm(old);openPhoto(i);PHO.up(k).then(persist);});}
+function openPhoto(i){const l=st.logs[i];if(!l?.photo)return;openSheet(`<div class="row between"><h2>${L('Fotografia','Photo')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div><img data-ph="${l.photo}" alt="" style="width:100%;border-radius:18px;background:var(--soft);min-height:200px;object-fit:contain"><div id="visBox">${visSeg(l.phVis||'f','ph-vis',`data-i="${i}"`)}</div><div class="btns"><button data-act="ph-add" data-v="${i}">${L('Trocar','Replace')}</button><button class="ghost" data-act="ph-del" data-v="${i}" style="color:var(--bad)">${L('Remover','Remove')}</button></div>`);}
+const VIS=[['p','🔒',()=>L('Só eu','Only me')],['f','👥',()=>L('Amigos','Friends')],['a','🌍',()=>L('Todos','Everyone')]];
+const visSeg=(cur,act,extra='')=>`<div class="small"><b>${L('Quem vê a fotografia','Who can see the photo')}</b></div><div class="seg">${VIS.map(([v,ic,l])=>`<button type="button" data-act="${act}" data-v="${v}" ${extra} aria-pressed="${cur===v}">${ic} ${l()}</button>`).join('')}</div><div class="tiny muted">${{p:L('Fica só para ti.','Just for you.'),f:L('Aparece no feed dos teus grupos.','Shows in your groups’ feed.'),a:L('Qualquer pessoa na Zone5 que veja este treino.','Anyone on Zone5 who sees this workout.')}[cur]}</div>`;
 const phHtml=(l,big)=>l.photo?`<button class="lphoto${big?'':' sm'}" data-act="ph-view" data-v="${st.logs.indexOf(l)}" aria-label="${L('Ver fotografia','View photo')}"><img data-ph="${l.photo}" alt=""></button>`:'';
 const avatarHtml=(cls='')=>st.profile.photo?`<span class="avatar ${cls}" style="background:none;overflow:hidden"><img src="${st.profile.photo}" alt="" style="width:100%;height:100%;object-fit:cover"></span>`:null;
 const IC={share:'<path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',edit:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>',list:'<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".8"/><circle cx="4" cy="12" r=".8"/><circle cx="4" cy="18" r=".8"/>',smile:'<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4 4 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>',cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M9 15l6 0"/>',run:'<circle cx="15" cy="4.5" r="2"/><path d="M8 21l3-6 3 2v5M6 12l3-4 4 1 2 4 3 1"/>',dumb:'<path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/>',users:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3.3 2.7-5 6-5s6 1.7 6 5M15 14.5c3 0 6 1.3 6 4.5"/>',plus:'<path d="M12 5v14M5 12h14"/>',cam:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>',back:'<path d="M15 5l-7 7 7 7"/>',out:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
@@ -2987,11 +2998,11 @@ function openLog(wid,extra){
   draft={wid:w?w.id:null,extra:!!extra,date:w?(w.date>TODAY?TODAY:w.date):TODAY,mode:'gpx',gpx:null};
   renderLog();
 }
-function logPhHtml(){if(!draft)return'';if(draft.phUrl||draft.phKey)return `<div class="phprev"><img ${draft.phUrl?`src="${draft.phUrl}"`:`data-ph="${draft.phKey}"`} alt=""><button type="button" data-act="log-ph-del" aria-label="${L('Remover fotografia','Remove photo')}">✕</button></div>`;
+function logPhHtml(){if(!draft)return'';if(draft.phUrl||draft.phKey)return `<div class="phprev"><img ${draft.phUrl?`src="${draft.phUrl}"`:`data-ph="${draft.phKey}"`} alt=""><button type="button" data-act="log-ph-del" aria-label="${L('Remover fotografia','Remove photo')}">✕</button></div>${visSeg(draft.phVis||'f','log-vis')}`;
   return `<button type="button" class="addbtn" data-act="log-ph">${ico('cam')}${L('Adicionar fotografia (opcional)','Add a photo (optional)')}</button>`;}
 function openLogEdit(i){
   const l=st.logs[i];if(!l)return;
-  draft={wid:l.wid||null,extra:!!l.extra,date:l.date,mode:'man',gpx:null,rpe:l.rpe||5,edit:i,phKey:l.photo||null,pre:{dist:l.dist,time:l.time,fast:l.fast||null,shoe:l.shoe||''}};
+  draft={wid:l.wid||null,extra:!!l.extra,date:l.date,mode:'man',gpx:null,rpe:l.rpe||5,edit:i,phKey:l.photo||null,phVis:l.phVis||'f',pre:{dist:l.dist,time:l.time,fast:l.fast||null,shoe:l.shoe||''}};
   renderLog();
 }
 function renderLog(){
@@ -3076,7 +3087,9 @@ function saveLog(){
   log.rpe=draft.rpe||5;
   {const so=$('#mShoe');const v=so?so.value:st.shoeDefault;if(v)log.shoe=v;}
   const w=draft.wid?allW().find(x=>x.id===draft.wid):null;
-  if(draft.phBlob){const k=phKey(),b=draft.phBlob;log.photo=k;PHO.put(k,b).then(()=>PHO.up(k)).then(persist);}else if(draft.phKey)log.photo=draft.phKey;
+  const visChanged=draft.phKey&&draft.edit!=null&&(st.logs[draft.edit]?.phVis||'f')!==(draft.phVis||'f');
+  if(draft.phBlob){const k=phKey(),b=draft.phBlob;log.photo=k;log.phVis=draft.phVis||'f';PHO.put(k,b).then(()=>PHO.up(k)).then(persist);}else if(draft.phKey){log.photo=draft.phKey;log.phVis=draft.edit!=null?(st.logs[draft.edit]?.phVis||'f'):(draft.phVis||'f');}
+  if(visChanged){const k=draft.phKey,v=draft.phVis;setTimeout(()=>PHO.setVis(k,v),0);}
   if(draft.edit!=null){const old=st.logs[draft.edit];if(old?.photo&&old.photo!==log.photo)PHO.rm(old.photo);if(old){const same=Math.abs((old.dist||0)-log.dist)<0.02*Math.max(1,log.dist)&&Math.abs((old.time||0)-log.time)<5;
     for(const k of ['aid','stravaId','stravaName','elev','avgHr','route','source'])if(old[k]!=null&&log[k]==null)log[k]=old[k];
     if(same)for(const k of ['splits','best','fast'])if(old[k]!=null&&log[k]==null)log[k]=old[k];
@@ -3393,6 +3406,9 @@ document.addEventListener('click',e=>{
   else if(a==='me-back')location.hash='#perfil';
   else if(a==='ph-add'){closeSheet();addLogPhoto(+b.dataset.v);}
   else if(a==='ph-view')openPhoto(+b.dataset.v);
+  else if(a==='log-vis'){if(draft){draft.phVis=b.dataset.v;$('#phBox').innerHTML=logPhHtml();}}
+  else if(a==='ph-vis'){const i=+b.dataset.i,l=st.logs[i];if(l?.photo){PHO.setVis(l.photo,b.dataset.v);$('#visBox').innerHTML=visSeg(b.dataset.v,'ph-vis',`data-i="${i}"`);toast(L('Visibilidade atualizada','Visibility updated'));}}
+  else if(a==='fph-view'){openSheet(`<div class="row between"><h2>${esc(b.dataset.n||'')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div><img data-fph="${esc(b.dataset.v)}" alt="" style="width:100%;border-radius:18px;background:var(--soft);min-height:200px;object-fit:contain">`);}
   else if(a==='ph-del'){const l=st.logs[+b.dataset.v];if(l?.photo){PHO.rm(l.photo);delete l.photo;persist();}closeSheet();render();toast(L('Fotografia removida','Photo removed'));}
   else if(a==='log-ph'){pickImage(async f=>{const bl=await shrinkImg(f,1600);if(!draft)return;draft.phBlob=bl;if(draft.phUrl)URL.revokeObjectURL(draft.phUrl);draft.phUrl=URL.createObjectURL(bl);$('#phBox').innerHTML=logPhHtml();});}
   else if(a==='log-ph-del'){if(draft){draft.phBlob=null;draft.phKey=null;draft.phUrl=null;}$('#phBox').innerHTML=logPhHtml();}
@@ -3607,21 +3623,25 @@ function actRow(l){
   const title=(w?tr(w.title):l.dist>0?L('Corrida','Run'):L('Treino','Workout')).slice(0,120);
   const line=l.dist>0?`${nf(Math.round(l.dist*100)/100)} km · ${fmtTime(l.time)}${l.time?' · '+fmtPace(l.time/l.dist)+'/km':''}`:w?.gym?`${w.steps.filter(x=>x.z==='G').length} ${L('exercícios','exercises')}${l.lifts?` · ${l.lifts} ${L('séries registadas','sets logged')}`:''}`:w?.hx?`${w.min||''}${w.min?' min':''}`.trim():'';
   const pr=l.prs?.length?l.prs.map(p=>`${tr(p.n)} ${fmtKg(p.kg)} kg × ${p.reps}`).join(' · ').slice(0,200):null;
-  return{id:l.aid,user_id:user.id,date:l.date,kind,title,line:line||null,pr};
+  const r={id:l.aid,user_id:user.id,date:l.date,kind,title,line:line||null,pr};
+  if(!noFeedPhoto)r.photo=l.photo&&(l.phVis||'f')!=='p'&&st.phUp?.[l.photo]===(l.phVis||'f')?phPath(l.photo,l.phVis||'f'):null;
+  return r;
 }
+let noFeedPhoto=false;
 async function syncFeed(){
   if(mode!=='cloud'||feedOff||feedBusy||!st?.logs)return;feedBusy=true;
   try{
     const since=addDays(TODAY,-21),rows=[];
-    for(const l of st.logs){if(l.date<since||(!l.wid&&!(l.dist>0)))continue;if(!l.aid){l.aid=uuid();}const r=actRow(l);const k=JSON.stringify([r.date,r.title,r.line,r.pr]);if(l.aidK===k)continue;rows.push([l,r,k]);}
-    if(rows.length){const {error}=await sb.from('activities').upsert(rows.map(x=>x[1]));if(error){if(/relation|does not exist|schema cache/i.test(error.message||''))feedOff=true;}else rows.forEach(([l,,k])=>l.aidK=k);}
+    for(const l of st.logs){if(l.date<since||(!l.wid&&!(l.dist>0)))continue;if(!l.aid){l.aid=uuid();}const r=actRow(l);const k=JSON.stringify([r.date,r.title,r.line,r.pr,r.photo||null]);if(l.aidK===k)continue;rows.push([l,r,k]);}
+    if(rows.length){let {error}=await sb.from('activities').upsert(rows.map(x=>x[1]));if(error&&!noFeedPhoto&&/photo/i.test(error.message||'')){noFeedPhoto=true;rows.forEach(x=>delete x[1].photo);({error}=await sb.from('activities').upsert(rows.map(x=>x[1])));}if(error){if(/relation|does not exist|schema cache/i.test(error.message||''))feedOff=true;}else rows.forEach(([l,,k])=>l.aidK=k);}
     const gone=(st.feedDel||[]);if(gone.length){await sb.from('activities').delete().in('id',gone);st.feedDel=[];}
   }catch(e){}feedBusy=false;
 }
 async function loadFeed(){
   if(feedOff||!grp.members?.length){grp.feed=[];return;}
   try{
-    const {data,error}=await sb.from('activities').select('id,user_id,date,kind,title,line,pr,created_at').in('user_id',grp.members.map(m=>m.user_id)).gte('date',addDays(TODAY,-14)).order('date',{ascending:false}).order('created_at',{ascending:false}).limit(40);
+    const q=c=>sb.from('activities').select(c).in('user_id',grp.members.map(m=>m.user_id)).gte('date',addDays(TODAY,-14)).order('date',{ascending:false}).order('created_at',{ascending:false}).limit(40);
+    let {data,error}=await q('id,user_id,date,kind,title,line,pr,photo,created_at');if(error&&/photo/i.test(error.message||''))({data,error}=await q('id,user_id,date,kind,title,line,pr,created_at'));
     if(error){feedOff=/relation|does not exist|schema cache/i.test(error.message||'');grp.feed=[];return;}
     grp.feed=data||[];
     if(grp.feed.length){const {data:k}=await sb.from('kudos').select('activity_id,user_id,emoji').in('activity_id',grp.feed.map(a=>a.id));grp.kudos=k||[];}else grp.kudos=[];
@@ -3634,8 +3654,8 @@ function feedHtml(){
   const ic={run:'🏃',gym:'💪',hyrox:'🏋️',other:'✅'};
   if(!grp.feed.length)return `<section class="card"><h3>${L('Atividade','Activity')}</h3><div class="small muted">${L('Os treinos que tu e os teus amigos registarem aparecem aqui. Dá-lhes um 👏.','Workouts you and your friends log show up here. Give them a 👏.')}</div></section>`;
   return `<section class="card"><h3>${L('Atividade','Activity')}</h3><div class="feed">${grp.feed.map(a=>{const ks=(grp.kudos||[]).filter(k=>k.activity_id===a.id),mine=ks.find(k=>k.user_id===user.id),me=a.user_id===user.id;
-    return `<div class="fi"><div class="fh"><span class="fic">${ic[a.kind]||'✅'}</span><div style="flex:1;min-width:0"><b>${esc(nm(a.user_id))}</b>${me?` <span class="tiny muted">(${L('tu','you')})</span>`:''}<div class="tiny muted">${a.date===TODAY?L('Hoje','Today'):a.date===addDays(TODAY,-1)?L('Ontem','Yesterday'):DOW[dow(a.date)]+' '+fmtDate(a.date)}</div></div></div>
-    <div><b>${esc(a.title)}</b>${a.line?`<div class="small muted num">${esc(a.line)}</div>`:''}${a.pr?`<div class="small">🏆 ${esc(a.pr)}</div>`:''}</div>
+    return `<div class="fi"><div class="fh">${(grp.pubs||[]).find(x=>x.user_id===a.user_id)?.avatar||(me&&st.profile.photo)?grpAv(a.user_id,nm(a.user_id)):`<span class="fic">${ic[a.kind]||'✅'}</span>`}<div style="flex:1;min-width:0"><b>${esc(nm(a.user_id))}</b>${me?` <span class="tiny muted">(${L('tu','you')})</span>`:''}<div class="tiny muted">${a.date===TODAY?L('Hoje','Today'):a.date===addDays(TODAY,-1)?L('Ontem','Yesterday'):DOW[dow(a.date)]+' '+fmtDate(a.date)}</div></div></div>
+    <div><b>${esc(a.title)}</b>${a.line?`<div class="small muted num">${esc(a.line)}</div>`:''}${a.pr?`<div class="small">🏆 ${esc(a.pr)}</div>`:''}</div>${a.photo&&/^[0-9a-f-]{36}\/(f|a)\/p[a-z0-9]+\.jpg$/.test(a.photo)?`<button class="lphoto sm" data-act="fph-view" data-v="${esc(a.photo)}" data-n="${esc(nm(a.user_id))}"><img data-fph="${esc(a.photo)}" alt=""></button>`:''}
     <div class="kd">${KUDOS.map(e=>{const n=ks.filter(k=>k.emoji===e).length;return me?(n?`<span class="kb on">${e} ${n}</span>`:''):`<button type="button" class="kb ${mine?.emoji===e?'on':''}" data-act="kudo" data-id="${a.id}" data-v="${e}" aria-pressed="${mine?.emoji===e}">${e}${n?' '+n:''}</button>`;}).join('')}${ks.length?`<span class="tiny muted">${ks.slice(0,3).map(k=>esc(nm(k.user_id))).join(', ')}${ks.length>3?' +'+(ks.length-3):''}</span>`:''}</div></div>`;}).join('')}</div></section>`;
 }
 async function kudo(aid,e){
