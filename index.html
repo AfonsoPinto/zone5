@@ -229,6 +229,7 @@ details.wud>summary{cursor:pointer;list-style:none;color:var(--muted);font-weigh
 .gchip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:12.5px;font-weight:700;margin-top:6px}.gchip i{font-style:normal;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ffb547,#ff5a3c);color:#1a0d05;font-size:11px;font-weight:900}
 .newb{display:flex;align-items:center;gap:10px;justify-content:center;padding:10px;border-radius:14px;background:color-mix(in srgb,var(--warn) 14%,var(--soft));font-weight:700}
 button.gchip{min-height:0;color:var(--ink)}
+.lvchip{display:inline-block;font-size:11px;font-weight:800;padding:1px 7px;border-radius:999px;background:linear-gradient(135deg,#ffb547,#ff5a3c);color:#1a0d05;vertical-align:1px}
 .hitem{display:flex;flex-direction:column;gap:8px}
 @media (min-width:381px){.stats>.stat:last-child:nth-child(3n+2){grid-column:span 2}.stats>.stat:last-child:nth-child(3n+1):not(:first-child){grid-column:span 3}}
 .stat .l{line-height:1.25}
@@ -1885,7 +1886,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611252018';
+const APP_VER='202611252020';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2198,14 +2199,15 @@ async function loadSharedRaces(){
   try{const {data}=await sb.from('races').select('id,name,city,cc,date,km,terrain').gte('date',TODAY).order('date').limit(300);
     const seen=new Set(RACES.map(r=>r.name.toLowerCase()+'|'+r.date));EXTRA_RACES=[];for(const r of data||[]){const k=r.name.trim().toLowerCase()+'|'+r.date;if(seen.has(k))continue;seen.add(k);EXTRA_RACES.push({id:'db-'+r.id,name:r.name,city:r.city||'',cc:r.cc||'',date:r.date,km:Number(r.km),terrain:r.terrain||'flat',shared:true});}}catch(e){}
 }
-let lastPub='',noAvatarCol=false;
+let lastPub='',noAvatarCol=false,noLevelCol=false;
 function grpAv(uid,name){let a=(uid===user?.id?st.profile.photo:null)||(grp.pubs||[]).find(x=>x.user_id===uid)?.avatar;if(a&&!/^data:image\/(jpeg|png|webp);base64,/.test(a))a=null;return a?`<span class="gav"><img src="${esc(a)}" alt=""></span>`:`<span class="gav">${esc(initials(name))}</span>`;}
 async function pushPublic(){
   if(mode!=='cloud'||!st?.profile)return;
   const p=st.profile,isR=p.goalType==='race'||p.goalType==='hyrox'&&p.raceDate,row={user_id:user.id,race_name:isR?p.raceName:({start:'🌱 Começar a correr',back:'🔁 Voltar a correr',maintain:'⚡ Manter a forma',hyrox:'🏋️ HYROX',gym:'💪 Ginásio'})[p.goalType]||null,race_date:isR?p.raceDate:null,race_km:p.goalType==='race'?p.raceKm:null,updated_at:new Date().toISOString()};
   if(!noAvatarCol){row.avatar=p.photo||null;row.name=myName().slice(0,60);row.feed=!st.feedOff;}
-  const key=JSON.stringify([row.race_name,row.race_date,row.race_km,(p.photo||'').length,row.name,row.feed]);if(key===lastPub)return;
-  try{let {error}=await sb.from('public_profile').upsert(row);if(error&&row.avatar!==undefined){noAvatarCol=true;delete row.avatar;delete row.name;delete row.feed;({error}=await sb.from('public_profile').upsert(row));}if(!error)lastPub=key;}catch(e){}
+  if(!noLevelCol)row.level=xpInfo().level;
+  const key=JSON.stringify([row.race_name,row.race_date,row.race_km,(p.photo||'').length,row.name,row.feed,row.level]);if(key===lastPub)return;
+  try{let {error}=await sb.from('public_profile').upsert(row);if(error&&row.level!==undefined&&/level/i.test(error.message||'')){noLevelCol=true;delete row.level;({error}=await sb.from('public_profile').upsert(row));}if(error&&row.avatar!==undefined){noAvatarCol=true;delete row.avatar;delete row.name;delete row.feed;({error}=await sb.from('public_profile').upsert(row));}if(!error)lastPub=key;}catch(e){}
 }
 
 /* ---------- Sapatilhas ---------- */
@@ -3947,7 +3949,7 @@ async function loadFeed(more){
   if(error){feedOff=/relation|does not exist|schema cache/i.test(error.message||'');if(!feedOff)throw error;grp.feed=[];return;}
   const rows=data||[];grp.more=rows.length===N;grp.feed=more?[...grp.feed,...rows]:rows;
   const need=[...new Set(rows.map(a=>a.user_id))].filter(id=>!(grp.pubs||[]).some(p=>p.user_id===id));
-  if(need.length){let {data:pp,error:e2}=await sb.from('public_profile').select('user_id,name,avatar').in('user_id',need);if(e2)({data:pp}=await sb.from('public_profile').select('user_id,avatar').in('user_id',need));grp.pubs=[...(more?grp.pubs||[]:[]),...(pp||[])];
+  if(need.length){let {data:pp,error:e2}=await sb.from('public_profile').select('user_id,name,avatar,level').in('user_id',need);if(e2)({data:pp,error:e2}=await sb.from('public_profile').select('user_id,name,avatar').in('user_id',need));if(e2)({data:pp}=await sb.from('public_profile').select('user_id,avatar').in('user_id',need));grp.pubs=[...(more?grp.pubs||[]:[]),...(pp||[])];
     const miss=need.filter(id=>!grp.pubs.some(p=>p.user_id===id&&p.name));if(miss.length){try{const {data:gm}=await sb.from('group_members').select('user_id,display_name').in('user_id',miss);for(const m of gm||[]){const p=grp.pubs.find(x=>x.user_id===m.user_id);if(p)p.name=p.name||m.display_name;else grp.pubs.push({user_id:m.user_id,name:m.display_name});}}catch(e){}}}
   if(rows.length){const {data:k}=await sb.from('kudos').select('activity_id,user_id,emoji').in('activity_id',rows.map(a=>a.id));grp.kudos=[...(more?grp.kudos||[]:[]),...(k||[])];}else if(!more)grp.kudos=[];
   const kn=[...new Set((grp.kudos||[]).map(k=>k.user_id))].filter(id=>!grp.pubs.some(p=>p.user_id===id));
@@ -3961,7 +3963,7 @@ function feedHtml(){
   const ic={run:'🏃',gym:'💪',hyrox:'🏋️',other:'✅'};
   if(!grp.feed.length)return `<section class="card"><h3>${L('Atividade','Activity')}</h3><div class="small muted">${L('Os treinos de toda a gente na Zone5 aparecem aqui. Dá-lhes um 👏.','Everyone’s workouts on Zone5 show up here. Give them a 👏.')}</div></section>`;
   return `<section class="card"><h3>${L('Atividade','Activity')}</h3><div class="feed">${grp.feed.map(a=>{const ks=(grp.kudos||[]).filter(k=>k.activity_id===a.id),mine=ks.find(k=>k.user_id===user.id),me=a.user_id===user.id;
-    return `<div class="fi"><div class="fh">${grpAv(a.user_id,nm(a.user_id))}<div style="flex:1;min-width:0"><b>${esc(nm(a.user_id))}</b>${me?` <span class="tiny muted">(${L('tu','you')})</span>`:''}<div class="tiny muted">${ic[a.kind]||'✅'} ${a.date===TODAY?L('Hoje','Today'):a.date===addDays(TODAY,-1)?L('Ontem','Yesterday'):DOW[dow(a.date)]+' '+fmtDate(a.date)}</div></div></div>
+    return `<div class="fi"><div class="fh">${grpAv(a.user_id,nm(a.user_id))}<div style="flex:1;min-width:0"><b>${esc(nm(a.user_id))}</b>${(()=>{const lv=me?xpInfo().level:(grp.pubs||[]).find(p=>p.user_id===a.user_id)?.level;return lv?` <span class="lvchip">⭐ ${lv}</span>`:'';})()}${me?` <span class="tiny muted">(${L('tu','you')})</span>`:''}<div class="tiny muted">${ic[a.kind]||'✅'} ${a.date===TODAY?L('Hoje','Today'):a.date===addDays(TODAY,-1)?L('Ontem','Yesterday'):DOW[dow(a.date)]+' '+fmtDate(a.date)}</div></div></div>
     <div><b>${esc(a.title)}</b>${a.line?`<div class="small muted num">${esc(a.line)}</div>`:''}${a.pr?`<div class="small">🏆 ${esc(a.pr)}</div>`:''}</div>${a.photo&&/^[0-9a-f-]{36}\/(f|a)\/p[a-z0-9]+\.jpg$/.test(a.photo)?`<button class="lphoto sm" data-act="fph-view" data-v="${esc(a.photo)}" data-n="${esc(nm(a.user_id))}"><img data-fph="${esc(a.photo)}" alt=""></button>`:''}
     <div class="kd">${KUDOS.map(e=>{const n=ks.filter(k=>k.emoji===e).length;return me?(n?`<span class="kb on">${e} ${n}</span>`:''):`<button type="button" class="kb ${mine?.emoji===e?'on':''}" data-act="kudo" data-id="${a.id}" data-v="${e}" aria-pressed="${mine?.emoji===e}">${e}${n?' '+n:''}</button>`;}).join('')}${ks.length?`<span class="tiny muted">${ks.slice(0,3).map(k=>esc(nm(k.user_id))).join(', ')}${ks.length>3?' +'+(ks.length-3):''}</span>`:''}</div></div>`;}).join('')}</div>${grp.more?`<button class="ghost" data-act="g-more">${L('Ver mais','Load more')}</button>`:''}</section>`;
 }
