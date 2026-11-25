@@ -1378,7 +1378,7 @@ function xrModePick(){
 const SET_OPEN=new Set();
 const SET_META={'Os teus ritmos':['⏱️','train'],'Registar uma prova ou teste':['🏁','train'],'Refazer o plano':['🗓️','train'],
  'Google Calendar':['📅','link'],'Outros calendários e cópia de segurança':['💾','link'],'Strava':['🟠','link'],
- 'Lembretes':['🔔','app'],'Meteorologia':['🌦️','app'],'Weather':['🌦️','app'],'Reminders':['🔔','app'],'Sapatilhas':['👟','app'],'Shoes':['👟','app'],'Idioma · Language':['🌐','app'],
+ 'Lembretes':['🔔','app'],'Notificações':['🔔','app'],'Notifications':['🔔','app'],'Meteorologia':['🌦️','app'],'Weather':['🌦️','app'],'Reminders':['🔔','app'],'Sapatilhas':['👟','app'],'Shoes':['👟','app'],'Idioma · Language':['🌐','app'],
  'Conta':['👤','acc'],'Sugerir melhoria':['💬','app'],'Suggest an improvement':['💬','app'],'Apagar tudo':['🗑️','acc']};
 const SET_GROUPS={train:['Treino','Training'],link:['Ligações','Connections'],app:['App','App'],acc:['Conta','Account']};
 function settify(){
@@ -1460,7 +1460,7 @@ function shareLogIdx(i){const l=st.logs[i];if(!l)return;const w=l.wid?allW().fin
 const NUDGES=[
   ['wx','🌦️',()=>L('Ativa a meteorologia para veres a previsão nos treinos e seres avisado de chuva no dia do longo.','Turn on weather to see the forecast on your workouts and get warned about rain on long-run day.'),()=>!st.wxLoc&&nLogs()>=1&&st.profile.goalType!=='gym','#ajustes:Meteorologia',L('Ativar','Turn on')],
   ['shoes','👟',()=>L('Regista as tuas sapatilhas e eu aviso-te quando estiverem gastas.','Add your running shoes and I’ll tell you when they’re worn out.'),()=>!(st.shoes||[]).length&&nLogs()>=2&&st.profile.goalType!=='gym','#ajustes:Sapatilhas',L('Adicionar','Add')],
-  ['remind','🔔',()=>L('Queres um lembrete no telemóvel nos dias de treino?','Want a phone reminder on training days?'),()=>CONFIG.VAPID_PUBLIC_KEY&&mode==='cloud'&&!st.remind?.on&&nLogs()>=3,'#ajustes:Lembretes',L('Ligar','Turn on')],
+  ['remind','🔔',()=>L('Queres uma notificação no telemóvel nos dias de treino?','Want a phone notification on training days?'),()=>CONFIG.VAPID_PUBLIC_KEY&&mode==='cloud'&&!st.remind?.on&&nLogs()>=3,'#ajustes:Notificações',L('Ligar','Turn on')],
   ['gcal','📅',()=>L('Põe os treinos no teu Google Calendar, com a hora que preferires.','Put your workouts in Google Calendar, at the time you like.'),()=>!st.gcal?.last&&nLogs()>=4,'#ajustes:Google Calendar',L('Ligar','Connect')]];
 const nLogs=()=>st.logs.filter(l=>l.wid||l.dist>0).length;
 function nudgeHtml(){
@@ -1472,7 +1472,7 @@ function nudgeHtml(){
   <div class="row between"><button class="link small" data-act="nudge-x" data-v="${id}">${L('Agora não','Not now')}</button><button class="chip" data-act="nudge-go" data-v="${id}" data-go="${go}">${btn}</button></div></section>`;
 }
 let SET_FOCUS=null;
-function goSetting(target){const [h,sec]=target.split(':');if(sec){const alt={Meteorologia:'Weather',Lembretes:'Reminders',Sapatilhas:'Shoes'}[sec];SET_OPEN.add(sec);if(alt)SET_OPEN.add(alt);SET_FOCUS=[sec,alt];}if(location.hash===h)render();else location.hash=h;}
+function goSetting(target){const [h,sec]=target.split(':');if(sec){const alt={Meteorologia:'Weather',Lembretes:'Reminders',Notificações:'Notifications',Sapatilhas:'Shoes'}[sec];SET_OPEN.add(sec);if(alt)SET_OPEN.add(alt);SET_FOCUS=[sec,alt];}if(location.hash===h)render();else location.hash=h;}
 
 /* ---------- Avisos agrupados numa só linha ---------- */
 function alertsHtml(parts){
@@ -1875,7 +1875,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251939';
+const APP_VER='202611251958';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2284,21 +2284,21 @@ async function remindOn(){
     const perm=await Notification.requestPermission();if(perm!=='granted')return toast(L('Sem autorização para notificações.','Notifications not allowed.'));
     const reg=await navigator.serviceWorker.ready;
     const sub=(await reg.pushManager.getSubscription())||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64(CONFIG.VAPID_PUBLIC_KEY)});
-    st.remind={...(st.remind||{}),on:true,hour:st.remind?.hour??8};persist();await pushSync();render();toast(L('Lembretes ligados','Reminders on'));
+    st.remind={...(st.remind||{}),on:true,hour:st.remind?.hour??8};persist();await pushSync();render();toast(L('Notificações ligadas','Notifications on'));
   }catch(e){toast(L('Não foi possível ligar os lembretes neste dispositivo.',"Couldn't turn on reminders on this device."));}
 }
 async function remindOff(){
   try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(sub){await sb.from('push_subs').delete().eq('endpoint',sub.endpoint);await sub.unsubscribe();}}catch(e){}
-  st.remind={...(st.remind||{}),on:false,hour:st.remind?.hour??8};persist();render();toast(L('Lembretes desligados','Reminders off'));
+  st.remind={...(st.remind||{}),on:false,hour:st.remind?.hour??8};persist();render();toast(L('Notificações desligadas','Notifications off'));
 }
 function remindHtml(){
   const isIOS=/iPhone|iPad/.test(navigator.userAgent),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
   const r=st.remind||{};
-  return `<section class="card"><div class="row between"><h3>${L('Lembretes','Reminders')}</h3>${r.on?'<span class="pill st-done">'+L('Ligados','On')+'</span>':''}</div>
-  <div class="small muted">${L('Uma notificação no dia de cada treino, à hora que escolheres. Ao domingo, às 19h, um resumo da semana. Quando alguém reagir aos teus treinos, também avisamos.','A notification on each workout day, at the time you choose. On Sunday at 7 pm, a weekly summary. We also let you know when someone reacts to your workouts.')}</div>${r.on?`<label class="switch"><input type="checkbox" id="rmWeekly" ${r.weekly!==false?'checked':''}><span>${L('Resumo semanal e reações','Weekly summary and reactions')}</span></label>`:''}
+  return `<section class="card"><div class="row between"><h3>${L('Notificações','Notifications')}</h3>${r.on?'<span class="pill st-done">'+L('Ligadas','On')+'</span>':''}</div>
+  <div class="small muted">${L('Notificações no telemóvel, como as do WhatsApp: no dia de cada treino, à hora que escolheres. Ao domingo, às 19h, um resumo da semana. Quando alguém reagir aos teus treinos, também avisamos.','Phone notifications, like WhatsApp’s: on each workout day, at the time you choose. On Sunday at 7 pm, a weekly summary. We also let you know when someone reacts to your workouts.')}</div>${r.on?`<label class="switch"><input type="checkbox" id="rmWeekly" ${r.weekly!==false?'checked':''}><span>${L('Resumo semanal e reações','Weekly summary and reactions')}</span></label>`:''}
   ${!CONFIG.VAPID_PUBLIC_KEY?`<div class="small" style="color:var(--warn)">${L('Em breve.','Coming soon.')}</div>`:mode!=='cloud'?`<div class="small muted">${L('Precisa de conta.','Needs an account.')}</div>`:isIOS&&!standalone?`<div class="small">${L('No iPhone, primeiro instala a app: no Safari, Partilhar → Adicionar ao ecrã principal. Depois abre-a pelo ícone e volta aqui.','On iPhone, install the app first: in Safari, Share → Add to Home Screen. Then open it from the icon and come back here.')}</div>`:
   `<label for="rmHour">${L('Hora','Time')}<select id="rmHour">${Array.from({length:17},(_,i)=>i+6).map(h=>`<option value="${h}" ${(r.hour??8)===h?'selected':''}>${String(h).padStart(2,'0')}:00</option>`).join('')}</select></label>
-  <button class="${r.on?'ghost':'primary'}" data-act="${r.on?'rm-off':'rm-on'}">${r.on?L('Desligar lembretes','Turn off reminders'):L('Ligar lembretes','Turn on reminders')}</button>`}</section>`;
+  <button class="${r.on?'ghost':'primary'}" data-act="${r.on?'rm-off':'rm-on'}">${r.on?L('Desligar notificações','Turn off notifications'):L('Ligar notificações','Turn on notifications')}</button>`}</section>`;
 }
 
 
