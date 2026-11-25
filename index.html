@@ -290,7 +290,7 @@ body.sheet-open{overflow:hidden}
     <a href="#hoje" data-tab="hoje"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>Hoje</a>
     <a href="#plano" data-tab="plano"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Plano</a>
     <a href="#progresso" data-tab="progresso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16M6 15l4-4 3 3 5-6"/></svg>Progresso</a>
-    <a href="#grupo" data-tab="grupo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3.3 2.7-5 6-5s6 1.7 6 5M15 14.5c3 0 6 1.3 6 4.5"/></svg>Grupo</a>
+    <a href="#grupo" data-tab="grupo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3.3 2.7-5 6-5s6 1.7 6 5M15 14.5c3 0 6 1.3 6 4.5"/></svg>Comunidade</a>
     <a href="#perfil" data-tab="perfil"><span id="navMe" class="navme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg></span>Perfil</a>
   </div>
 </nav>
@@ -943,7 +943,7 @@ function shareLog(){
 const TIPS=[
   ['👋',()=>L('Este é o teu treino de hoje. Toca em ▶ Começar treino e eu guio-te bloco a bloco, com voz e sinais sonoros.','This is today’s workout. Tap ▶ Start workout and I’ll guide you block by block, with voice and beeps.')],
   ['✅',()=>L('Treinaste com o relógio ou o Strava? Toca em "Já fiz · registar" e escolhe o ficheiro. Eu analiso e ajusto o plano sozinho.','Trained with your watch or Strava? Tap "Done it · log" and pick the file. I’ll analyse it and adjust your plan.')],
-  ['👥',()=>L('No separador Grupo convidas amigos. Cada um segue o seu objetivo e comparam quanto do plano cumpriram.','In the Group tab you can invite friends. Everyone follows their own goal and you compare how much of the plan you completed.')]];
+  ['👥',()=>L('No separador Comunidade vês os treinos de toda a gente na Zone5 e podes dar kudos. Os teus também aparecem lá (podes desligar no Perfil).','In the Community tab you see everyone’s workouts on Zone5 and can give kudos. Yours show up too (you can turn this off in Profile).')]];
 function tipsHtml(){
   const i=st.tips|0;if(i<1||i>TIPS.length)return'';const [ic,tx]=TIPS[i-1];
   return `<section class="card tip"><div class="row" style="flex-wrap:nowrap;align-items:flex-start;gap:12px"><span style="font-size:26px">${ic}</span><div class="small">${tx()}</div></div>
@@ -1286,7 +1286,6 @@ function shareLogIdx(i){const l=st.logs[i];if(!l)return;const w=l.wid?allW().fin
 
 /* ---------- Descobrir aos poucos (uma sugestão de cada vez) ---------- */
 const NUDGES=[
-  ['group','👥',()=>L('Treina com amigos: cria um grupo e partilha o convite. Cada um segue o seu objetivo.','Train with friends: create a group and share the invite. Everyone follows their own goal.'),()=>mode==='cloud'&&grp.loaded&&!grp.groups.length&&nLogs()>=1,'#grupo',L('Ir para o Grupo','Go to Group')],
   ['wx','🌦️',()=>L('Ativa a meteorologia para veres a previsão nos treinos e seres avisado de chuva no dia do longo.','Turn on weather to see the forecast on your workouts and get warned about rain on long-run day.'),()=>!st.wxLoc&&nLogs()>=1&&st.profile.goalType!=='gym','#ajustes:Meteorologia',L('Ativar','Turn on')],
   ['shoes','👟',()=>L('Regista as tuas sapatilhas e eu aviso-te quando estiverem gastas.','Add your running shoes and I’ll tell you when they’re worn out.'),()=>!(st.shoes||[]).length&&nLogs()>=2&&st.profile.goalType!=='gym','#ajustes:Sapatilhas',L('Adicionar','Add')],
   ['remind','🔔',()=>L('Queres um lembrete no telemóvel nos dias de treino?','Want a phone reminder on training days?'),()=>CONFIG.VAPID_PUBLIC_KEY&&mode==='cloud'&&!st.remind?.on&&nLogs()>=3,'#ajustes:Lembretes',L('Ligar','Turn on')],
@@ -1700,7 +1699,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251757';
+const APP_VER='202611251806';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -1765,14 +1764,14 @@ Object.assign(EN_EXACT,{
 'Esqueci-me da palavra-passe':'Forgot password','Esta semana':'This week','Experimentar sem conta':'Try without an account','Experiência':'Experience','Exportar para o calendário (.ics)':'Export to calendar (.ics)',
 'Fartlek':'Fartlek','Fechar':'Close','Feito':'Done','Ficheiro GPX':'GPX file','Força':'Strength','Força A':'Strength A','Força B':'Strength B','Força feita. Boa!':'Strength done. Nice!','Fáceis e longos':'Easy and long runs','Fácil':'Easy','Fácil + acelerações':'Easy + strides',
 'Gera um plano novo a partir de hoje. Os treinos registados ficam guardados.':'Builds a new plan starting today. Your logged workouts are kept.','Gravado com o GPS do telemóvel.':"Recorded with the phone's GPS.",'Gravar com o GPS do telemóvel':"Record with the phone's GPS",
-'Grupo':'Group','Grupo criado':'Group created','Guardar e analisar':'Save and analyse','Guardar nome':'Save name','Habitua o corpo e a cabeça ao ritmo exato que queres manter no dia da prova.':'Gets your body and mind used to the exact pace you want to hold on race day.',
+'Grupo':'Group','Comunidade':'Community','Grupo criado':'Group created','Guardar e analisar':'Save and analyse','Guardar nome':'Save name','Habitua o corpo e a cabeça ao ritmo exato que queres manter no dia da prova.':'Gets your body and mind used to the exact pace you want to hold on race day.',
 'Histórico':'History','Hoje':'Today','Hora dos treinos':'Workout time','Ignorar':'Dismiss','Incluir':'Include','Indica o tempo, por exemplo 45:00.':'Enter the time, for example 45:00.','Iniciante':'Beginner','Intermédio':'Intermediate','Intervalos':'Intervals',
 'Juntar-me a outro grupo':'Join another group','Juntar-me a um grupo':'Join a group','Já tenho conta':'I already have an account','Ligado':'Connected','Ligar e sincronizar':'Connect and sync','Limiar':'Threshold','Limiar fracionado':'Cruise intervals','Longo':'Long run','Longo com final rápido':'Long run with fast finish',
 'Lunge à retaguarda':'Reverse lunge','Maratona':'Marathon','Marcar como feito':'Mark as done','Meia':'Half','Meia maratona':'Half marathon','Mudanças de ritmo por sensação. Desenvolve velocidade sem a pressão de bater tempos exatos.':'Pace changes by feel. Builds speed without the pressure of hitting exact times.',
 'Mudar de dia':'Move to another day','No Strava: abre a atividade no site, menu "…" e "Exportar GPX". No iPhone, guarda-o em Ficheiros e escolhe-o aqui.':'In Strava: open the activity on the website, "…" menu, then "Export GPX". On iPhone, save it to Files and pick it here.',
 'No modo experiência os dados ficam só neste dispositivo.':'In trial mode your data stays on this device only.','Nome do grupo':'Group name','Nome no grupo':'Name in group','Não encontrei nenhum grupo com esse código.':"I couldn't find a group with that code.",'Não incluir':"Don't include",
 'O mesmo estímulo do tempo run, dividido em blocos com pausas curtas. Mais volume no ritmo certo.':'The same stimulus as a tempo run, split into blocks with short breaks. More volume at the right pace.','O plano e todos os registos são removidos. Não dá para desfazer.':"Your plan and all logs are removed. This can't be undone.",
-'O plano mudou. O teu Google Calendar está por atualizar.':"Your plan changed. Your Google Calendar hasn't been updated yet.",'O ritmo resultante parece improvável. Confirma distância e tempo.':'That pace looks unlikely. Check the distance and time.','O teu nome (aparece no grupo)':'Your name (shown in the group)','O teu plano':'Your plan',
+'O plano mudou. O teu Google Calendar está por atualizar.':"Your plan changed. Your Google Calendar hasn't been updated yet.",'O ritmo resultante parece improvável. Confirma distância e tempo.':'That pace looks unlikely. Check the distance and time.','O teu nome (aparece na comunidade)':'Your name (shown in the community)','O teu plano':'Your plan',
 'O teu plano de corrida adaptativo, sincronizado entre dispositivos.':'Your adaptive running plan, synced across devices.','O teu plano de corrida adaptativo, sincronizado entre dispositivos · tens um convite para um grupo.':"Your adaptive running plan, synced across devices · you've been invited to a group.",
 'O treino mais importante da semana para a resistência. Ritmo calmo e constante, do início ao fim.':'The most important endurance session of the week. Calm, steady pace from start to finish.','Objetivo':'Goal',
 'Os blocos são por tempo, estimado a partir dos teus ritmos. Mantém o ecrã ligado: com o iPhone bloqueado, o temporizador e o GPS param. Se gravares no relógio ou no Strava, deixa o GPS da Zone5 desligado e regista depois com o GPX.':"Blocks are timed, estimated from your paces. Keep the screen on: with the iPhone locked, the timer and GPS stop. If you record on your watch or Strava, leave Zone5's GPS off and log it afterwards with the GPX.",
@@ -1807,7 +1806,7 @@ Object.assign(EN_EXACT,{
 'Calendário Zone5 apagado':'Zone5 calendar deleted','A preparar o calendário…':'Preparing the calendar…','O Google Calendar já estava em dia.':'Google Calendar was already up to date.','Disponível no site final.':'Available on the final site.',
 'Os grupos precisam de uma conta: cria uma para treinares com amigos e veres o ranking semanal.':'Groups need an account: create one to train with friends and see the weekly leaderboard.','Criar conta ou entrar':'Create account or sign in','Criar conta e guardar o plano':'Create an account and save the plan',
 'Modo experiência: os dados estão só neste dispositivo.':'Trial mode: your data is only on this device.','Modo experiência':'Trial mode','Sem ligação':'Offline','A ligar…':'Connecting…','A carregar…':'Loading…','Tentar outra vez':'Try again','Não foi possível carregar o grupo. Verifica a ligação e tenta outra vez.':"Couldn't load the group. Check your connection and try again.",
-'Esta é a pré-visualização: as contas, o grupo e o Google Calendar ficam ativos no site final. Podes experimentar o resto da app já.':'This is the preview: accounts, groups and Google Calendar go live on the final site. You can try the rest of the app now.',
+'Esta é a pré-visualização: as contas, a comunidade e o Google Calendar ficam ativos no site final. Podes experimentar o resto da app já.':'This is the preview: accounts, the community and Google Calendar go live on the final site. You can try the rest of the app now.',
 'Não foi possível descarregar o ficheiro neste navegador.':"Couldn't download the file in this browser.",'Ritmos recalculados com base neste resultado.':'Paces recalculated from this result.','Distância demasiado curta para recalcular os ritmos.':'Distance too short to recalculate paces.',
 'Sessão de qualidade com esforço baixo. Se se repetir, os ritmos podem subir.':'Quality session at low effort. If it happens again, your paces may go up.','Sessão muito dura.':'Very hard session.','Sessão registada.':'Session logged.',
 'Abranda para recuperar melhor.':'Slow down to recover better.','Bom trabalho.':'Good job.','O esforço foi alto para um fácil: atenção ao cansaço.':'The effort was high for an easy run: watch out for fatigue.',
@@ -1874,7 +1873,7 @@ EN_RX.push(
 [/^(.+): (\d[\d:]*)\. Ritmos recalculados \(forma (.+)\)\.?$/,(m,a,b,c)=>`${tr(a)}: ${b}. Paces recalculated (fitness ${c}).`],
 [/^Plano criado: (\d+) semanas até (.+)\.?$/,(m,a,b)=>`Plan created: ${a} weeks until ${b.replace(/\.$/,'')==='ao teste final'?'the final test':trD(b.replace(/\.$/,''))}.`],
 [/^Google Calendar atualizado: (.+)\.?$/,(m,a)=>'Google Calendar updated: '+a.replace(/\.$/,'').replace(/criados/,'created').replace(/atualizados/,'updated').replace(/removidos/,'removed')+'.'],
-[/^Sessão iniciada como (\S+) · nome no grupo: (.+)$/,'Signed in as $1 · group name: $2'],[/^Última sincronização: (.+)$/,'Last sync: $1'],[/^A atualizar o calendário: (\d+)\/(\d+)$/,'Updating calendar: $1/$2'],
+[/^Sessão iniciada como (\S+) · nome: (.+)$/,'Signed in as $1 · name: $2'],[/^Última sincronização: (.+)$/,'Last sync: $1'],[/^A atualizar o calendário: (\d+)\/(\d+)$/,'Updating calendar: $1/$2'],
 [/^([\d.]+) de (\d+) km$/,'$1 of $2 km'],[/^Melhor (.+)$/,(m,a)=>'Best '+tr(a)],[/^esforço (\d+)\/10$/,'effort $1/10'],[/^cerca de (.+) cada$/,'about $1 each'],[/^(\d+) × 60 s a subir forte$/,'$1 × 60 s hard uphill'],[/^(\d+) min em trilho \(≈ ([\d.]+) km\)$/,'$1 min on trail (≈ $2 km)'],[/^([\d.]+) min a andar$/,'$1 min walk'],[/^([\d.]+) min a correr$/,'$1 min run'],[/^(\d+) × ([\d.]+) min a correr \+ ([\d.]+) min a andar$/,'$1 × $2 min run + $3 min walk'],[/^Corrida (\d+) de (\d+)$/,'Run $1 of $2'],[/^Plano criado: (\d+) semanas até correres 30 min seguidos\.?$/,'Plan created: $1 weeks until you run 30 min non-stop.'],[/^Plano criado: (\d+) semanas\.?$/,'Plan created: $1 weeks.'],[/^≈ (.+) cada$/,'≈ $1 each'],[/^rec\. (.+)$/,(m,x)=>'rec. '+tr(x)],[/^Quilómetro (\d+)\.?$/,'Kilometre $1.'],[/^Ritmo (\d.+)$/,'Pace $1']
 );
 
@@ -1944,16 +1943,16 @@ async function boot(){
 let authMode='in';
 function authHtml(){
   const inv=new URLSearchParams(location.search).get('g');
-  return `<div class="authwrap"><div class="authhead"><h1>${authMode==='in'?'Bem-vindo de volta':'Criar conta'}</h1><div class="small muted">O teu plano de corrida adaptativo${inv?' · tens um convite para um grupo':''}.</div></div>
+  return `<div class="authwrap"><div class="authhead"><h1>${authMode==='in'?'Bem-vindo de volta':'Criar conta'}</h1><div class="small muted">O teu plano de corrida adaptativo.</div></div>
   ${sb?`<section class="card">
-    ${authMode==='up'?`<label for="aName">O teu nome (aparece no grupo)<input id="aName" autocomplete="nickname" enterkeyhint="next"></label>`:''}
+    ${authMode==='up'?`<label for="aName">O teu nome (aparece na comunidade)<input id="aName" autocomplete="nickname" enterkeyhint="next"></label>`:''}
     <label for="aEmail">Email<input id="aEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next"></label>
     <label for="aPass">Palavra-passe<input id="aPass" type="password" autocomplete="${authMode==='in'?'current-password':'new-password'}" enterkeyhint="go"></label>
     <div class="small" id="aErr" style="color:var(--bad)"></div>
     <button class="primary" data-act="auth-go">${authMode==='in'?'Entrar':'Criar conta'}</button>
     ${authMode==='in'?'<button class="link small" data-act="auth-forgot" style="align-self:center">Esqueci-me da palavra-passe</button>':''}
   </section>
-  <div class="small" style="text-align:center">${authMode==='in'?'Ainda não tens conta?':'Já tens conta?'} <button class="link" data-act="auth-switch">${authMode==='in'?'Criar conta':'Entrar'}</button></div>`:`<section class="card"><div class="small">Esta é a pré-visualização: as contas, o grupo e o Google Calendar ficam ativos no site final. Podes experimentar o resto da app já.</div></section>`}
+  <div class="small" style="text-align:center">${authMode==='in'?'Ainda não tens conta?':'Já tens conta?'} <button class="link" data-act="auth-switch">${authMode==='in'?'Criar conta':'Entrar'}</button></div>`:`<section class="card"><div class="small">Esta é a pré-visualização: as contas, a comunidade e o Google Calendar ficam ativos no site final. Podes experimentar o resto da app já.</div></section>`}
   <div class="authfoot"><button class="ghost" data-act="demo">Experimentar sem conta</button>
   <div class="row between tiny muted"><span class="langmini"><button type="button" data-act="lang" data-v="en" aria-pressed="${LANG==='en'}">EN</button><button type="button" data-act="lang" data-v="pt" aria-pressed="${LANG==='pt'}">PT</button></span><a href="privacy.html" style="color:inherit">${L('Política de privacidade','Privacy policy')}</a></div></div></div>`;
 }
@@ -2014,21 +2013,13 @@ async function loadSharedRaces(){
     const seen=new Set(RACES.map(r=>r.name.toLowerCase()+'|'+r.date));EXTRA_RACES=[];for(const r of data||[]){const k=r.name.trim().toLowerCase()+'|'+r.date;if(seen.has(k))continue;seen.add(k);EXTRA_RACES.push({id:'db-'+r.id,name:r.name,city:r.city||'',cc:r.cc||'',date:r.date,km:Number(r.km),terrain:r.terrain||'flat',shared:true});}}catch(e){}
 }
 let lastPub='',noAvatarCol=false;
-function grpAv(uid,name){let a=(grp.pubs||[]).find(x=>x.user_id===uid)?.avatar||(uid===user?.id?st.profile.photo:null);if(a&&!/^data:image\/(jpeg|png|webp);base64,/.test(a))a=null;return a?`<span class="gav"><img src="${esc(a)}" alt=""></span>`:`<span class="gav">${esc(initials(name))}</span>`;}
+function grpAv(uid,name){let a=(uid===user?.id?st.profile.photo:null)||(grp.pubs||[]).find(x=>x.user_id===uid)?.avatar;if(a&&!/^data:image\/(jpeg|png|webp);base64,/.test(a))a=null;return a?`<span class="gav"><img src="${esc(a)}" alt=""></span>`:`<span class="gav">${esc(initials(name))}</span>`;}
 async function pushPublic(){
   if(mode!=='cloud'||!st?.profile)return;
   const p=st.profile,isR=p.goalType==='race'||p.goalType==='hyrox'&&p.raceDate,row={user_id:user.id,race_name:isR?p.raceName:({start:'🌱 Começar a correr',back:'🔁 Voltar a correr',maintain:'⚡ Manter a forma',hyrox:'🏋️ HYROX',gym:'💪 Ginásio'})[p.goalType]||null,race_date:isR?p.raceDate:null,race_km:p.goalType==='race'?p.raceKm:null,updated_at:new Date().toISOString()};
-  if(!noAvatarCol)row.avatar=p.photo||null;
-  const key=JSON.stringify([row.race_name,row.race_date,row.race_km,(p.photo||'').length]);if(key===lastPub)return;
-  try{let {error}=await sb.from('public_profile').upsert(row);if(error&&row.avatar!==undefined){noAvatarCol=true;delete row.avatar;({error}=await sb.from('public_profile').upsert(row));}if(!error)lastPub=key;}catch(e){}
-}
-function groupRacesHtml(){
-  const rows=(grp.pubs||[]).filter(x=>x.race_date&&x.race_date>=TODAY);
-  if(!rows.length)return'';
-  const rk=(d,km)=>d+'|'+Math.round(Number(km||0));const by={};for(const r of rows){const k=rk(r.race_date,r.race_km);(by[k]=by[k]||{name:r.race_name,date:r.race_date,km:r.race_km,who:[]}).who.push(r.user_id);if(r.user_id===user.id)by[k].name=r.race_name;}
-  const mine=st.profile.goalType==='race'?rk(st.profile.raceDate,st.profile.raceKm):'';
-  const nm=id=>id===user.id?L('Tu','You'):(grp.members.find(m=>m.user_id===id)?.display_name||'?');
-  return `<section class="card"><h3>Provas do grupo</h3>${Object.entries(by).sort((a,b)=>a[1].date<b[1].date?-1:1).map(([k,r])=>{const d=daysBetween(TODAY,r.date);return `<div class="rank ${k===mine?'me':''}" style="grid-template-columns:56px 1fr"><span class="race" style="padding:0;min-height:0;border:none;background:none"><span class="rd"><b>${d}</b><span>${L('dias','days')}</span></span></span><div><b>${esc(r.name||'')}</b><div class="small muted">${fmtDate(r.date)} · ${r.km?nf(Math.round(r.km*10)/10)+' km · ':''}${r.who.map(nm).map(esc).join(', ')}</div>${k===mine&&r.who.length>1?`<div class="tiny" style="color:var(--good)">${r.who.length-1} ${L('do grupo vão contigo','from the group are going with you')}</div>`:''}</div></div>`;}).join('')}</section>`;
+  if(!noAvatarCol){row.avatar=p.photo||null;row.name=myName().slice(0,60);row.feed=!st.feedOff;}
+  const key=JSON.stringify([row.race_name,row.race_date,row.race_km,(p.photo||'').length,row.name,row.feed]);if(key===lastPub)return;
+  try{let {error}=await sb.from('public_profile').upsert(row);if(error&&row.avatar!==undefined){noAvatarCol=true;delete row.avatar;delete row.name;delete row.feed;({error}=await sb.from('public_profile').upsert(row));}if(!error)lastPub=key;}catch(e){}
 }
 
 /* ---------- Sapatilhas ---------- */
@@ -2238,67 +2229,22 @@ function stravaCardsHtml(){
   return out;
 }
 
-/* ---------- Grupo ---------- */
-let grp={loaded:false,groups:[],active:null,members:[],stats:[],week:'cur',err:'',sort:(()=>{try{return localStorage.getItem('zone5.gsort')||'pct';}catch(e){return'pct';}})()};
-async function loadGroup(){
+/* ---------- Comunidade: feed de toda a gente ---------- */
+let grp={loaded:false,feed:[],pubs:[],kudos:[],err:'',more:true};
+async function loadGroup(more){
   if(mode!=='cloud'){grp.loaded=true;return;}
-  try{
-    const {data:mem,error}=await sb.from('group_members').select('group_id,groups(id,name,code)').eq('user_id',user.id);
-    if(error)throw error;
-    grp.groups=(mem||[]).map(m=>m.groups).filter(Boolean);
-    if(!grp.active||!grp.groups.find(g=>g.id===grp.active))grp.active=grp.groups[0]?.id||null;
-    if(grp.active){
-      const {data:ms}=await sb.from('group_members').select('user_id,display_name').eq('group_id',grp.active);
-      grp.members=ms||[];
-      const cur=mondayOf(TODAY);
-      const {data:ss}=await sb.from('weekly_stats').select('user_id,week_start,km,runs,planned').in('user_id',grp.members.map(m=>m.user_id)).in('week_start',[cur,addDays(cur,-7)]);
-      grp.stats=ss||[];
-      try{const ids=grp.members.map(m=>m.user_id);let {data:pp,error}=await sb.from('public_profile').select('user_id,race_name,race_date,race_km,avatar').in('user_id',ids);if(error)({data:pp}=await sb.from('public_profile').select('user_id,race_name,race_date,race_km').in('user_id',ids));grp.pubs=pp||[];}catch(e){grp.pubs=[];}
-      await loadFeed();
-    }
-    grp.err='';
-  }catch(e){grp.err='Não foi possível carregar o grupo. Verifica a ligação e tenta outra vez.';}
+  try{await loadFeed(more);grp.err='';}catch(e){grp.err=L('Não foi possível carregar a comunidade. Verifica a ligação e tenta outra vez.','Could not load the community. Check your connection and try again.');}
   grp.loaded=true;if(tab==='grupo')render();
 }
 function grupoHtml(){
-  if(mode!=='cloud')return `<h2>Grupo</h2><section class="card emptyst"><div class="eic">${ico('users')}</div><h3>${L('Treina com amigos','Train with friends')}</h3><div class="small muted">Os grupos precisam de uma conta: cria uma para treinares com amigos e veres o ranking semanal.</div>${sb?'<button class="primary" data-act="logout">Criar conta ou entrar</button>':''}</section>`;
-  if(!grp.loaded){loadGroup();return `<h2>Grupo</h2><section class="card"><div class="small muted">A carregar…</div></section>`;}
-  const inv=new URLSearchParams(location.search).get('g')||'';
-  const joinCard=`<section class="card"><h3>${grp.groups.length?'Juntar-me a outro grupo':'Juntar-me a um grupo'}</h3><div class="row" style="flex-wrap:nowrap"><input id="gCode" placeholder="Código" value="${esc(inv)}" style="text-transform:uppercase;letter-spacing:.15em" maxlength="6"><button data-act="g-join">${L("Entrar","Join")}</button></div></section>
-  <section class="card"><h3>Criar um grupo</h3><div class="row" style="flex-wrap:nowrap"><input id="gName" placeholder="Nome do grupo"><button data-act="g-create">Criar</button></div></section>`;
-  if(grp.err)return `<h2>Grupo</h2><section class="card"><div class="small" style="color:var(--bad)">${esc(grp.err)}</div><button data-act="g-reload">Tentar outra vez</button></section>`;
-  if(!grp.active)return `<h2>Grupo</h2><section class="card empty"><div style="font-size:34px">👥</div><b>${L('Treinar com amigos sabe melhor','Training with friends is better')}</b><div class="small muted">${L('Cria um grupo e partilha o convite. Cada um segue o seu objetivo — corrida ou HYROX — e veem quem cumpriu mais do plano esta semana.','Create a group and share the invite. Everyone follows their own goal — running or HYROX — and you see who completed more of their plan this week.')}</div></section>`+joinCard;
-  const g=grp.groups.find(x=>x.id===grp.active);
-  const cur=mondayOf(TODAY),wk=grp.week==='cur'?cur:addDays(cur,-7);
-  const pct=r=>r.planned?Math.min(1,r.runs/r.planned):0,byPct=grp.sort==='pct';
-  const goalOf=id=>{const x=(grp.pubs||[]).find(q=>q.user_id===id);if(!x||!x.race_name)return'';return x.race_date?`${x.race_name} · ${fmtDate(x.race_date)}`:x.race_name;};
-  const rows=grp.members.map(m=>{const s=grp.stats.find(x=>x.user_id===m.user_id&&x.week_start===wk)||{km:0,runs:0,planned:0};return{...m,...s};}).sort((a,b)=>byPct?(pct(b)-pct(a))||(b.km-a.km):b.km-a.km);
-  const mx=Math.max(1,...rows.map(r=>r.km));
-  const link=`${location.origin}${location.pathname}?g=${g.code}`;
-  return `<div class="row between"><h2>${esc(g.name)}</h2>${grp.groups.length>1?`<select id="gSel" style="width:auto">${grp.groups.map(x=>`<option value="${x.id}" ${x.id===g.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:''}</div>
-  <section class="card"><div class="seg"><button data-act="g-week" data-v="cur" aria-pressed="${grp.week==='cur'}">Esta semana</button><button data-act="g-week" data-v="prev" aria-pressed="${grp.week==='prev'}">Semana passada</button></div>
-  <div class="seg"><button data-act="g-sort" data-v="pct" aria-pressed="${byPct}">${L('Plano cumprido','Plan completed')}</button><button data-act="g-sort" data-v="km" aria-pressed="${!byPct}">${L('Quilómetros','Kilometres')}</button></div>
-  <div>${rows.map((r,i)=>`<div class="rank ${r.user_id===user.id?'me':''}"><span class="pos">${i+1}</span><div class="row" style="gap:10px;flex-wrap:nowrap;align-items:flex-start">${grpAv(r.user_id,r.display_name)}<div style="min-width:0;flex:1"><b>${esc(r.display_name)}</b>${r.user_id===user.id?' <span class="tiny muted">(tu)</span>':''}${goalOf(r.user_id)?`<div class="tiny muted">${esc(tr(goalOf(r.user_id)))}</div>`:''}<div class="rbar"><div style="width:${byPct?pct(r)*100:r.km/mx*100}%"></div></div><span class="tiny muted">${r.planned?`${r.runs}/${r.planned} treinos do plano`:'sem plano esta semana'}${byPct&&r.km?' · '+nf(r.km)+' km':''}</span></div></div><span class="num" style="font-family:var(--display);font-size:22px;font-weight:700">${byPct?(r.planned?Math.round(pct(r)*100)+'%':'–'):nf(r.km)+' km'}</span></div>`).join('')}</div>
-  <button class="link" data-act="g-reload">Atualizar</button></section>
-  ${feedHtml()}
-  ${groupRacesHtml()}
-  <section class="card"><h3>Convidar amigos</h3><div class="small muted">Partilha o código ou o link. Quem entrar cria a sua conta e o seu plano, e aparece aqui.</div><div class="code">${g.code}</div><div class="small num" style="word-break:break-all">${esc(link)}</div><button data-act="g-copy" data-v="${esc(link)}">${navigator.share?L('Partilhar convite','Share invite'):'Copiar link de convite'}</button></section>
-  ${joinCard}
-  <button class="ghost" data-act="g-leave" style="color:var(--bad)">Sair deste grupo</button>`;
+  const H=`<h2>${L('Comunidade','Community')}</h2>`;
+  if(mode!=='cloud')return `${H}<section class="card emptyst"><div class="eic">${ico('users')}</div><h3>${L('Vê quem anda a treinar','See who’s training')}</h3><div class="small muted">${L('A comunidade precisa de uma conta: cria uma para veres os treinos de toda a gente, dares kudos e partilhares os teus.','The community needs an account: create one to see everyone’s workouts, give kudos and share yours.')}</div>${sb?`<button class="primary" data-act="logout">${L('Criar conta ou entrar','Create account or sign in')}</button>`:''}</section>`;
+  if(!grp.loaded){loadGroup();return `${H}<section class="card"><div class="small muted">${L('A carregar…','Loading…')}</div></section>`;}
+  if(grp.err)return `${H}<section class="card"><div class="small" style="color:var(--bad)">${esc(grp.err)}</div><button data-act="g-reload">${L('Tentar outra vez','Try again')}</button></section>`;
+  return `<div class="row between">${H}<button class="mini" style="flex:none" data-act="g-reload">${L('Atualizar','Refresh')}</button></div>
+  ${st.feedOff?`<section class="card"><div class="small muted">${L('Os teus treinos não aparecem no feed.','Your workouts are hidden from the feed.')} <button class="link small" data-act="feed-on">${L('Mostrar','Show them')}</button></div></section>`:''}
+  ${feedHtml()}`;
 }
-async function gCreate(){
-  const name=($('#gName').value||'').trim();if(!name)return toast('Dá um nome ao grupo.');
-  const {data,error}=await sb.rpc('create_group',{p_name:name,p_display:myName()});
-  if(error)return toast('Não foi possível criar o grupo.');
-  grp.active=data;grp.loaded=false;await loadGroup();pushStats();toast('Grupo criado');
-}
-async function gJoin(){
-  const code=($('#gCode').value||'').trim().toUpperCase();if(code.length<4)return toast('Escreve o código do grupo.');
-  const {data,error}=await sb.rpc('join_group',{p_code:code,p_display:myName()});
-  if(error||!data)return toast('Não encontrei nenhum grupo com esse código.');
-  grp.active=data;grp.loaded=false;history.replaceState(null,'',location.pathname+'#grupo');lastStats='';await pushStats();await loadGroup();toast('Entraste no grupo');
-}
-async function gLeave(){await sb.from('group_members').delete().eq('group_id',grp.active).eq('user_id',user.id);grp.active=null;grp.loaded=false;closeSheet();await loadGroup();}
 
 /* ---------- helpers de estado ---------- */
 const allW=()=>st.plan.weeks.flatMap(w=>w.workouts);
@@ -2375,9 +2321,9 @@ const PHO={db:null,urls:{},
     if(mode==='cloud'&&sb&&was&&was!==v){try{const {error}=await sb.storage.from('photos').move(phPath(k,was),phPath(k,v));if(error)throw error;st.phUp[k]=v;persist();syncFeed();return;}catch(e){}}
     if(mode==='cloud'&&sb)await this.up(k);},
   todo(){return [...new Set([...(st?.phPend||[]),...(st?.logs||[]).filter(l=>l.photo&&!st.phUp?.[l.photo]).map(l=>l.photo)])];},
-  async flush(){for(const k of this.todo())await this.up(k);}
+  async flush(){for(const l of st?.logs||[])if(l.photo&&(l.phVis==='f'||!l.phVis)){l.phVis='p';if(st.phUp?.[l.photo]==='f')await this.setVis(l.photo,'p');}for(const k of this.todo())await this.up(k);}
 };
-const phVisOf=k=>(st?.logs||[]).find(l=>l.photo===k)?.phVis||'f';
+const phVisOf=k=>(st?.logs||[]).find(l=>l.photo===k)?.phVis||'p';
 const phPath=(k,v)=>`${user.id}/${v==='f'?'f/':v==='a'?'a/':''}${k}.jpg`;
 const phPaths=k=>['p','f','a'].map(v=>phPath(k,v));
 const phKey=()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -2391,10 +2337,10 @@ function pickImage(cb){const i=document.createElement('input');i.type='file';i.a
   i.onchange=async()=>{const f=i.files&&i.files[0];i.remove();if(!f)return;try{await cb(f);}catch(e){toast(L('Não foi possível usar esta fotografia.','Could not use this photo.'));}};i.click();}
 const FPH={};async function feedPhUrl(p){if(FPH[p])return FPH[p];try{const {data}=await sb.storage.from('photos').createSignedUrl(p,3600);if(data?.signedUrl)return FPH[p]=data.signedUrl;}catch(e){}return null;}
 new MutationObserver(()=>{document.querySelectorAll('img[data-fph]:not([data-ld])').forEach(im=>{im.dataset.ld=1;feedPhUrl(im.dataset.fph).then(u=>{if(u)im.src=u;else im.closest('.lphoto')?.remove();});});document.querySelectorAll('img[data-ph]:not([data-ld])').forEach(im=>{im.dataset.ld=1;PHO.url(im.dataset.ph).then(u=>{if(u)im.src=u;else im.closest('.lphoto')?.remove();});});}).observe(document.documentElement,{childList:true,subtree:true});
-async function addLogPhoto(i){const l=st.logs[i];if(!l)return;pickImage(async f=>{const b=await shrinkImg(f,1600);const k=phKey();await PHO.put(k,b);const old=l.photo;l.photo=k;l.phVis=l.phVis||'f';persist();render();if(old)PHO.rm(old);openPhoto(i);PHO.up(k).then(persist);});}
-function openPhoto(i){const l=st.logs[i];if(!l?.photo)return;openSheet(`<div class="row between"><h2>${L('Fotografia','Photo')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div><img data-ph="${l.photo}" alt="" style="width:100%;border-radius:18px;background:var(--soft);min-height:200px;object-fit:contain"><div id="visBox">${visSeg(l.phVis||'f','ph-vis',`data-i="${i}"`)}</div><div class="btns"><button data-act="ph-add" data-v="${i}">${L('Trocar','Replace')}</button><button class="ghost" data-act="ph-del" data-v="${i}" style="color:var(--bad)">${L('Remover','Remove')}</button></div>`);}
-const VIS=[['p','🔒',()=>L('Só eu','Only me')],['f','👥',()=>L('Amigos','Friends')],['a','🌍',()=>L('Todos','Everyone')]];
-const visSeg=(cur,act,extra='')=>`<div class="small"><b>${L('Quem vê a fotografia','Who can see the photo')}</b></div><div class="seg">${VIS.map(([v,ic,l])=>`<button type="button" data-act="${act}" data-v="${v}" ${extra} aria-pressed="${cur===v}">${ic} ${l()}</button>`).join('')}</div><div class="tiny muted">${{p:L('Fica só para ti.','Just for you.'),f:L('Aparece no feed dos teus grupos.','Shows in your groups’ feed.'),a:L('Qualquer pessoa na Zone5 que veja este treino.','Anyone on Zone5 who sees this workout.')}[cur]}</div>`;
+async function addLogPhoto(i){const l=st.logs[i];if(!l)return;pickImage(async f=>{const b=await shrinkImg(f,1600);const k=phKey();await PHO.put(k,b);const old=l.photo;l.photo=k;l.phVis=l.phVis||'p';persist();render();if(old)PHO.rm(old);openPhoto(i);PHO.up(k).then(persist);});}
+function openPhoto(i){const l=st.logs[i];if(!l?.photo)return;openSheet(`<div class="row between"><h2>${L('Fotografia','Photo')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div><img data-ph="${l.photo}" alt="" style="width:100%;border-radius:18px;background:var(--soft);min-height:200px;object-fit:contain"><div id="visBox">${visSeg(l.phVis||'p','ph-vis',`data-i="${i}"`)}</div><div class="btns"><button data-act="ph-add" data-v="${i}">${L('Trocar','Replace')}</button><button class="ghost" data-act="ph-del" data-v="${i}" style="color:var(--bad)">${L('Remover','Remove')}</button></div>`);}
+const VIS=[['p','🔒',()=>L('Só eu','Only me')],['a','🌍',()=>L('Pública','Public')]];
+const visSeg=(cur,act,extra='')=>{cur=cur==='a'?'a':'p';return `<div class="small"><b>${L('Quem vê a fotografia','Who can see the photo')}</b></div><div class="seg">${VIS.map(([v,ic,l])=>`<button type="button" data-act="${act}" data-v="${v}" ${extra} aria-pressed="${cur===v}">${ic} ${l()}</button>`).join('')}</div><div class="tiny muted">${{p:L('Fica só para ti.','Just for you.'),a:st.feedOff?L('Aparece no feed da comunidade quando voltares a mostrar os teus treinos (Perfil).','Shows in the community feed once you show your workouts again (Profile).'):L('Aparece no feed da comunidade, com este treino.','Shows in the community feed with this workout.')}[cur]||''}</div>`;};
 const phHtml=(l,big)=>l.photo?`<button class="lphoto${big?'':' sm'}" data-act="ph-view" data-v="${st.logs.indexOf(l)}" aria-label="${L('Ver fotografia','View photo')}"><img data-ph="${l.photo}" alt=""></button>`:'';
 const avatarHtml=(cls='')=>st.profile.photo?`<span class="avatar ${cls}" style="background:none;overflow:hidden"><img src="${st.profile.photo}" alt="" style="width:100%;height:100%;object-fit:cover"></span>`:null;
 const IC={share:'<path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',edit:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>',list:'<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".8"/><circle cx="4" cy="12" r=".8"/><circle cx="4" cy="18" r=".8"/>',smile:'<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4 4 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>',cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M9 15l6 0"/>',run:'<circle cx="15" cy="4.5" r="2"/><path d="M8 21l3-6 3 2v5M6 12l3-4 4 1 2 4 3 1"/>',dumb:'<path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/>',users:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3.3 2.7-5 6-5s6 1.7 6 5M15 14.5c3 0 6 1.3 6 4.5"/>',plus:'<path d="M12 5v14M5 12h14"/>',cam:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>',back:'<path d="M15 5l-7 7 7 7"/>',out:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
@@ -2491,7 +2437,6 @@ function render(){
   app.innerHTML=tab==='perfil'?perfilHtml():tab==='hoje'?hojeHtml():tab==='plano'?planoHtml():tab==='progresso'?progHtml():tab==='grupo'?grupoHtml():ajustesHtml();
   if(tab==='ajustes'){settify();bindAjustes();}
   if(tab==='plano')bindPlano();
-  if(tab==='grupo'){const sel=$('#gSel');if(sel)sel.onchange=e=>{grp.active=e.target.value;grp.loaded=false;render();};}
 }
 window.addEventListener('hashchange',()=>{tab=(location.hash||'#hoje').slice(1);render();window.scrollTo(0,0);});
 
@@ -2617,18 +2562,19 @@ function perfilHtml(){
     <div class="small muted">${(p.runDays||[]).length} ${L('dias por semana','days a week')}: ${(p.runDays||[]).slice().sort((a,c)=>a-c).map(d=>DOW[d]).join(', ')}</div></section>
   <section class="card"><div class="row between"><h3>${L('Sobre ti','About you')}</h3><button class="mini" style="flex:none" data-act="me-body">${ico('edit')}${L('Editar','Edit')}</button></div>
     ${b.age||wNow||b.sex?`<div class="kv"><div><b>${sexT?esc(sexT.split(' ')[0]):'–'}</b><span>${L('sexo','sex')}</span></div><div><b>${b.age||'–'}</b><span>${L('anos','years')}</span></div><div><b>${b.h||'–'}</b><span>cm</span></div><div><b>${wNow?nf(wNow):'–'}</b><span>kg</span></div></div>`:`<div class="small muted">${L('Acrescenta idade, altura e peso para eu afinar melhor os treinos (por exemplo, menos impacto quando faz sentido).','Add your age, height and weight so I can fine-tune your training (e.g. less impact when it makes sense).')}</div>`}
-    <div class="tiny muted">${L('Só usado para ajustar o plano. Não aparece no grupo.','Only used to tailor your plan. Not shown in groups.')}</div></section>
+    <div class="tiny muted">${L('Só usado para ajustar o plano. Ninguém mais vê.','Only used to tailor your plan. Nobody else sees it.')}</div></section>
   ${showRun?`<section class="card"><div class="row between"><h3>${L('Forma atual','Current fitness')}</h3><span class="small muted">${L('índice','index')} <b class="num">${nf(st.vdot.toFixed(1))}</b></span></div><div class="kv kv2">${preds}</div><div class="tiny muted">${L('Tempos que conseguirias hoje, com o treino específico para cada distância.','Times you could run today, with specific training for each distance.')}</div></section>`:''}
+  ${mode==='cloud'?`<section class="card"><h3>${L('Comunidade','Community')}</h3><label class="switch"><input type="checkbox" data-act="${st.feedOff?'feed-on':'feed-off'}" ${st.feedOff?'':'checked'}> ${L('Mostrar os meus treinos no feed','Show my workouts in the feed')}</label><div class="tiny muted">${L('Toda a gente na Zone5 vê os teus treinos (distância, tempo, ritmo) e as fotografias que marcares como públicas. O teu nome e a fotografia de perfil também aparecem.','Everyone on Zone5 sees your workouts (distance, time, pace) and photos you mark as public. Your name and profile photo show too.')}</div></section>`:''}
   ${recordsHtml(true)}
   ${showRun?`<section class="card"><div class="row between"><h3>${L('Sapatilhas','Shoes')}</h3><button class="mini" style="flex:none" data-act="me-shoes">${ico('gear')}${L('Gerir','Manage')}</button></div>${shoes.length?shoes.map(x=>`<div class="row between"><span>👟 ${esc(x.name)}</span><span class="small muted num">${nf(Math.round(typeof shoeKm==='function'?shoeKm(x):0))} km</span></div>`).join(''):`<div class="small muted">${L('Ainda sem sapatilhas registadas.','No shoes added yet.')}</div>`}</section>`:''}
   <div class="acts"><button class="act" data-act="me-set">${ico('gear')}${L('Ajustes','Settings')}</button>${mode==='cloud'?`<button class="act" data-act="logout" style="color:var(--bad)">${ico('out')}${L('Terminar sessão','Sign out')}</button>`:(sb?`<button class="act" data-act="logout">${ico('users')}${L('Criar conta','Create account')}</button>`:'')}</div>`;
 }
 function openMePhoto(){if(!st.profile.photo){pickImage(async f=>{st.profile.photo=await shrinkImg(f,256,.8,true);persist();lastPub='';pushPublic();render();toast(L('Fotografia de perfil atualizada','Profile photo updated'));});return;}
   openSheet(`<div class="row between"><h2>${L('Fotografia de perfil','Profile photo')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div><div style="display:flex;justify-content:center">${avatarHtml('big')}</div><button class="primary" data-act="me-photo-pick">${L('Escolher outra','Choose another')}</button><button class="ghost" data-act="me-photo-del" style="color:var(--bad)">${L('Remover fotografia','Remove photo')}</button>`);}
-function openMeName(){const nm=mode==='cloud'||st.profile.nick?myName():'';openSheet(`<div class="row between"><h2>${L('O teu nome','Your name')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div><label for="meNm">${L('Nome','Name')}<input id="meNm" value="${esc(nm)}" maxlength="40" autocomplete="name" placeholder="${L('Ex.: Afonso Pinto','E.g. Alex Smith')}"></label><div class="small muted">${mode==='cloud'?L('É assim que apareces no grupo.','This is how you appear in groups.'):L('Usado na saudação e nos teus cartões.','Used in your greeting and cards.')}</div><div class="small" id="meErr" style="color:var(--bad)"></div><button class="primary" data-act="me-name-save">${L('Guardar','Save')}</button>`);setTimeout(()=>$('#meNm')?.focus(),200);}
+function openMeName(){const nm=mode==='cloud'||st.profile.nick?myName():'';openSheet(`<div class="row between"><h2>${L('O teu nome','Your name')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div><label for="meNm">${L('Nome','Name')}<input id="meNm" value="${esc(nm)}" maxlength="40" autocomplete="name" placeholder="${L('Ex.: Afonso Pinto','E.g. Alex Smith')}"></label><div class="small muted">${mode==='cloud'?L('É assim que apareces na comunidade.','This is how you appear in the community.'):L('Usado na saudação e nos teus cartões.','Used in your greeting and cards.')}</div><div class="small" id="meErr" style="color:var(--bad)"></div><button class="primary" data-act="me-name-save">${L('Guardar','Save')}</button>`);setTimeout(()=>$('#meNm')?.focus(),200);}
 async function saveMeName(){const n=$('#meNm').value.trim();if(!n){$('#meErr').textContent=L('Escreve o teu nome.','Enter your name.');return;}
   if(mode==='cloud'){const {data,error}=await sb.auth.updateUser({data:{name:n}});if(error)return toast(L('Não foi possível guardar o nome.','Could not save your name.'));if(data?.user)user=data.user;}
-  st.profile.nick=n;persist();closeSheet();render();toast(L('Nome guardado','Name saved'));}
+  st.profile.nick=n;lastPub='';persist();closeSheet();render();toast(L('Nome guardado','Name saved'));}
 function openMeBody(){const b=st.profile.body||{},w=(st.weights||[]).slice(-1)[0]?.kg||b.w||70;
   const sel=(id,a,c,v,u)=>`<select id="${id}">${Array.from({length:c-a+1},(_,i)=>a+i).map(x=>`<option value="${x}" ${x===v?'selected':''}>${x} ${u}</option>`).join('')}</select>`;
   const ch=(v,l)=>`<button type="button" class="chip" data-act="me-sex" data-v="${v}" aria-pressed="${b.sex===v}">${l}</button>`;
@@ -2670,8 +2616,8 @@ function ajustesHtml(){
   ${shoesHtml()}
   ${mode==='cloud'?`<section class="card"><h3>${L('Sugerir melhoria','Suggest an improvement')}</h3><div class="small muted">${L('Algo confuso, um erro ou uma ideia? Escreve uma frase. Vai diretamente para quem gere a Zone5.','Something confusing, a bug or an idea? Write a sentence. It goes straight to whoever runs Zone5.')}</div><textarea id="fbText" rows="3" maxlength="2000" placeholder="${L('Ex.: Não percebi onde mudo a hora dos lembretes','E.g. I couldn’t find where to change the reminder time')}"></textarea><button class="primary" data-act="fb-send">${L('Enviar','Send')}</button></section>`:''}
   <section class="card"><h3>Idioma · Language</h3>${langSeg()}</section>
-  <section class="card"><h3>Conta</h3><div class="small muted">${mode==='cloud'?`Sessão iniciada como ${esc(user.email)} · nome no grupo: ${esc(myName())}`:'Modo experiência: os dados estão só neste dispositivo.'}</div>
-    ${mode==='cloud'?`<label for="myNm">Nome no grupo<input id="myNm" value="${esc(myName())}"></label><div class="btns"><button id="saveNm">Guardar nome</button><button class="ghost" data-act="logout">Terminar sessão</button></div>`:`${sb?'<button class="primary" data-act="logout">Criar conta e guardar o plano</button>':''}`}</section>
+  <section class="card"><h3>Conta</h3><div class="small muted">${mode==='cloud'?`Sessão iniciada como ${esc(user.email)} · nome: ${esc(myName())}`:'Modo experiência: os dados estão só neste dispositivo.'}</div>
+    ${mode==='cloud'?`<label for="myNm">Nome<input id="myNm" value="${esc(myName())}"></label><div class="btns"><button id="saveNm">Guardar nome</button><button class="ghost" data-act="logout">Terminar sessão</button></div>`:`${sb?'<button class="primary" data-act="logout">Criar conta e guardar o plano</button>':''}`}</section>
   <div class="tiny muted" style="text-align:center"><a href="privacy.html" style="color:inherit">${L('Política de privacidade','Privacy policy')}</a></div>
   <section class="card"><h3>Apagar tudo</h3><div class="small muted">Remove o plano e todos os registos.</div><button id="reset" class="ghost" style="color:var(--bad);border-color:var(--bad)">Apagar plano e registos</button></section>`;
 }
@@ -2968,7 +2914,7 @@ function bindAjustes(){
   {const rw=$('#rmWeekly');if(rw)rw.onchange=e=>{st.remind={...(st.remind||{}),weekly:e.target.checked};persist();pushSync();};}
   $('#gcAuto').onchange=e=>{st.gcal=st.gcal||{};st.gcal.auto=e.target.checked;persist();};
   $('#gcSync').onclick=()=>gcalSync(true);
-  if($('#saveNm'))$('#saveNm').onclick=async()=>{const n=$('#myNm').value.trim();if(!n)return;const {data,error}=await sb.auth.updateUser({data:{name:n}});if(error)return toast('Não foi possível guardar o nome.');user=data.user;await sb.from('group_members').update({display_name:n}).eq('user_id',user.id);grp.loaded=false;toast('Nome guardado');render();};
+  if($('#saveNm'))$('#saveNm').onclick=async()=>{const n=$('#myNm').value.trim();if(!n)return;const {data,error}=await sb.auth.updateUser({data:{name:n}});if(error)return toast('Não foi possível guardar o nome.');user=data.user;st.profile.nick=n;lastPub='';persist();await sb.from('group_members').update({display_name:n}).eq('user_id',user.id);grp.loaded=false;toast('Nome guardado');render();};
   if($('#gcOff'))$('#gcOff').onclick=()=>openSheet(`<h2>Apagar o calendário Zone5?</h2><div class="small muted">Apago o calendário "Zone5 · treinos" da tua conta Google. Os teus outros calendários não são tocados.</div><div class="btns"><button class="ghost" data-act="close">Cancelar</button><button class="primary" data-act="gc-off">Remover</button></div>`);
   $('#ttDist').onchange=e=>{$('#ttBox').innerHTML=timePick('ttTime',Math.round(predict(st.vdot,Number(e.target.value)*1000)),true);};
   $('#ttSave').onclick=()=>{const t=readPick('ttTime'),d=Number($('#ttDist').value);if(!(t>0))return toast('Escolhe o tempo.');const v=vdotFrom(d*1000,t);if(!(v>18&&v<85))return toast('Esse tempo parece improvável. Confirma.');const o=st.vdot;st.vdot=Math.round(v*10)/10;st.vdotHist.push({d:TODAY,v:st.vdot,why:'prova/teste'});addNote(`Ritmos recalculados com ${fmtTime(t)} em ${d} km (forma ${o.toFixed(1)} → ${st.vdot.toFixed(1)}).`,v>=o?'up':'down');persist();render();toast('Ritmos atualizados');};
@@ -2998,11 +2944,11 @@ function openLog(wid,extra){
   draft={wid:w?w.id:null,extra:!!extra,date:w?(w.date>TODAY?TODAY:w.date):TODAY,mode:'gpx',gpx:null};
   renderLog();
 }
-function logPhHtml(){if(!draft)return'';if(draft.phUrl||draft.phKey)return `<div class="phprev"><img ${draft.phUrl?`src="${draft.phUrl}"`:`data-ph="${draft.phKey}"`} alt=""><button type="button" data-act="log-ph-del" aria-label="${L('Remover fotografia','Remove photo')}">✕</button></div>${visSeg(draft.phVis||'f','log-vis')}`;
+function logPhHtml(){if(!draft)return'';if(draft.phUrl||draft.phKey)return `<div class="phprev"><img ${draft.phUrl?`src="${draft.phUrl}"`:`data-ph="${draft.phKey}"`} alt=""><button type="button" data-act="log-ph-del" aria-label="${L('Remover fotografia','Remove photo')}">✕</button></div>${visSeg(draft.phVis||'p','log-vis')}`;
   return `<button type="button" class="addbtn" data-act="log-ph">${ico('cam')}${L('Adicionar fotografia (opcional)','Add a photo (optional)')}</button>`;}
 function openLogEdit(i){
   const l=st.logs[i];if(!l)return;
-  draft={wid:l.wid||null,extra:!!l.extra,date:l.date,mode:'man',gpx:null,rpe:l.rpe||5,edit:i,phKey:l.photo||null,phVis:l.phVis||'f',pre:{dist:l.dist,time:l.time,fast:l.fast||null,shoe:l.shoe||''}};
+  draft={wid:l.wid||null,extra:!!l.extra,date:l.date,mode:'man',gpx:null,rpe:l.rpe||5,edit:i,phKey:l.photo||null,phVis:l.phVis||'p',pre:{dist:l.dist,time:l.time,fast:l.fast||null,shoe:l.shoe||''}};
   renderLog();
 }
 function renderLog(){
@@ -3087,8 +3033,8 @@ function saveLog(){
   log.rpe=draft.rpe||5;
   {const so=$('#mShoe');const v=so?so.value:st.shoeDefault;if(v)log.shoe=v;}
   const w=draft.wid?allW().find(x=>x.id===draft.wid):null;
-  const visChanged=draft.phKey&&draft.edit!=null&&(st.logs[draft.edit]?.phVis||'f')!==(draft.phVis||'f');
-  if(draft.phBlob){const k=phKey(),b=draft.phBlob;log.photo=k;log.phVis=draft.phVis||'f';PHO.put(k,b).then(()=>PHO.up(k)).then(persist);}else if(draft.phKey){log.photo=draft.phKey;log.phVis=draft.edit!=null?(st.logs[draft.edit]?.phVis||'f'):(draft.phVis||'f');}
+  const visChanged=draft.phKey&&draft.edit!=null&&(st.logs[draft.edit]?.phVis||'p')!==(draft.phVis||'p');
+  if(draft.phBlob){const k=phKey(),b=draft.phBlob;log.photo=k;log.phVis=draft.phVis||'p';PHO.put(k,b).then(()=>PHO.up(k)).then(persist);}else if(draft.phKey){log.photo=draft.phKey;log.phVis=draft.edit!=null?(st.logs[draft.edit]?.phVis||'p'):(draft.phVis||'p');}
   if(visChanged){const k=draft.phKey,v=draft.phVis;setTimeout(()=>PHO.setVis(k,v),0);}
   if(draft.edit!=null){const old=st.logs[draft.edit];if(old?.photo&&old.photo!==log.photo)PHO.rm(old.photo);if(old){const same=Math.abs((old.dist||0)-log.dist)<0.02*Math.max(1,log.dist)&&Math.abs((old.time||0)-log.time)<5;
     for(const k of ['aid','stravaId','stravaName','elev','avgHr','route','source'])if(old[k]!=null&&log[k]==null)log[k]=old[k];
@@ -3509,14 +3455,9 @@ document.addEventListener('click',e=>{
   else if(a==='newpass'){const p=$('#np').value;if(p.length<8)return toast('Mínimo 8 caracteres.');sb.auth.updateUser({password:p}).then(({error})=>{toast(error?'Não foi possível mudar a palavra-passe.':'Palavra-passe atualizada');closeSheet();});}
   else if(a==='demo'){mode='demo';try{localStorage.setItem('zone5.mode','demo');}catch(e){}st=readLocal();setSync('local');render();}
   else if(a==='logout'){if(mode==='cloud'&&sb){sb.auth.signOut();}else{try{localStorage.removeItem('zone5.mode');}catch(e){}mode=null;st=null;authMode='up';render();}}
-  else if(a==='g-create')gCreate();
-  else if(a==='g-join')gJoin();
-  else if(a==='g-reload'){grp.loaded=false;render();}
-  else if(a==='g-week'){grp.week=b.dataset.v;render();}
-  else if(a==='g-sort'){grp.sort=b.dataset.v;try{localStorage.setItem('zone5.gsort',grp.sort);}catch(e){}render();}
-  else if(a==='g-copy'){const url=b.dataset.v;if(navigator.share){navigator.share({title:'Zone5',text:L('Junta-te ao meu grupo de corrida na Zone5','Join my running group on Zone5'),url}).catch(()=>{});}else navigator.clipboard?.writeText(url).then(()=>toast('Link copiado'),()=>toast('Copia o link acima'));}
-  else if(a==='g-leave')openSheet(`<h2>Sair do grupo?</h2><div class="small muted">Deixas de aparecer no ranking. Podes voltar a entrar com o código.</div><div class="btns"><button class="ghost" data-act="close">Cancelar</button><button class="primary" data-act="g-leave-yes">Sair</button></div>`);
-  else if(a==='g-leave-yes')gLeave();
+  else if(a==='g-reload'){grp.loaded=false;grp.feed=[];render();}
+  else if(a==='g-more'){b.disabled=true;loadGroup(true);}
+  else if(a==='feed-on'||a==='feed-off'){st.feedOff=a==='feed-off';if(st.feedOff){(st.feedDel=st.feedDel||[]).push(...st.logs.filter(l=>l.aid).map(l=>l.aid));st.logs.forEach(l=>{delete l.aidK;});}persist();lastPub='';pushPublic();syncFeed();grp.loaded=false;render();toast(st.feedOff?L('Os teus treinos deixaram de aparecer no feed','Your workouts are now hidden from the feed'):L('Os teus treinos aparecem no feed','Your workouts now show in the feed'));}
   else if(a==='gc-now')gcalSync(true);
   else if(a==='reset-yes'){st=null;try{localStorage.removeItem(lsKey());}catch(_){}if(mode==='cloud')sb.from('user_state').delete().eq('user_id',user.id).then(()=>{});closeSheet();ob=null;render();}
 });
@@ -3624,7 +3565,7 @@ function actRow(l){
   const line=l.dist>0?`${nf(Math.round(l.dist*100)/100)} km · ${fmtTime(l.time)}${l.time?' · '+fmtPace(l.time/l.dist)+'/km':''}`:w?.gym?`${w.steps.filter(x=>x.z==='G').length} ${L('exercícios','exercises')}${l.lifts?` · ${l.lifts} ${L('séries registadas','sets logged')}`:''}`:w?.hx?`${w.min||''}${w.min?' min':''}`.trim():'';
   const pr=l.prs?.length?l.prs.map(p=>`${tr(p.n)} ${fmtKg(p.kg)} kg × ${p.reps}`).join(' · ').slice(0,200):null;
   const r={id:l.aid,user_id:user.id,date:l.date,kind,title,line:line||null,pr};
-  if(!noFeedPhoto)r.photo=l.photo&&(l.phVis||'f')!=='p'&&st.phUp?.[l.photo]===(l.phVis||'f')?phPath(l.photo,l.phVis||'f'):null;
+  if(!noFeedPhoto)r.photo=l.photo&&l.phVis==='a'&&st.phUp?.[l.photo]==='a'?phPath(l.photo,'a'):null;
   return r;
 }
 let noFeedPhoto=false;
@@ -3632,31 +3573,36 @@ async function syncFeed(){
   if(mode!=='cloud'||feedOff||feedBusy||!st?.logs)return;feedBusy=true;
   try{
     const since=addDays(TODAY,-21),rows=[];
-    for(const l of st.logs){if(l.date<since||(!l.wid&&!(l.dist>0)))continue;if(!l.aid){l.aid=uuid();}const r=actRow(l);const k=JSON.stringify([r.date,r.title,r.line,r.pr,r.photo||null]);if(l.aidK===k)continue;rows.push([l,r,k]);}
+    if(!st.feedOff)for(const l of st.logs){if(l.date<since||(!l.wid&&!(l.dist>0)))continue;if(!l.aid){l.aid=uuid();}const r=actRow(l);const k=JSON.stringify([r.date,r.title,r.line,r.pr,r.photo||null]);if(l.aidK===k)continue;rows.push([l,r,k]);}
     if(rows.length){let {error}=await sb.from('activities').upsert(rows.map(x=>x[1]));if(error&&!noFeedPhoto&&/photo/i.test(error.message||'')){noFeedPhoto=true;rows.forEach(x=>delete x[1].photo);({error}=await sb.from('activities').upsert(rows.map(x=>x[1])));}if(error){if(/relation|does not exist|schema cache/i.test(error.message||''))feedOff=true;}else rows.forEach(([l,,k])=>l.aidK=k);}
     const gone=(st.feedDel||[]);if(gone.length){await sb.from('activities').delete().in('id',gone);st.feedDel=[];}
   }catch(e){}feedBusy=false;
 }
-async function loadFeed(){
-  if(feedOff||!grp.members?.length){grp.feed=[];return;}
-  try{
-    const q=c=>sb.from('activities').select(c).in('user_id',grp.members.map(m=>m.user_id)).gte('date',addDays(TODAY,-14)).order('date',{ascending:false}).order('created_at',{ascending:false}).limit(40);
-    let {data,error}=await q('id,user_id,date,kind,title,line,pr,photo,created_at');if(error&&/photo/i.test(error.message||''))({data,error}=await q('id,user_id,date,kind,title,line,pr,created_at'));
-    if(error){feedOff=/relation|does not exist|schema cache/i.test(error.message||'');grp.feed=[];return;}
-    grp.feed=data||[];
-    if(grp.feed.length){const {data:k}=await sb.from('kudos').select('activity_id,user_id,emoji').in('activity_id',grp.feed.map(a=>a.id));grp.kudos=k||[];}else grp.kudos=[];
-  }catch(e){grp.feed=[];}
+async function loadFeed(more){
+  if(feedOff){grp.feed=[];return;}
+  const off=more?grp.feed.length:0,N=25;
+  const q=c=>sb.from('activities').select(c).gte('date',addDays(TODAY,-30)).order('created_at',{ascending:false}).range(off,off+N-1);
+  let {data,error}=await q('id,user_id,date,kind,title,line,pr,photo,created_at');if(error&&/photo/i.test(error.message||''))({data,error}=await q('id,user_id,date,kind,title,line,pr,created_at'));
+  if(error){feedOff=/relation|does not exist|schema cache/i.test(error.message||'');if(!feedOff)throw error;grp.feed=[];return;}
+  const rows=data||[];grp.more=rows.length===N;grp.feed=more?[...grp.feed,...rows]:rows;
+  const need=[...new Set(rows.map(a=>a.user_id))].filter(id=>!(grp.pubs||[]).some(p=>p.user_id===id));
+  if(need.length){let {data:pp,error:e2}=await sb.from('public_profile').select('user_id,name,avatar').in('user_id',need);if(e2)({data:pp}=await sb.from('public_profile').select('user_id,avatar').in('user_id',need));grp.pubs=[...(more?grp.pubs||[]:[]),...(pp||[])];
+    const miss=need.filter(id=>!grp.pubs.some(p=>p.user_id===id&&p.name));if(miss.length){try{const {data:gm}=await sb.from('group_members').select('user_id,display_name').in('user_id',miss);for(const m of gm||[]){const p=grp.pubs.find(x=>x.user_id===m.user_id);if(p)p.name=p.name||m.display_name;else grp.pubs.push({user_id:m.user_id,name:m.display_name});}}catch(e){}}}
+  if(rows.length){const {data:k}=await sb.from('kudos').select('activity_id,user_id,emoji').in('activity_id',rows.map(a=>a.id));grp.kudos=[...(more?grp.kudos||[]:[]),...(k||[])];}else if(!more)grp.kudos=[];
+  const kn=[...new Set((grp.kudos||[]).map(k=>k.user_id))].filter(id=>!grp.pubs.some(p=>p.user_id===id));
+  if(kn.length){try{const {data:pp}=await sb.from('public_profile').select('user_id,name,avatar').in('user_id',kn);grp.pubs.push(...(pp||[]));}catch(e){}}
 }
 const KUDOS=['👏','🔥','💪'];
 function feedHtml(){
-  if(feedOff||!grp.feed)return'';
-  const nm=id=>grp.members.find(m=>m.user_id===id)?.display_name||'—';
+  if(feedOff)return `<section class="card"><div class="small muted">${L('A comunidade ainda não está disponível.','The community isn’t available yet.')}</div></section>`;
+  if(!grp.feed)return'';
+  const nm=id=>id===user.id?myName():(grp.pubs||[]).find(p=>p.user_id===id)?.name||L('Atleta Zone5','Zone5 athlete');
   const ic={run:'🏃',gym:'💪',hyrox:'🏋️',other:'✅'};
-  if(!grp.feed.length)return `<section class="card"><h3>${L('Atividade','Activity')}</h3><div class="small muted">${L('Os treinos que tu e os teus amigos registarem aparecem aqui. Dá-lhes um 👏.','Workouts you and your friends log show up here. Give them a 👏.')}</div></section>`;
+  if(!grp.feed.length)return `<section class="card"><h3>${L('Atividade','Activity')}</h3><div class="small muted">${L('Os treinos de toda a gente na Zone5 aparecem aqui. Dá-lhes um 👏.','Everyone’s workouts on Zone5 show up here. Give them a 👏.')}</div></section>`;
   return `<section class="card"><h3>${L('Atividade','Activity')}</h3><div class="feed">${grp.feed.map(a=>{const ks=(grp.kudos||[]).filter(k=>k.activity_id===a.id),mine=ks.find(k=>k.user_id===user.id),me=a.user_id===user.id;
-    return `<div class="fi"><div class="fh">${(grp.pubs||[]).find(x=>x.user_id===a.user_id)?.avatar||(me&&st.profile.photo)?grpAv(a.user_id,nm(a.user_id)):`<span class="fic">${ic[a.kind]||'✅'}</span>`}<div style="flex:1;min-width:0"><b>${esc(nm(a.user_id))}</b>${me?` <span class="tiny muted">(${L('tu','you')})</span>`:''}<div class="tiny muted">${a.date===TODAY?L('Hoje','Today'):a.date===addDays(TODAY,-1)?L('Ontem','Yesterday'):DOW[dow(a.date)]+' '+fmtDate(a.date)}</div></div></div>
+    return `<div class="fi"><div class="fh">${grpAv(a.user_id,nm(a.user_id))}<div style="flex:1;min-width:0"><b>${esc(nm(a.user_id))}</b>${me?` <span class="tiny muted">(${L('tu','you')})</span>`:''}<div class="tiny muted">${ic[a.kind]||'✅'} ${a.date===TODAY?L('Hoje','Today'):a.date===addDays(TODAY,-1)?L('Ontem','Yesterday'):DOW[dow(a.date)]+' '+fmtDate(a.date)}</div></div></div>
     <div><b>${esc(a.title)}</b>${a.line?`<div class="small muted num">${esc(a.line)}</div>`:''}${a.pr?`<div class="small">🏆 ${esc(a.pr)}</div>`:''}</div>${a.photo&&/^[0-9a-f-]{36}\/(f|a)\/p[a-z0-9]+\.jpg$/.test(a.photo)?`<button class="lphoto sm" data-act="fph-view" data-v="${esc(a.photo)}" data-n="${esc(nm(a.user_id))}"><img data-fph="${esc(a.photo)}" alt=""></button>`:''}
-    <div class="kd">${KUDOS.map(e=>{const n=ks.filter(k=>k.emoji===e).length;return me?(n?`<span class="kb on">${e} ${n}</span>`:''):`<button type="button" class="kb ${mine?.emoji===e?'on':''}" data-act="kudo" data-id="${a.id}" data-v="${e}" aria-pressed="${mine?.emoji===e}">${e}${n?' '+n:''}</button>`;}).join('')}${ks.length?`<span class="tiny muted">${ks.slice(0,3).map(k=>esc(nm(k.user_id))).join(', ')}${ks.length>3?' +'+(ks.length-3):''}</span>`:''}</div></div>`;}).join('')}</div></section>`;
+    <div class="kd">${KUDOS.map(e=>{const n=ks.filter(k=>k.emoji===e).length;return me?(n?`<span class="kb on">${e} ${n}</span>`:''):`<button type="button" class="kb ${mine?.emoji===e?'on':''}" data-act="kudo" data-id="${a.id}" data-v="${e}" aria-pressed="${mine?.emoji===e}">${e}${n?' '+n:''}</button>`;}).join('')}${ks.length?`<span class="tiny muted">${ks.slice(0,3).map(k=>esc(nm(k.user_id))).join(', ')}${ks.length>3?' +'+(ks.length-3):''}</span>`:''}</div></div>`;}).join('')}</div>${grp.more?`<button class="ghost" data-act="g-more">${L('Ver mais','Load more')}</button>`:''}</section>`;
 }
 async function kudo(aid,e){
   const ks=grp.kudos||[],mine=ks.find(k=>k.activity_id===aid&&k.user_id===user.id);haptic();

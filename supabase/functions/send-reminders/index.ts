@@ -96,9 +96,10 @@ Deno.serve(async (req) => {
         const { data: ks } = await sb.from("kudos").select("activity_id,user_id,emoji,created_at")
           .in("activity_id", ids).gt("created_at", seen).neq("user_id", s.user_id).order("created_at");
         if (ks && ks.length) {
-          const { data: names } = await sb.from("group_members").select("user_id,display_name")
-            .in("user_id", [...new Set(ks.map((k) => k.user_id))]);
-          const nm = (id: string) => names?.find((n) => n.user_id === id)?.display_name ?? "?";
+          const kids = [...new Set(ks.map((k) => k.user_id))];
+          const { data: pnames } = await sb.from("public_profile").select("user_id,name").in("user_id", kids);
+          const { data: names } = await sb.from("group_members").select("user_id,display_name").in("user_id", kids);
+          const nm = (id: string) => pnames?.find((n) => n.user_id === id)?.name ?? names?.find((n) => n.user_id === id)?.display_name ?? (en ? "Someone" : "Alguém");
           const who = [...new Set(ks.map((k) => `${nm(k.user_id)} ${k.emoji}`))].slice(0, 3).join(", ");
           const act = acts!.find((a) => a.id === ks[ks.length - 1].activity_id)?.title ?? "";
           const title = ks.length === 1
