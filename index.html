@@ -194,6 +194,34 @@ details.why>summary{display:inline-flex;align-items:center;gap:4px;font-size:14p
 ul.adv{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14.5px}.aicard{border-color:color-mix(in srgb,var(--zR) 45%,var(--line));background:linear-gradient(160deg,color-mix(in srgb,var(--zR) 12%,var(--surface)),var(--surface))}
 .aiload{display:inline-flex;gap:3px;vertical-align:middle;margin-right:4px}.aiload i{width:6px;height:6px;border-radius:50%;background:var(--zR);animation:aib 1s infinite ease-in-out}.aiload i:nth-child(2){animation-delay:.15s}.aiload i:nth-child(3){animation-delay:.3s}@keyframes aib{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:none}}.aicur{color:var(--zR);animation:blink 1s steps(2) infinite}@keyframes blink{50%{opacity:0}}
 .props{display:flex;flex-direction:column;gap:8px}.prop{flex-direction:row!important;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:14px;background:var(--soft);border:1px solid var(--line);font-weight:400}.prop input{width:20px;height:20px;min-height:0;margin-top:2px;flex:none}.prop>span{display:flex;flex-direction:column;gap:2px}.cl2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* ---- visual mais leve (v2) ---- */
+main{gap:14px}
+.card{border-color:color-mix(in srgb,var(--line) 45%,transparent);border-radius:24px}
+.card:not(.hero):not(.aicard):not(.aihero){background:color-mix(in srgb,var(--surface) 92%,var(--bg))}
+.eyebrow{letter-spacing:.09em;font-size:11.5px}
+.greet{padding:4px 2px 0}.greet h1{font-size:31px}
+h2{font-size:25px}
+.sec{display:flex;align-items:baseline;justify-content:space-between;padding:6px 4px 0;margin-bottom:-4px}.sec b{font-size:17px;font-family:var(--display);font-stretch:108%}.sec .link{font-size:14px}
+/* Treinador IA em destaque */
+.aihero{position:relative;overflow:hidden;border:none;padding:18px;gap:12px;background:radial-gradient(120% 90% at 100% 0%,color-mix(in srgb,var(--zR) 38%,transparent),transparent 60%),radial-gradient(90% 80% at 0% 100%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 65%),linear-gradient(160deg,#211d3a,#151a2b);box-shadow:0 16px 40px -20px color-mix(in srgb,var(--zR) 70%,transparent)}
+.aih-top{display:flex;align-items:center;gap:12px}.aiorb{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;font-size:22px;flex:none;background:linear-gradient(135deg,#8b5cf6,#ff5a3c);box-shadow:0 6px 18px -6px #8b5cf6}
+.aih-top b{font-family:var(--display);font-size:19px;font-stretch:108%;display:block}.aih-top span{font-size:12.5px;color:color-mix(in srgb,var(--ink) 65%,transparent)}
+.aih-txt{font-size:14.5px;line-height:1.5;color:color-mix(in srgb,var(--ink) 92%,transparent)}
+.aih-props{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.07);font-weight:700;font-size:14px}.aih-props .dot2{width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.aihero .btns button{min-height:44px}.aihero .ghost{border-color:rgba(255,255,255,.18)}
+/* treino secundário compacto */
+.wmini{display:flex;align-items:center;gap:12px;padding:14px 16px;text-align:left;font-weight:400;border-radius:20px;width:100%;background:color-mix(in srgb,var(--surface) 92%,var(--bg));border:1px solid color-mix(in srgb,var(--line) 45%,transparent)}
+.wmini .wz{width:6px;align-self:stretch;border-radius:3px;background:var(--zc);flex:none}.wmini .wm{flex:1;min-width:0;display:flex;flex-direction:column}.wmini .wm b{font-size:16px}.wmini .pill{flex:none}
+/* passos recolhidos */
+.steps.clip li:nth-child(n+5){display:none}.stepsmore{align-self:flex-start;font-size:14px;color:var(--muted);font-weight:700;padding:0;min-height:0;border:none;background:none}
+.howi{width:28px;height:28px;min-height:0;padding:0;border-radius:50%;font-size:14px;flex:none;background:color-mix(in srgb,var(--ink) 7%,transparent);border:none;color:var(--muted);font-weight:800}
+.trow{display:flex;align-items:center;gap:8px;justify-content:space-between}
+/* ajustes agrupados */
+.setgrp{display:flex;flex-direction:column;border-radius:22px;overflow:hidden;background:color-mix(in srgb,var(--surface) 92%,var(--bg));border:1px solid color-mix(in srgb,var(--line) 45%,transparent)}
+.setgrp>details.setc{border:none;border-radius:0;background:none;box-shadow:none}.setgrp>details.setc+details.setc{border-top:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.restday{flex-direction:row;align-items:center;gap:14px}
+button.aih-props{width:100%;border:none;text-align:left;min-height:0;color:var(--ink)}
+details.wud>summary{cursor:pointer;list-style:none;color:var(--muted);font-weight:700;padding:2px 0}details.wud>summary::-webkit-details-marker{display:none}
 .hitem{display:flex;flex-direction:column;gap:8px}
 @media (min-width:381px){.stats>.stat:last-child:nth-child(3n+2){grid-column:span 2}.stats>.stat:last-child:nth-child(3n+1):not(:first-child){grid-column:span 3}}
 .stat .l{line-height:1.25}
@@ -1364,7 +1392,7 @@ function settify(){
     (h.parentElement.classList.contains('row')?h.parentElement:h).remove();
     d.appendChild(s);const body=document.createElement('div');body.className='setbody';while(sec.firstChild)body.appendChild(sec.firstChild);d.appendChild(body);
     d.addEventListener('toggle',()=>{d.open?SET_OPEN.add(title):SET_OPEN.delete(title);});
-    sec.replaceWith(d);
+    let g=app.querySelector(`.setgrp[data-g="${m[1]}"]`);if(!g){g=document.createElement('div');g.className='setgrp';g.dataset.g=m[1];sec.before(g);}sec.remove();g.appendChild(d);
     if(SET_FOCUS&&SET_FOCUS.includes(title)){SET_FOCUS=null;setTimeout(()=>d.scrollIntoView({behavior:'smooth',block:'start'}),120);}
   });
 }
@@ -1842,7 +1870,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251848';
+const APP_VER='202611251903';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2406,12 +2434,12 @@ const PH={base:'Base',build:'Desenvolvimento',peak:'Específico',taper:'Afinaç�
 function paceTxt(z){const p=pz();if(z==='H')return 'por esforço, forte a subir';if(z==='W')return 'a andar, passo vivo';if(z==='E')return `${fmtPace(p.E[0])}–${fmtPace(p.E[1])}/km`;return `${fmtPace(p[z])}/km`;}
 function stepHtml(s,w,i){
   if(s.z==='G'){const last=liftLast(s.t),can=w&&!logFor(w)&&w.date>=TODAY&&gxAlts(s.t).length;let nx='';if(w&&!logFor(w)&&!isTimed(s.reps)&&liftHist(s.t).length){const sg=liftSuggest(s.t,s.reps,!!w.light);if(sg.kg>0)nx=`${L('Hoje','Today')}: ${fmtKg(sg.kg)} kg × ${sg.reps}${sg.up?' 📈':''}`;}
-    return `<li><span class="bar zG"></span><div style="flex:1"><div class="t">${esc(tr(s.t))}</div><div class="p num">${esc(s.d)}</div>${last?`<div class="tiny muted num">${L('Última vez','Last time')}: ${esc(last)}${nx?' · <b>'+nx+'</b>':''}</div>`:''}<div class="row" style="gap:14px"><button class="link small howbtn" data-act="howto" data-v="${esc(s.t)}">ⓘ ${L('Como fazer','How to do it')}</button>${can?`<button class="link small howbtn" data-act="swap" data-id="${w.id}" data-v="${i}">⇄ ${L('Trocar','Swap')}</button>`:''}</div></div></li>`;}
-  if(isWuStep(s,w))return `<li><span class="bar zE"></span><div style="flex:1"><div class="t">${esc(s.t)}</div><div class="wul">${wuFor(w).map(([n,,pt,en])=>`<button type="button" class="chip" data-act="howto" data-v="${esc(n)}">${esc(tr(n))} · ${LANG==='pt'?pt:en}</button>`).join('')}</div><div class="p">${esc(s.d||'')}</div></div></li>`;
+    return `<li><span class="bar zG"></span><div style="flex:1"><div class="trow"><span class="t">${esc(tr(s.t))}</span><button class="howi" data-act="howto" data-v="${esc(s.t)}" aria-label="${L('Como fazer','How to do it')}">?</button></div><div class="p num">${esc(s.d)}</div>${last?`<div class="tiny muted num">${L('Última vez','Last time')}: ${esc(last)}${nx?' · <b>'+nx+'</b>':''}</div>`:''}${can?`<button class="link small howbtn" data-act="swap" data-id="${w.id}" data-v="${i}">⇄ ${L('Trocar exercício','Swap exercise')}</button>`:''}</div></li>`;}
+  if(isWuStep(s,w))return `<li><span class="bar zE"></span><div style="flex:1"><div class="t">${esc(s.t)}</div><details class="wud"><summary class="small">${L('Ver os exercícios','See the exercises')} (${wuFor(w).length}) ›</summary><div class="wul">${wuFor(w).map(([n,,pt,en])=>`<button type="button" class="chip" data-act="howto" data-v="${esc(n)}">${esc(tr(n))} · ${LANG==='pt'?pt:en}</button>`).join('')}</div></details><div class="p">${esc(s.d||'')}</div></div></li>`;
   if(s.seq){const parts=[];for(const x of s.seq){if(x.kind==='run')parts.push(fmtKm(x.km));else if(x.kind==='st')parts.push(`${tr(x.t)} ${x.amt}`);}
     const one=s.seq.filter(x=>x.kind==='rest').length+1;const per=one>1?parts.slice(0,parts.length/one):parts;
     return `<li><span class="bar z${s.z}"></span><div><div class="t">${esc(tr(s.t))}</div><div class="p num">${per.map(esc).join(' → ')}${one>1?` · ${L('2 min de descanso entre voltas','2 min rest between rounds')}`:''}${s.seq.some(x=>x.kind==='run')?` · ${L('corrida a','runs at')} ${fmtPace(pz().P)}/km`:''}</div></div></li>`;}
-  if(s.z==='F')return `<li><span class="bar zF"></span><div><div class="t">${esc(tr(s.t))}</div><div class="p num">${esc(tr(s.d||''))}</div>${w&&hasHow(s.t)?`<button class="link small howbtn" data-act="howto" data-v="${esc(s.t)}">ⓘ ${L('Como fazer','How to do it')}</button>`:''}</div></li>`;
+  if(s.z==='F')return `<li><span class="bar zF"></span><div style="flex:1"><div class="trow"><span class="t">${esc(tr(s.t))}</span>${w&&hasHow(s.t)?`<button class="howi" data-act="howto" data-v="${esc(s.t)}" aria-label="${L('Como fazer','How to do it')}">?</button>`:''}</div><div class="p num">${esc(tr(s.d||''))}</div></div></li>`;
   const p=pz();let extra='';
   if(s.z==='H'||s.z==='W'||s.restSec){}
   else if(s.reps&&s.repKm&&!s.repSec){extra=` · ≈ ${fmtTime(target(p,s.z)*s.repKm)} cada`;}
@@ -2488,6 +2516,17 @@ const phHtml=(l,big)=>l.photo?`<button class="lphoto${big?'':' sm'}" data-act="p
 const avatarHtml=(cls='')=>st.profile.photo?`<span class="avatar ${cls}" style="background:none;overflow:hidden"><img src="${st.profile.photo}" alt="" style="width:100%;height:100%;object-fit:cover"></span>`:null;
 const IC={share:'<path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',edit:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>',list:'<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".8"/><circle cx="4" cy="12" r=".8"/><circle cx="4" cy="18" r=".8"/>',smile:'<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4 4 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>',cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M9 15l6 0"/>',run:'<circle cx="15" cy="4.5" r="2"/><path d="M8 21l3-6 3 2v5M6 12l3-4 4 1 2 4 3 1"/>',dumb:'<path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/>',users:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3.3 2.7-5 6-5s6 1.7 6 5M15 14.5c3 0 6 1.3 6 4.5"/>',plus:'<path d="M12 5v14M5 12h14"/>',cam:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>',back:'<path d="M15 5l-7 7 7 7"/>',out:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
 const ico=k=>`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${IC[k]}</svg>`;
+function wminiHtml(w){const s=status(w),z=zOf(w),F=w.type==='F';
+  return `<button class="wmini" data-act="open" data-id="${w.id}" style="--zc:var(--z${z})"><span class="wz"></span><span class="wm"><b>${esc(tr(w.title))}</b><span class="small muted">${F?'~'+estMin(w)+' min':nf(w.km)+' km · ~'+estMin(w)+' min'}${w.gym?' · '+L('ginásio','gym'):w.hx?' · HYROX':''}</span></span>${s==='done'?'<span class="pill st-done">✓</span>':`<span class="chev" style="color:var(--muted);font-size:20px">›</span>`}</button>`;}
+function aiHeroHtml(){const a=st.aiPlan,on=aiOn();if(!on&&!sb)return'';
+  if(!on)return `<section class="card aihero"><div class="aih-top"><span class="aiorb">✨</span><div><b>${L('Treinador IA','AI coach')}</b><span>${L('Analisa os teus treinos e ajusta o plano','Reviews your training and tunes your plan')}</span></div></div><div class="aih-txt">${L('Cria uma conta gratuita para teres análises e propostas personalizadas para todas as tuas provas e modalidades.','Create a free account to get personalised analysis and suggestions for all your races and sports.')}</div><button class="primary" data-act="logout">${L('Criar conta','Create account')}</button></section>`;
+  const ago=a?daysBetween(a.d,TODAY):null,when=a?(ago===0?L('análise de hoje','today’s analysis'):ago===1?L('análise de ontem','yesterday’s analysis'):L(`análise de há ${ago} dias`,`analysis from ${ago} days ago`)):L('o teu treinador pessoal','your personal coach');
+  const lines=a?a.t.split('\n').map(x=>x.replace(/^\s*[-•*]\s*/,'').trim()).filter(Boolean).slice(0,2):[];
+  const pend=a&&a.props?.length&&!a.applied?a.props.length:0;
+  return `<section class="card aihero"><div class="aih-top"><span class="aiorb">✨</span><div><b>${L('Treinador IA','AI coach')}</b><span>${when}</span></div></div>
+  <div class="aih-txt">${a?lines.map(x=>'• '+aiFmt(x)).join('<br>'):L('Analiso os teus últimos treinos face a todos os teus objetivos e provas, em qualquer modalidade, e proponho ajustes ao plano.','I review your recent training against all your goals and races, in any sport, and suggest plan changes.')}</div>
+  ${pend?`<button class="aih-props" data-act="ai-open"><span class="dot2"></span>${L(`${pend} ${pend===1?'proposta':'propostas'} para o teu plano`,`${pend} ${pend===1?'suggestion':'suggestions'} for your plan`)}<span style="margin-left:auto">›</span></button>`:''}
+  <div class="btns">${!a||ago>=3?`<button class="primary" data-act="ai-go">${a?L('Nova análise','New analysis'):L('Analisar os meus treinos','Analyse my training')}</button>`:''}${a?`<button class="ghost" data-act="ai-open">${L('Ver análise','See analysis')}</button>`:''}</div></section>`;}
 function workoutCard(w,hero){
   const s=status(w),l=logFor(w);
   const stPill=s==='done'?'<span class="pill st-done">Feito</span>':s==='miss'?'<span class="pill st-miss">Falhado</span>':s==='skip'?'<span class="pill">Saltado</span>':s==='today'?'<span class="pill st-next">Hoje</span>':'';
@@ -2511,7 +2550,7 @@ function workoutCard(w,hero){
     ${future&&WX&&WX[w.date]?`<div class="small" style="${badWx(WX[w.date])?'color:var(--warn)':''}">${wxLine(WX[w.date])}</div>`:''}
     ${l?'':why?(hero?`<details class="why"><summary class="small">${L('Porquê este treino?','Why this workout?')}</summary><div class="small muted">${esc(why)}</div></details>`:`<div class="small muted">${esc(why)}</div>`):''}
     ${w.race?(w.hx?hxRaceHtml(w):racePlanHtml(w)):''}
-    ${l?'':`<ul class="steps">${w.steps.map((x,i)=>stepHtml(x,w,i)).join('')}</ul>`}
+    ${l?'':`<ul class="steps${hero&&w.steps.length>4?' clip':''}">${w.steps.map((x,i)=>stepHtml(x,w,i)).join('')}</ul>${hero&&w.steps.length>4?`<button class="stepsmore" data-act="steps-more">${L(`Ver o treino todo (+${w.steps.length-4})`,`See full workout (+${w.steps.length-4})`)} ›</button>`:''}`}
     ${w.strength?'<div class="small muted">Força (opcional, 20 min): agachamentos, lunges, ponte de glúteos, gémeos e prancha.</div>':''}
     ${l?logSummary(l,true):''}
     ${(()=>{const m=[w.date===TODAY&&!l&&!w.race&&!ciToday()?`<button class="mini" data-act="checkin" data-id="${w.id}">${ico('smile')}${L('Como te sentes?','How do you feel?')}</button>`:'',future&&status(w)!=='skip'?`<button class="mini" data-act="cant" data-id="${w.id}">${ico('cal')}${L('Não posso fazer','I can’t make it')}</button>`:''].join('');return m?`<div class="minis">${m}</div>`:'';})()}
@@ -2586,7 +2625,7 @@ window.addEventListener('hashchange',()=>{tab=(location.hash||'#hoje').slice(1);
 function hojeHtml(){
   const ws=allW();
   const next=ws.find(w=>w.date>=TODAY&&!logFor(w)&&!st.skipped?.includes(w.id)&&w.date!==TODAY)||ws.find(w=>w.date>TODAY&&!logFor(w))||null;
-  const todayW=ws.find(w=>w.date===TODAY&&!logFor(w)&&!st.skipped?.includes(w.id))||ws.find(w=>w.date===TODAY);
+  const tw=ws.filter(w=>w.date===TODAY),openT=tw.filter(w=>!logFor(w)&&!st.skipped?.includes(w.id)),todayW=openT.find(w=>w.type!=='F'&&!st.profile.goalType?.startsWith('gym'))||openT.find(w=>w.hx||w.gym)||openT[0]||tw[0];
   const p=st.profile;
   const pred=st.profile.goalType==='hyrox'?hxPredict(st.vdot):predict(st.vdot,gKm()*1000);
   const wk=weekOf(TODAY)||st.plan.weeks.find(w=>w.start>TODAY)||st.plan.weeks[st.plan.weeks.length-1];
@@ -2595,29 +2634,26 @@ function hojeHtml(){
   const plan=wk?wk.workouts.reduce((a,w)=>a+w.km,0):0;
   const days=p.raceDate?daysBetween(TODAY,p.raceDate):null;
   let out='';
-  {const h=new Date().getHours();const nm=mode==='cloud'||st.profile.nick?myName():'';out+=`<div class="greet"><span class="eyebrow">${DOW[dow(TODAY)]} ${fmtDate(TODAY)}${days!==null&&days>=0?` · ${days} ${L('dias para a prova','days to race')}`:''}</span><h1>${h<12?L('Bom dia','Good morning'):h<20?L('Boa tarde','Good afternoon'):L('Boa noite','Good evening')}${nm?', '+esc(nm):''}</h1></div>`;}
+  {const h=new Date().getHours();const nm=mode==='cloud'||st.profile.nick?myName().split(' ')[0]:'';out+=`<div class="greet"><span class="eyebrow">${DOW[dow(TODAY)]} ${fmtDate(TODAY)}${days!==null&&days>=0?` · ${days} ${L('dias para a prova','days to race')}`:''}</span><h1>${h<12?L('Bom dia','Good morning'):h<20?L('Boa tarde','Good afternoon'):L('Boa noite','Good evening')}${nm?', '+esc(nm):''}</h1></div>`;}
   if(st.gl)out+=glResumeHtml();
   const AL=[];
   if(st.suggest){AL.push(`<section class="card suggest"><h3>Sugestão: aliviar a próxima semana</h3><div class="small">${esc(st.suggest.why)} Recomendo reduzir a semana de ${fmtDate(st.suggest.week)} em cerca de 20%.</div><div class="btns"><button class="primary" data-act="sugg-yes">Aplicar</button><button class="ghost" data-act="sugg-no">Ignorar</button></div></section>`);}
   if(st.gcal?.pending&&st.gcal?.last)AL.push(`<section class="card"><div class="row between"><span class="small">O plano mudou. O teu Google Calendar está por atualizar.</span><button data-act="gc-now">Atualizar</button></div></section>`);
   AL.push(stravaCardsHtml(),wxSuggestHtml(),shoeAlertHtml(),recapHtml());
+  out+=aiHeroHtml();
   out+=nudgeHtml();
-  if(todayW&&!logFor(todayW)&&status(todayW)!=='skip')out+=workoutCard(todayW,true);
-  else if(todayW){out+=workoutCard(todayW,false);if(next)out+=`<div class="eyebrow">Próximo treino</div>`+workoutCard(next,true);}
-  else if(next){out+=`<section class="card"><div class="small muted">Hoje é dia de descanso.</div></section><div class="eyebrow">Próximo treino</div>`+workoutCard(next,true);}
+  const nxH=`<div class="sec"><b>${L('Próximo treino','Next workout')}</b><span class="small muted">${next?DOW[dow(next.date)]+' '+fmtDate(next.date):''}</span></div>`;
+  if(todayW&&!logFor(todayW)&&status(todayW)!=='skip')out+=`<div class="sec"><b>${L('Treino de hoje','Today’s workout')}</b></div>`+workoutCard(todayW,true);
+  else if(todayW){out+=`<div class="sec"><b>${L('Hoje','Today')}</b></div>`+workoutCard(todayW,false);if(next)out+=nxH+workoutCard(next,true);}
+  else if(next){out+=`<section class="card restday"><span style="font-size:26px">🛋️</span><div><b>${L('Hoje é dia de descanso','Rest day today')}</b><div class="small muted">${L('Recuperar também é treinar. Amanhã há mais.','Recovery is training too. More tomorrow.')}</div></div></section>`+nxH+workoutCard(next,true);}
   else out+=`<section class="card hero"><h2>Plano concluído</h2><div class="small">${p.goalType==='start'?'Já corres 30 minutos seguidos. O próximo passo natural é um plano de 5 km.':'Bom trabalho. Escolhe o próximo objetivo para continuares a evoluir.'}</div><div class="btns">${(()=>{const nx=(st.extraRaces||[]).filter(r=>r.date>TODAY).sort((a,b)=>a.date<b.date?-1:1)[0];return nx?`<button class="primary" data-act="race-promote" data-v="${esc(nx.id)}">${L('Preparar','Prepare for')} ${esc(nx.name)}</button>`:'';})()}${p.goalType==='maintain'?'<button class="primary" data-act="continue">Continuar mais 12 semanas</button>':''}<button class="${p.goalType==='maintain'?'':'primary'}" data-act="newplan">Escolher novo objetivo</button></div></section>`;
-  for(const x of ws.filter(w=>w.date===TODAY&&w!==todayW))out+=workoutCard(x,false);
-  out+=coachHomeHtml();
+  {const more=ws.filter(w=>w.date===TODAY&&w!==todayW);if(more.length)out+=`<div class="sec"><b>${L('Também hoje','Also today')}</b></div>`+more.map(w=>logFor(w)?workoutCard(w,false):wminiHtml(w)).join('');}
   out+=alertsHtml(AL);
   const fresh=nLogs()===0;
   out+=`<section class="card"><div class="row between"><span class="eyebrow">Semana ${wk?wk.n:''} · ${wk?PH[wk.phase]+(wk.recovery?' (recuperação)':''):''}</span><span class="num small muted">${p.goalType==='gym'?(wk?wk.workouts.filter(w=>logFor(w)).length+' / '+wk.workouts.length+' '+L('treinos','workouts'):''):nf(Math.round(done*10)/10)+' / '+nf(Math.round(plan))+' km'}</span></div><div class="week">${strip}</div></section>`;
-  if(fresh){}else if(p.goalType==='gym')out+=gymWeekHtml();else out+=`<section class="card"><div class="stats">
-    <div class="stat"><span class="v">${fmtTime(pred)}</span><span class="l">${L('Previsão','Forecast')} · ${p.goalType==='hyrox'?'HYROX':nf(gKm())+' km'}</span></div>${p.goalTime?`<div class="stat"><span class="v">${fmtTime(p.goalTime)}</span><span class="l">Objetivo · ${goalVerdict()}</span></div>`:''}
-    <div class="stat"><span class="v">${nf(st.vdot.toFixed(1))}</span><span class="l">Índice de forma</span></div>
-    ${p.goalTime?'':`<div class="stat"><span class="v">${days!==null&&days>=0?days:'–'}</span><span class="l">${days!==null&&days>=0?'Dias para a prova':'Sem prova marcada'}</span></div>`}
-  </div></section>`;
+
   out+=`<div class="quick">${p.goalType!=='gym'?`<button class="qa" data-act="log-extra"><span class="qi">${ico('run')}</span><span><b>${L('Corrida extra','Extra run')}</b><br><small>${L('Registar fora do plano','Log outside the plan')}</small></span></button>`:''}<button class="qa" data-act="free-workout"><span class="qi">${ico('dumb')}</span><span><b>${L('Treino livre','Free workout')}</b><br><small>${L('Ginásio, à tua escolha','Gym, your choice')}</small></span></button></div>`;
-  if(st.notes.length&&!fresh)out+=`<section class="card"><h3>Ajustes do treinador</h3>${st.notes.slice(0,3).map(n=>`<div class="note ${n.kind}"><span class="tiny muted">${fmtDate(n.d)}</span><br>${esc(n.text)}</div>`).join('')}</section>`;
+  if(st.notes.length&&!fresh){const n=st.notes[0];out+=`<button class="wmini" data-act="notes-all" style="--zc:var(--zM)"><span class="wz"></span><span class="wm"><span class="tiny muted">${L('Último ajuste ao plano','Latest plan change')} · ${fmtDate(n.d)}</span><span class="small cl2">${esc(n.text)}</span></span><span class="chev" style="color:var(--muted)">›</span></button>`;}
   return out;
 }
 
@@ -2790,7 +2826,7 @@ function perfilHtml(){
     <div class="tiny muted">${L('Só usado para ajustar o plano. Ninguém mais vê.','Only used to tailor your plan. Nobody else sees it.')}</div></section>
   ${showRun?`<section class="card"><div class="row between"><h3>${L('Forma atual','Current fitness')}</h3><span class="small muted">${L('índice','index')} <b class="num">${nf(st.vdot.toFixed(1))}</b></span></div><div class="kv kv2">${preds}</div><div class="tiny muted">${L('Tempos que conseguirias hoje, com o treino específico para cada distância.','Times you could run today, with specific training for each distance.')}</div></section>`:''}
   ${mode==='cloud'?`<section class="card"><h3>${L('Comunidade','Community')}</h3><label class="switch"><input type="checkbox" data-act="${st.feedOff?'feed-on':'feed-off'}" ${st.feedOff?'':'checked'}> ${L('Mostrar os meus treinos no feed','Show my workouts in the feed')}</label><div class="tiny muted">${L('Toda a gente na Zone5 vê os teus treinos (distância, tempo, ritmo) e as fotografias que marcares como públicas. O teu nome e a fotografia de perfil também aparecem.','Everyone on Zone5 sees your workouts (distance, time, pace) and photos you mark as public. Your name and profile photo show too.')}</div></section>`:''}
-  ${recordsHtml(true)}
+  ${badgesHtml()}
   ${showRun?`<section class="card"><div class="row between"><h3>${L('Sapatilhas','Shoes')}</h3><button class="mini" style="flex:none" data-act="me-shoes">${ico('gear')}${L('Gerir','Manage')}</button></div>${shoes.length?shoes.map(x=>`<div class="row between"><span>👟 ${esc(x.name)}</span><span class="small muted num">${nf(Math.round(typeof shoeKm==='function'?shoeKm(x):0))} km</span></div>`).join(''):`<div class="small muted">${L('Ainda sem sapatilhas registadas.','No shoes added yet.')}</div>`}</section>`:''}
   <div class="acts"><button class="act" data-act="me-set">${ico('gear')}${L('Ajustes','Settings')}</button>${mode==='cloud'?`<button class="act" data-act="logout" style="color:var(--bad)">${ico('out')}${L('Terminar sessão','Sign out')}</button>`:(sb?`<button class="act" data-act="logout">${ico('users')}${L('Criar conta','Create account')}</button>`:'')}</div>`;
 }
@@ -3483,6 +3519,8 @@ function records2(){
   r.hx=HX_ST.map(k=>({k,t:hxBest(k)})).filter(x=>x.t);
   return r;
 }
+function badgesHtml(){const r=records2();const got=BADGES.filter(b=>b[3](r)),next=BADGES.filter(b=>!b[3](r)).slice(0,3);
+  return `<section class="card"><div class="row between"><h3>${L('Conquistas','Achievements')}</h3><span class="small muted">${got.length}/${BADGES.length}</span></div><div class="bdg">${got.map(b=>`<span class="bd on">${b[1]}<small>${esc(L(b[2][0],b[2][1]))}</small></span>`).join('')}${next.map(b=>`<span class="bd">${b[1]}<small>${esc(L(b[2][0],b[2][1]))}</small></span>`).join('')}</div><button class="link small" data-act="go-prog" style="align-self:flex-start">${L('Ver recordes no Progresso','See records in Progress')} ›</button></section>`;}
 function recordsHtml(compact){
   const r=records2();if(!r.nAll)return'';
   const lab={1:'1 km',5:'5 km',10:'10 km',21.0975:L('Meia','Half')};
@@ -3581,6 +3619,9 @@ document.addEventListener('click',e=>{
   else if(a==='race-ai')askRaceAI(b.dataset.v);
   else if(a==='ai-review'||a==='ai-open')openCoach();
   else if(a==='ai-plan')askPlanAI();
+  else if(a==='ai-go'){openCoach();askPlanAI();}
+  else if(a==='steps-more'){const c=b.closest('section');c?.querySelector('.steps.clip')?.classList.remove('clip');b.remove();}
+  else if(a==='notes-all')openSheet(`<div class="row between"><h2>${L('Ajustes ao plano','Plan changes')}</h2><button class="link" data-act="close">${L('Fechar','Close')}</button></div>${st.notes.slice(0,15).map(n=>`<div class="note ${n.kind}"><span class="tiny muted">${fmtDate(n.d)}</span><br>${esc(n.text)}</div>`).join('')}`);
   else if(a==='ai-apply'){const a2=st.aiPlan;if(!a2)return;const sel=[...document.querySelectorAll('.prop input[data-pi]')].filter(x=>x.checked).map(x=>a2.props[+x.dataset.pi]);if(!sel.length)return toast(L('Escolhe pelo menos uma proposta.','Pick at least one suggestion.'));const n=applyProps(sel);a2.applied=true;a2.props=sel;persist();render();openCoach();toast(n?L('Próximos treinos atualizados','Upcoming workouts updated'):L('Nada a alterar','Nothing to change'));}
   else if(a==='ai-skip'){closeSheet();}
   else if(a==='ai-undo'){undoAi();closeSheet();}
@@ -3590,6 +3631,7 @@ document.addEventListener('click',e=>{
   else if(a==='hist-more'){histN+=20;render();}
   else if(a==='log-detail')openLogDetail(+b.dataset.v);
   else if(a==='go-perfil')location.hash='#perfil';
+  else if(a==='go-prog')location.hash='#progresso';
   else if(a==='ph-add'){closeSheet();addLogPhoto(+b.dataset.v);}
   else if(a==='ph-view')openPhoto(+b.dataset.v);
   else if(a==='log-vis'){if(draft){draft.phVis=b.dataset.v;$('#phBox').innerHTML=logPhHtml();}}
