@@ -74,32 +74,41 @@ Usa só datas/ids que estejam em "upcoming" e "goals.races". "why" com menos de 
   }[kind];
   const system = base + "\n" + task;
 
-  const models = [Deno.env.get("GEMINI_MODEL"), "gemini-flash-latest", "gemini-2.5-flash"].filter(Boolean) as string[];
+  const models = [...new Set([Deno.env.get("GEMINI_MODEL"), "gemini-flash-latest", "gemini-flash-lite-latest"].filter(Boolean) as string[])];
   const payload = (thinking: boolean) => JSON.stringify({
     systemInstruction: { parts: [{ text: system }] },
     contents: [{ role: "user", parts: [{ text: ctxStr }] }],
     generationConfig: { temperature: 0.6, maxOutputTokens: 4096, ...(thinking ? { thinkingConfig: { thinkingLevel: "low" } } : {}) },
   });
-  // escolhe o primeiro modelo que aceita o pedido (pouco raciocínio = resposta mais rápida)
-  let up: Response | null = null, lastErr = "";
+  // tenta os modelos por ordem; se estiver ocupado (5xx) tenta de novo; guarda os erros todos para diagnóstico
+  let up: Response | null = null;
+  const errs: string[] = [];
   outer: for (const m of models) {
-    for (const thinking of [true, false]) {
-      try {
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:streamGenerateContent?alt=sse`, {
-          method: "POST",
-          headers: { "content-type": "application/json", "x-goog-api-key": key.trim() },
-          body: payload(thinking),
-        });
-        if (r.ok && r.body) { up = r; break outer; }
-        const t = await r.text();
-        lastErr = `${m}: ${r.status} ${t.slice(0, 160)}`;
-        if (r.status === 429) return json({ error: "limit" }, 429);
-        if (r.status === 400 && thinking) continue; // modelo sem "thinkingLevel": tenta sem
-        break;
-      } catch (e) { lastErr = String(e); break; }
+    think: for (const thinking of [true, false]) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:streamGenerateContent?alt=sse`, {
+            method: "POST",
+            headers: { "content-type": "application/json", "x-goog-api-key": key.trim() },
+            body: payload(thinking),
+          });
+          if (r.ok && r.body) { up = r; break outer; }
+          const t = (await r.text()).replace(/\s+/g, " ");
+          errs.push(`${m}${thinking ? "" : " (sem thinking)"}: ${r.status} ${t.slice(0, 140)}`);
+          if (r.status === 429 && attempt === 0) { await new Promise((ok) => setTimeout(ok, 1500)); continue; }
+          if (r.status >= 500 && attempt === 0) { await new Promise((ok) => setTimeout(ok, 1200)); continue; }
+          if (r.status === 400 && thinking) continue think;
+          continue outer;
+        } catch (e) { errs.push(`${m}: ${String(e).slice(0, 120)}`); continue outer; }
+      }
+      continue outer;
     }
   }
-  if (!up) return json({ error: "ai: " + lastErr.slice(0, 200) }, 502);
+  if (!up) {
+    console.error("coach: all models failed", errs);
+    const lim = errs.length && errs.every((e) => / 429 /.test(e));
+    return json({ error: lim ? "limit" : "ai: " + errs.join(" | ").slice(0, 600) }, lim ? 429 : 502);
+  }
 
   await admin.from("ai_usage").upsert({ user_id: user.id, day, n: (use?.n ?? 0) + 1 });
 

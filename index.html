@@ -973,7 +973,7 @@ async function aiCall(kind,ctx,live){const {data}=await sb.auth.getSession();con
   finally{live?.stop();}}
 function aiErrMsg(e){const m=String(e?.message||e);try{reportErr&&reportErr('coach: '+m);}catch(_){}
   const msg=/^limit$|429/i.test(m)?L('Chegaste ao limite de análises de hoje. Tenta amanhã.','You’ve reached today’s analysis limit. Try tomorrow.'):/^http 404$/i.test(m)?L('O treinador IA ainda não está ligado (função "coach" não encontrada).','The AI coach isn’t set up yet (function "coach" not found).'):/not configured/i.test(m)?L('Falta a chave da IA (segredo GEMINI_API_KEY).','The AI key is missing (GEMINI_API_KEY secret).'):/^auth$|401/i.test(m)?L('Sessão expirada: sai e volta a entrar.','Session expired: sign out and back in.'):L('A IA não respondeu.','The AI didn’t respond.');
-  return msg+`<div class="tiny muted" style="margin-top:6px;word-break:break-word">${L('Detalhe','Detail')}: ${esc(m.slice(0,220))}</div>`;}
+  return msg+`<div class="tiny muted" style="margin-top:6px;word-break:break-word">${L('Detalhe','Detail')}: ${esc(m.slice(0,600))}</div>`;}
 function athleteCtx(){const p=st.profile,P=pz(),run=p.goalType!=='gym'||p.runExtra?.days?.length;
   return{goalType:p.goalType,goal:p.goalType==='gym'?p.gymGoal:p.goalType==='race'?(p.raceName||gLabel())+' '+p.raceDate:p.goalType==='hyrox'?'HYROX '+(p.raceDate||'sem prova'):p.goalType,level:p.level,daysPerWeek:(p.runDays||[]).length,
     run:run?{vdot:st.vdot,paces:{easy:fmtPace(P.E[0]),threshold:fmtPace(P.T),interval:fmtPace(P.I)},pred5k:fmtTime(predict(st.vdot,5000)),pred10k:fmtTime(predict(st.vdot,10000))}:null,
@@ -1875,7 +1875,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251932';
+const APP_VER='202611251939';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
