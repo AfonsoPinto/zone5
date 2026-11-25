@@ -223,6 +223,12 @@ h2{font-size:25px}
 button.aih-props{width:100%;border:none;text-align:left;min-height:0;color:var(--ink)}
 details.wud>summary{cursor:pointer;list-style:none;color:var(--muted);font-weight:700;padding:2px 0}details.wud>summary::-webkit-details-marker{display:none}
 .notifc{border:1px solid color-mix(in srgb,var(--warn) 40%,transparent)!important;background:linear-gradient(160deg,color-mix(in srgb,var(--warn) 12%,var(--surface)),var(--surface))!important}.nbell{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-size:22px;flex:none;background:color-mix(in srgb,var(--warn) 22%,var(--soft))}
+.game{gap:12px}.lvl{width:58px;height:58px;border-radius:18px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#ffb547,#ff5a3c);color:#1a0d05;box-shadow:0 8px 20px -8px #ff8a3d}.lvl b{font-family:var(--display);font-size:24px;line-height:1}.lvl span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.xpbar{height:8px;border-radius:4px;background:var(--soft);overflow:hidden;margin:6px 0 4px}.xpbar>div{height:100%;background:linear-gradient(90deg,#ffb547,#ff5a3c);border-radius:4px}.xpbar.sm{height:6px}
+.chal{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:14px;background:var(--soft)}.chal.ok{background:color-mix(in srgb,var(--good) 14%,var(--soft))}.chal.ok .xpbar>div{background:var(--good)}
+.gchip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:12.5px;font-weight:700;margin-top:6px}.gchip i{font-style:normal;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ffb547,#ff5a3c);color:#1a0d05;font-size:11px;font-weight:900}
+.newb{display:flex;align-items:center;gap:10px;justify-content:center;padding:10px;border-radius:14px;background:color-mix(in srgb,var(--warn) 14%,var(--soft));font-weight:700}
+button.gchip{min-height:0;color:var(--ink)}
 .hitem{display:flex;flex-direction:column;gap:8px}
 @media (min-width:381px){.stats>.stat:last-child:nth-child(3n+2){grid-column:span 2}.stats>.stat:last-child:nth-child(3n+1):not(:first-child){grid-column:span 3}}
 .stat .l{line-height:1.25}
@@ -1096,6 +1102,7 @@ function weekCount(date){const wk=weekOf(date);if(!wk)return null;const c=x=>(x.
 let lastCele=null,lastSheetBeforeHow='';
 function celebrate(log,w){
   haptic();lastCele={log,w};
+  const xb=xpInfo(log),nb=syncBadges(),xa=xpInfo(),gain=xa.xp-xb.xp,lvUp=xa.level>xb.level;monthChallenge();persist();render();
   const e=log.eval||{},wc=weekCount(log.date),r=records();
   const title=w?tr(w.title):L('Corrida','Run');
   const em=e.cls==='down'?'💪':w&&w.race?'🏅':'🎉';
@@ -1106,6 +1113,8 @@ function celebrate(log,w){
   ${e.msg?`<div class="note ${e.cls||'info'}">${esc(e.msg)}</div>`:''}
   ${log.prs?.length?`<div class="note info">🏆 <b>${log.prs.length>1?L('Novos recordes','New records'):L('Novo recorde','New record')}</b>: ${log.prs.map(p=>`${esc(tr(p.n))} ${fmtKg(p.kg)} kg × ${p.reps}`).join(' · ')}</div>`:''}
   <div class="small">${wc?`${L('Esta semana','This week')}: <b>${wc.done}/${wc.tot}</b> ${L('treinos','workouts')}`:''}${r.streak>=1?` · 🔥 ${r.streak} ${r.streak===1?L('semana seguida','week in a row'):L('semanas seguidas','weeks in a row')}`:''}</div>
+  <div class="row" style="justify-content:center;gap:8px"><span class="gchip"><i>${xa.level}</i>+${gain} XP</span>${lvUp?`<span class="gchip" style="border-color:var(--warn)">⬆️ ${L('Subiste para o nível','Level up:')} ${xa.level} · ${esc(xa.name)}</span>`:''}</div>
+  ${nb.map(b=>`<div class="newb"><span style="font-size:26px">${b[1]}</span>${L('Novo selo','New badge')}: ${esc(L(b[2][0],b[2][1]))}</div>`).join('')}
   <div class="btns"><button class="primary" data-act="close">${L('Continuar','Continue')}</button><button data-act="share-log">↗ ${L('Partilhar','Share')}</button></div></div>`);
 }
 function shareLog(){
@@ -1876,7 +1885,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611252002';
+const APP_VER='202611252018';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2262,6 +2271,17 @@ function reminderSchedule(){
     const t=w.type==='F'?`💪 ${tr(w.title)} · ${w.min||25} min`:`🏃 ${tr(w.title)} · ${nf(w.km)} km`;
     const b=w.type==='F'?tr(L('Sessão de força de hoje.','Today’s strength session.')):w.steps.map(s=>tr(s.t)).join(' · ');
     if(out[w.date]){out[w.date].title+=' + '+t;}else out[w.date]={title:t,body:b.slice(0,180)};}
+  const T=st.remind?.types||{},add=(d,title,body,first)=>{if(d<TODAY)return;const o=out[d];if(!o)out[d]={title,body:body.slice(0,180)};else if(first){out[d]={title,body:(body+' · '+o.title).slice(0,180)};}else o.body=(o.body+'\n'+title+(body?' '+body:'')).slice(0,200);};
+  // ✨ Treinador IA: todas as segundas
+  if(T.ai!==false&&aiOn())for(let i=0;i<60;i++){const d=addDays(TODAY,i);if(dow(d)===0)add(d,L('✨ Treinador IA: como correu a semana?','✨ AI coach: how did your week go?'),L('Abre a app para a análise e as propostas para esta semana.','Open the app for your analysis and this week’s suggestions.'));}
+  // 🏁 provas: 7 dias antes e véspera
+  if(T.race!==false){const p=st.profile,rs=[...(p.raceDate&&(p.goalType==='race'||p.goalType==='hyrox')?[{name:p.raceName||gLabel(),date:p.raceDate,km:p.goalType==='hyrox'?null:gKm(),hx:p.goalType==='hyrox',prio:'A'}]:[]),...(st.extraRaces||[])].filter(r=>r.date>TODAY);
+    for(const r of rs){const pred=r.hx?hxPredict(st.vdot):predict(st.vdot,r.km*1000),pace=r.km?` (${fmtPace(pred/r.km)}/km)`:'';const c=(r.prio||'B')==='C';
+      add(addDays(r.date,-7),L(`🏁 Falta 1 semana: ${r.name}`,`🏁 One week to go: ${r.name}`),c?L('Prova em modo treino: sem afinação especial.','Training race: no special taper.'):L(`Objetivo realista ~${fmtTime(pred)}${pace}. Esta semana é mais leve: confia no treino.`,`Realistic target ~${fmtTime(pred)}${pace}. Lighter week ahead: trust your training.`),true);
+      add(addDays(r.date,-1),L(`🏁 Amanhã: ${r.name}`,`🏁 Tomorrow: ${r.name}`),L('Prepara a roupa e o dorsal, jantar habitual e cama cedo. Arranca controlado!','Lay out your kit and bib, usual dinner, early night. Start controlled!'),true);}}
+  // 🔥 série em risco (sábado desta semana)
+  if(T.game!==false){const wk=weekOf(TODAY),r=records();if(wk&&r.streak>=1){const ws=wk.workouts.filter(x=>(x.type!=='F'||x.hx||x.gym)&&!x.free),done=ws.filter(x=>logFor(x)).length,need=Math.ceil(ws.length*0.75)-done;const sat=addDays(wk.start,5);
+    if(need>0&&sat>=TODAY)add(sat,L(`🔥 A tua série de ${r.streak} ${r.streak===1?'semana':'semanas'} está em risco`,`🔥 Your ${r.streak}-week streak is at risk`),L(`Faltam ${need} ${need===1?'treino':'treinos'} esta semana para a manter.`,`${need} more ${need===1?'workout':'workouts'} this week to keep it.`));}}
   return out;
 }
 let noWeeklyCol=false;
@@ -2269,7 +2289,9 @@ function weeklyPayload(){
   const nx=st.plan.weeks.find(w=>w.start===addDays(mondayOf(TODAY),7));const counts=x=>(x.type!=='F'||x.hx||x.gym)&&!x.free;
   const ws=nx?nx.workouts.filter(counts):[];const key=ws.filter(w=>w.race||w.type==='L'||w.type==='Q'||/Simulação/.test(w.title)).slice(0,3);
   const next=ws.length?`${L('Próxima semana','Next week')}: ${ws.length} ${L('treinos','workouts')}${key.length?' · '+key.map(w=>`${DOW[dow(w.date)]} ${tr(w.title)}${w.km&&w.type!=='F'?' '+nf(w.km)+' km':''}`).join(', '):''}`:'';
-  return{lang:LANG,next,goal:st.profile.raceDate&&st.profile.raceDate>TODAY?`${st.profile.raceName||''} · ${L('faltam','in')} ${Math.ceil(daysBetween(TODAY,st.profile.raceDate)/7)} ${L('semanas','weeks')}`:''};
+  const xi=xpInfo(),wkS=mondayOf(TODAY),gainW=st.logs.filter(l=>l.date>=wkS&&(l.dist>0||l.wtype==='F')).reduce((a,l)=>a+xpOf(l),0),nb=(st.badgeLog||[]).filter(b=>b.d>=wkS).map(b=>BADGES.find(x=>x[0]===b.id)).filter(Boolean);
+  const game=(st.remind?.types||{}).game!==false?`⭐ ${L('Nível','Level')} ${xi.level} · ${xi.name}${gainW?` (+${gainW} XP ${L('esta semana','this week')})`:''}${nb.length?' · '+L('Novo selo','New badge')+': '+nb.map(b=>b[1]+' '+L(b[2][0],b[2][1])).join(', '):''}`:'';
+  return{lang:LANG,next:[game,next].filter(Boolean).join('\n'),goal:st.profile.raceDate&&st.profile.raceDate>TODAY?`${st.profile.raceName||''} · ${L('faltam','in')} ${Math.ceil(daysBetween(TODAY,st.profile.raceDate)/7)} ${L('semanas','weeks')}`:''};
 }
 async function pushSync(){
   if(!pushReady()||!st?.remind?.on)return;
@@ -2304,7 +2326,7 @@ function remindHtml(){
   const isIOS=/iPhone|iPad/.test(navigator.userAgent),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
   const r=st.remind||{};
   return `<section class="card"><div class="row between"><h3>${L('Notificações','Notifications')}</h3>${r.on?'<span class="pill st-done">'+L('Ligadas','On')+'</span>':''}</div>
-  <div class="small muted">${L('Notificações no telemóvel, como as do WhatsApp: no dia de cada treino, à hora que escolheres. Ao domingo, às 19h, um resumo da semana. Quando alguém reagir aos teus treinos, também avisamos.','Phone notifications, like WhatsApp’s: on each workout day, at the time you choose. On Sunday at 7 pm, a weekly summary. We also let you know when someone reacts to your workouts.')}</div>${r.on?`<label class="switch"><input type="checkbox" id="rmWeekly" ${r.weekly!==false?'checked':''}><span>${L('Resumo semanal e reações','Weekly summary and reactions')}</span></label>`:''}
+  <div class="small muted">${L('Notificações no telemóvel, como as do WhatsApp: no dia de cada treino, à hora que escolheres. Ao domingo, às 19h, um resumo da semana. Quando alguém reagir aos teus treinos, também avisamos.','Phone notifications, like WhatsApp’s: on each workout day, at the time you choose. On Sunday at 7 pm, a weekly summary. We also let you know when someone reacts to your workouts.')}</div>${r.on?`<label class="switch"><input type="checkbox" id="rmWeekly" ${r.weekly!==false?'checked':''}><span>${L('Resumo semanal e reações','Weekly summary and reactions')}</span></label>${[['ai','✨',L('Treinador IA à segunda-feira','AI coach on Mondays')],['race','🏁',L('Provas: 7 dias e véspera','Races: 7 days and day before')],['game','🔥',L('Séries e conquistas','Streaks and achievements')]].map(([k,ic,t])=>`<label class="switch"><input type="checkbox" data-rmt="${k}" ${(r.types||{})[k]!==false?'checked':''}><span>${ic} ${t}</span></label>`).join('')}`:''}
   ${!CONFIG.VAPID_PUBLIC_KEY?`<div class="small" style="color:var(--warn)">${L('Em breve.','Coming soon.')}</div>`:mode!=='cloud'?`<div class="small muted">${L('Precisa de conta.','Needs an account.')}</div>`:isIOS&&!standalone?`<div class="small">${L('No iPhone, primeiro instala a app: no Safari, Partilhar → Adicionar ao ecrã principal. Depois abre-a pelo ícone e volta aqui.','On iPhone, install the app first: in Safari, Share → Add to Home Screen. Then open it from the icon and come back here.')}</div>`:
   `<label for="rmHour">${L('Hora','Time')}<select id="rmHour">${Array.from({length:17},(_,i)=>i+6).map(h=>`<option value="${h}" ${(r.hour??8)===h?'selected':''}>${String(h).padStart(2,'0')}:00</option>`).join('')}</select></label>
   <button class="${r.on?'ghost':'primary'}" data-act="${r.on?'rm-off':'rm-on'}">${r.on?L('Desligar notificações','Turn off notifications'):L('Ligar notificações','Turn on notifications')}</button>`}</section>`;
@@ -2626,6 +2648,7 @@ function render(){
   if(!mode){$('#tabs').hidden=true;app.innerHTML=authHtml();return;}
   if(!st||!st.profile){$('#tabs').hidden=true;app.innerHTML=onboardHtml();bindOnboard();return;}
   $('#tabs').hidden=false;
+  if(!st.badgesSeen)syncBadges();
   if(!['hoje','plano','progresso','grupo','ajustes','perfil'].includes(tab))tab='hoje';
   {const ini=(st.profile.photo?'img:'+st.profile.photo.length:'')||(mode==='cloud'||st.profile.nick?initials(myName()):''),n=$('#navMe');if(n&&n.dataset.ini!==ini){n.dataset.ini=ini;n.innerHTML=st.profile.photo?`<b class="navav img"><img src="${st.profile.photo}" alt=""></b>`:ini?`<b class="navav">${esc(ini)}</b>`:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>';}}
   document.querySelectorAll('nav.tabs a').forEach(a=>a.setAttribute('aria-current',a.dataset.tab===tab||(tab==='ajustes'&&a.dataset.tab==='perfil')?'page':'false'));
@@ -2649,6 +2672,7 @@ function hojeHtml(){
   const days=p.raceDate?daysBetween(TODAY,p.raceDate):null;
   let out='';
   {const h=new Date().getHours();const nm=mode==='cloud'||st.profile.nick?myName().split(' ')[0]:'';out+=`<div class="greet"><span class="eyebrow">${DOW[dow(TODAY)]} ${fmtDate(TODAY)}${days!==null&&days>=0?` · ${days} ${L('dias para a prova','days to race')}`:''}</span><h1>${h<12?L('Bom dia','Good morning'):h<20?L('Boa tarde','Good afternoon'):L('Boa noite','Good evening')}${nm?', '+esc(nm):''}</h1></div>`;}
+  if(nLogs()>0){const xi=xpInfo(),rr=records();out+=`<button class="gchip" data-act="go-perfil" style="align-self:flex-start;margin-top:-6px"><i>${xi.level}</i>${esc(xi.name)} · ${xi.cur}/${xi.need} XP${rr.streak?` · 🔥 ${rr.streak}`:''}</button>`;}
   if(st.gl)out+=glResumeHtml();
   const AL=[];
   if(st.suggest){AL.push(`<section class="card suggest"><h3>Sugestão: aliviar a próxima semana</h3><div class="small">${esc(st.suggest.why)} Recomendo reduzir a semana de ${fmtDate(st.suggest.week)} em cerca de 20%.</div><div class="btns"><button class="primary" data-act="sugg-yes">Aplicar</button><button class="ghost" data-act="sugg-no">Ignorar</button></div></section>`);}
@@ -2697,7 +2721,7 @@ function progHtml(){
   const p=st.profile,logs=st.logs.filter(l=>l.dist>0||l.wtype==='F'),gymOnly=p.goalType==='gym'&&!logs.some(l=>l.dist>0);
   const H=`<h2>${L('Progresso','Progress')}</h2>`;
   if(!logs.length)return `${H}<section class="card emptyst"><div class="eic">${ico('run')}</div><h3>${L('A tua evolução aparece aqui','Your progress shows up here')}</h3><div class="small muted">${L('Regista o primeiro treino e começas a ver números, gráficos e recordes.','Log your first workout to start seeing numbers, charts and records.')}</div></section>${p.goalType==='hyrox'?hxProgHtml():''}`;
-  return H+progSummaryHtml(logs,gymOnly)+progAiHtml()+progConsistHtml()+progVolumeHtml(gymOnly)+(p.goalType==='hyrox'?hxProgHtml():'')+(p.goalType!=='gym'||st.vdotHist.length>1?progPredHtml():'')+progRecordsHtml()+(p.goalType==='gym'||(st.weights||[]).length?weightHtml():'')+progHistHtml(logs);
+  return H+progSummaryHtml(logs,gymOnly)+gameHtml(true)+progAiHtml()+progConsistHtml()+progVolumeHtml(gymOnly)+(p.goalType==='hyrox'?hxProgHtml():'')+(p.goalType!=='gym'||st.vdotHist.length>1?progPredHtml():'')+progRecordsHtml()+(p.goalType==='gym'||(st.weights||[]).length?weightHtml():'')+progHistHtml(logs);
 }
 function progAiHtml(){return coachHomeHtml();}
 function progAiHtmlOld(){const a=st.aiReview,on=aiOn();if(!on&&!a)return'';
@@ -2841,6 +2865,7 @@ function perfilHtml(){
     <div class="tiny muted">${L('Só usado para ajustar o plano. Ninguém mais vê.','Only used to tailor your plan. Nobody else sees it.')}</div></section>
   ${showRun?`<section class="card"><div class="row between"><h3>${L('Forma atual','Current fitness')}</h3><span class="small muted">${L('índice','index')} <b class="num">${nf(st.vdot.toFixed(1))}</b></span></div><div class="kv kv2">${preds}</div><div class="tiny muted">${L('Tempos que conseguirias hoje, com o treino específico para cada distância.','Times you could run today, with specific training for each distance.')}</div></section>`:''}
   ${mode==='cloud'?`<section class="card"><h3>${L('Comunidade','Community')}</h3><label class="switch"><input type="checkbox" data-act="${st.feedOff?'feed-on':'feed-off'}" ${st.feedOff?'':'checked'}> ${L('Mostrar os meus treinos no feed','Show my workouts in the feed')}</label><div class="tiny muted">${L('Toda a gente na Zone5 vê os teus treinos (distância, tempo, ritmo) e as fotografias que marcares como públicas. O teu nome e a fotografia de perfil também aparecem.','Everyone on Zone5 sees your workouts (distance, time, pace) and photos you mark as public. Your name and profile photo show too.')}</div></section>`:''}
+  ${gameHtml(false)}
   ${badgesHtml()}
   ${showRun?`<section class="card"><div class="row between"><h3>${L('Sapatilhas','Shoes')}</h3><button class="mini" style="flex:none" data-act="me-shoes">${ico('gear')}${L('Gerir','Manage')}</button></div>${shoes.length?shoes.map(x=>`<div class="row between"><span>👟 ${esc(x.name)}</span><span class="small muted num">${nf(Math.round(typeof shoeKm==='function'?shoeKm(x):0))} km</span></div>`).join(''):`<div class="small muted">${L('Ainda sem sapatilhas registadas.','No shoes added yet.')}</div>`}</section>`:''}
   <div class="acts"><button class="act" data-act="me-set">${ico('gear')}${L('Ajustes','Settings')}</button>${mode==='cloud'?`<button class="act" data-act="logout" style="color:var(--bad)">${ico('out')}${L('Terminar sessão','Sign out')}</button>`:(sb?`<button class="act" data-act="logout">${ico('users')}${L('Criar conta','Create account')}</button>`:'')}</div>`;
@@ -3189,6 +3214,7 @@ function bindAjustes(){
   {const sw=$('#svWrite');if(sw)sw.onchange=()=>{st.strava={...(st.strava||{}),writeback:sw.checked};persist();};}
   {const rh=$('#rmHour');if(rh)rh.onchange=e=>{st.remind={...(st.remind||{}),hour:+e.target.value};persist();pushSync();toast(L('Hora guardada','Time saved'));};}
   {const rw=$('#rmWeekly');if(rw)rw.onchange=e=>{st.remind={...(st.remind||{}),weekly:e.target.checked};persist();pushSync();};}
+  document.querySelectorAll('[data-rmt]').forEach(x=>x.onchange=e=>{st.remind={...(st.remind||{}),types:{...(st.remind?.types||{}),[x.dataset.rmt]:e.target.checked}};persist();pushSync();});
   $('#gcAuto').onchange=e=>{st.gcal=st.gcal||{};st.gcal.auto=e.target.checked;persist();};
   $('#gcSync').onclick=()=>gcalSync(true);
   if($('#saveNm'))$('#saveNm').onclick=async()=>{const n=$('#myNm').value.trim();if(!n)return;const {data,error}=await sb.auth.updateUser({data:{name:n}});if(error)return toast('Não foi possível guardar o nome.');user=data.user;st.profile.nick=n;lastPub='';persist();await sb.from('group_members').update({display_name:n}).eq('user_id',user.id);grp.loaded=false;toast('Nome guardado');render();};
@@ -3508,9 +3534,32 @@ function records(){
   const longest=runs.reduce((a,l)=>!a||l.dist>a.dist?l:a,null);
   const total=runs.reduce((a,l)=>a+l.dist,0);
   let streak=0;const past=st.plan.weeks.filter(w=>addDays(w.start,7)<=TODAY).reverse();
-  for(const w of past){const ws=w.workouts.filter(x=>(x.type!=='F'||x.hx||x.gym)&&!x.free);if(!ws.length)continue;const d=ws.filter(x=>logFor(x)).length;if(d/ws.length>=0.75)streak++;else break;}
-  return{best,longest,total,streak,n:runs.length};
+  // 1 semana "protegida" por mês (doença, férias): não quebra a série
+  const frozen=[],usedM=new Set();
+  for(const w of past){const ws=w.workouts.filter(x=>(x.type!=='F'||x.hx||x.gym)&&!x.free);if(!ws.length)continue;const d=ws.filter(x=>logFor(x)).length;if(d/ws.length>=0.75)streak++;else{const m=w.start.slice(0,7);if(!usedM.has(m)&&d>0){usedM.add(m);frozen.push(w.start);continue;}break;}}
+  return{best,longest,total,streak,frozen,n:runs.length};
 }
+/* ---------- Gamificação: XP, níveis e desafio do mês ---------- */
+function xpOf(l){const w=l.wid?allW().find(x=>x.id===l.wid):null;let x=10;if(l.dist>0)x+=Math.min(25,Math.round(l.dist));if(w&&['Q','L','R','T'].includes(w.type))x+=8;if(w?.race)x+=40;if(l.wtype==='F'&&!(l.dist>0))x+=12;x+=(l.prs?.length||0)*5;return x;}
+const LVL_NAMES=[[1,'Estreante','Rookie'],[3,'Regular','Regular'],[5,'Dedicado','Committed'],[8,'Atleta','Athlete'],[12,'Elite','Elite'],[17,'Lenda','Legend']];
+const lvlNeed=n=>60*n*(n-1);
+function xpInfo(skip){
+  const logs=st.logs.filter(l=>(l.dist>0||l.wtype==='F')&&l!==skip);let xp=logs.reduce((a,l)=>a+xpOf(l),0);
+  const weeks=st.plan.weeks.filter(w=>addDays(w.start,7)<=TODAY).filter(w=>{const ws=w.workouts.filter(x=>(x.type!=='F'||x.hx||x.gym)&&!x.free);return ws.length&&ws.filter(x=>logFor(x)&&logFor(x)!==skip).length/ws.length>=0.75;}).length;
+  xp+=weeks*30+Object.keys(st.chDone||{}).length*50+(st.badgesSeen||[]).length*20;
+  let level=1;while(xp>=lvlNeed(level+1))level++;const a=lvlNeed(level),b=lvlNeed(level+1);
+  const name=[...LVL_NAMES].reverse().find(x=>level>=x[0]);return{xp,level,name:L(name[1],name[2]),cur:xp-a,need:b-a,pct:Math.round((xp-a)/(b-a)*100)};}
+function monthChallenge(){const m=TODAY.slice(0,7),end=(()=>{const d=new Date(+m.slice(0,4),+m.slice(5,7),0);return `${m}-${String(d.getDate()).padStart(2,'0')}`;})();
+  const ws=allW().filter(w=>w.date.slice(0,7)===m&&!w.free&&(w.type!=='F'||w.hx||w.gym)),done=st.logs.filter(l=>l.date.slice(0,7)===m&&(l.dist>0||l.wtype==='F')).length;
+  const target=Math.max(4,Math.round(ws.length*0.85)),km=st.logs.filter(l=>l.date.slice(0,7)===m).reduce((a,l)=>a+(l.dist||0),0);
+  const ok=done>=target;if(ok&&!(st.chDone||{})[m]){st.chDone=st.chDone||{};st.chDone[m]=TODAY;}
+  const M=LANG==='pt'?['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']:['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return{m,label:M[+m.slice(5,7)-1],done,target,km,ok,left:daysBetween(TODAY,end)};}
+function gameHtml(compact){const x=xpInfo(),c=monthChallenge(),r=records();
+  return `<section class="card game"><div class="row" style="flex-wrap:nowrap;gap:12px;align-items:center"><span class="lvl"><b>${x.level}</b><span>${L('nível','level')}</span></span><div style="flex:1;min-width:0"><div class="row between"><b>${esc(x.name)}</b><span class="tiny muted num">${x.cur}/${x.need} XP</span></div><div class="xpbar"><div style="width:${x.pct}%"></div></div><div class="tiny muted">${L('Próximo nível','Next level')}: ${x.need-x.cur} XP${r.streak?` · 🔥 ${r.streak} ${r.streak===1?L('semana','week'):L('semanas','weeks')}`:''}${r.frozen?.length?` · 🧊 ${r.frozen.length} ${L('protegida','protected')}`:''}</div></div></div>
+  <div class="chal${c.ok?' ok':''}"><div class="row between"><span class="small"><b>🎯 ${L('Desafio de','Challenge for')} ${c.label}</b></span><span class="small num">${c.ok?'✓ '+L('Feito!','Done!'):c.done+'/'+c.target+' '+L('treinos','workouts')}</span></div><div class="xpbar sm"><div style="width:${Math.min(100,Math.round(c.done/c.target*100))}%"></div></div>${compact?'':`<div class="tiny muted">${c.ok?L('+50 XP ganhos. Continua assim até ao fim do mês.','+50 XP earned. Keep it up until the end of the month.'):L(`Faltam ${c.target-c.done} treinos e ${c.left} dias. Vale +50 XP e um selo.`,`${c.target-c.done} workouts and ${c.left} days to go. Worth +50 XP and a badge.`)}</div>`}</div>
+  ${compact?'':`<div class="tiny muted">${L('Ganhas XP por cada treino (mais nas sessões de qualidade, provas e recordes), por cada semana cumprida, selos e desafios. Uma semana falhada por mês fica protegida e não quebra a série.','You earn XP for each workout (more for quality sessions, races and records), each completed week, badges and challenges. One missed week per month is protected and doesn’t break your streak.')}</div>`}</section>`;}
+function syncBadges(){const r=records2(),got=BADGES.filter(b=>b[3](r)).map(b=>b[0]);if(!st.badgesSeen){st.badgesSeen=got;return[];}const nw=got.filter(id=>!st.badgesSeen.includes(id));if(nw.length){st.badgesSeen=[...st.badgesSeen,...nw];(st.badgeLog=st.badgeLog||[]).push(...nw.map(id=>({id,d:TODAY})));}return nw.map(id=>BADGES.find(b=>b[0]===id));}
 const BADGES=[
  ['first','🌱',['Primeiro treino','First workout'],r=>r.nAll>=1],
  ['w10','🔟',['10 treinos','10 workouts'],r=>r.nAll>=10],
@@ -3523,9 +3572,23 @@ const BADGES=[
  ['k500','🛣️',['500 km','500 km'],r=>r.total>=500],
  ['race','🏁',['Primeira prova','First race'],r=>r.races>=1],
  ['pr','🏆',['Primeiro recorde no ginásio','First gym record'],r=>(st.prs||[]).length>=1],
- ['hx','🏋️',['Simulação HYROX feita','HYROX simulation done'],r=>r.sim>=1]];
+ ['hx','🏋️',['Simulação HYROX feita','HYROX simulation done'],r=>r.sim>=1],
+ ['s26','🌋',['26 semanas seguidas','26 weeks in a row'],r=>r.bestStreak>=26],
+ ['k1000','🌍',['1000 km','1000 km'],r=>r.total>=1000],
+ ['m100','📆',['100 km num mês','100 km in a month'],r=>r.bestMonthKm>=100],
+ ['long','🏔️',['Corrida de 20 km','20 km run'],r=>(r.longest?.dist||0)>=20],
+ ['half','🎽',['Meia maratona feita','Half marathon done'],r=>(r.longest?.dist||0)>=21],
+ ['mara','🗽',['Maratona feita','Marathon done'],r=>(r.longest?.dist||0)>=42],
+ ['pr10','💎',['10 recordes no ginásio','10 gym records'],r=>(st.prs||[]).length>=10],
+ ['ton','🦾',['10 toneladas levantadas','10 tonnes lifted'],r=>r.vol>=10000],
+ ['ch1','🎯',['Primeiro desafio do mês','First monthly challenge'],r=>r.chDone>=1],
+ ['ch6','🏆',['6 desafios do mês','6 monthly challenges'],r=>r.chDone>=6],
+ ['lv5','⭐',['Nível 5','Level 5'],r=>r.level>=5],
+ ['lv10','🌟',['Nível 10','Level 10'],r=>r.level>=10]];
 function records2(){
   const r=records();const all=st.logs.filter(l=>l.wid||l.dist>0);r.nAll=all.length;
+  {const bm={};for(const l of st.logs)if(l.dist>0)bm[l.date.slice(0,7)]=(bm[l.date.slice(0,7)]||0)+l.dist;r.bestMonthKm=Math.max(0,...Object.values(bm));}
+  r.vol=st.logs.reduce((a,l)=>a+(l.vol||0),0);r.chDone=Object.keys(st.chDone||{}).length;r.level=xpInfo().level;
   r.races=st.logs.filter(l=>{const w=l.wid&&allW().find(x=>x.id===l.wid);return w&&w.race;}).length;
   r.sim=st.logs.filter(l=>{const w=l.wid&&allW().find(x=>x.id===l.wid);return w&&/Simulação/.test(w.title);}).length;
   let b=0,c=0;for(const w of st.plan.weeks.filter(w=>addDays(w.start,7)<=TODAY)){const ws=w.workouts.filter(x=>(x.type!=='F'||x.hx||x.gym)&&!x.free);if(!ws.length)continue;if(ws.filter(x=>logFor(x)).length/ws.length>=0.75){c++;b=Math.max(b,c);}else c=0;}
