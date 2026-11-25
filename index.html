@@ -1744,7 +1744,11 @@ function has(name){return!!MAP[name];}
 function frameAt(S,ms){const seq=S.seq||[0,1],n=seq.length,dur=S.dur||1300,hold=S.hold==null?.25:S.hold,per=dur*(1+hold);const tt=(ms/per)%n,i=Math.floor(tt),f=tt-i;const a=S.F[seq[i]],b=S.F[seq[(i+1)%n]];const m=f<hold/(1+hold)?0:(f-hold/(1+hold))/(1/(1+hold));const k=(1-Math.cos(Math.min(1,m)*Math.PI))/2;return draw(S,a,b,k);}
 function svg(name,cls){const id=MAP[name];if(!id)return'';const S=D[id];return`<svg class="${cls||'xa'}" data-xa="${id}" viewBox="${S.vb||'0 0 220 210'}" role="img" aria-label="${esc(tr(name))}">${frameAt(S,0)}</svg>`;}
 let raf=0,T0=0;
-function tick(now){const els=document.querySelectorAll('svg[data-xa]');if(!els.length){raf=0;return;}if(!T0)T0=now;const slow=matchMedia('(prefers-reduced-motion: reduce)').matches?2:1;els.forEach(el=>{const S=D[el.dataset.xa];if(S)el.innerHTML=frameAt(S,(now-T0)/slow);});raf=requestAnimationFrame(tick);}
+// só anima o que está no ecrã e a ~25 fps (poupa bateria e mantém a app fluida em listas grandes)
+const vis=new Set(),io=typeof IntersectionObserver==='function'?new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting?vis.add(e.target):vis.delete(e.target))):null;let lastF=0,nF=0;
+function tick(now){const els=document.querySelectorAll('svg[data-xa]');if(!els.length){raf=0;vis.clear();return;}if(!T0)T0=now;
+  if(now-lastF<38){raf=requestAnimationFrame(tick);return;}lastF=now;if(++nF%120===0)vis.forEach(e=>{if(!e.isConnected)vis.delete(e);});
+  const slow=matchMedia('(prefers-reduced-motion: reduce)').matches?2:1;els.forEach(el=>{if(io&&!el._io){el._io=1;io.observe(el);return;}if(io&&!vis.has(el))return;const S=D[el.dataset.xa];if(S)el.innerHTML=frameAt(S,(now-T0)/slow);});raf=requestAnimationFrame(tick);}
 function start(){if(!raf){T0=0;raf=requestAnimationFrame(tick);}}
 return{svg,has,start,D,MAP,frameAt};
 })();
@@ -1870,7 +1874,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251903';
+const APP_VER='202611251929';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
