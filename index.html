@@ -1662,7 +1662,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251353';
+const APP_VER='202611251423';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2323,7 +2323,7 @@ function workoutCard(w,hero){
   const why=(w.hx&&st.profile.level==='ini'&&!w.race?L('Ainda estás a começar: foca-te na técnica, usa os pesos indicados (mais leves no início) e para quando a técnica falhar. ','You are just starting: focus on technique, use the suggested weights (lighter at first) and stop when your form breaks down. '):'')+(WHY[w.title]||(w.type==='R'?'O dia de mostrar o trabalho feito. Começa controlado e acelera na segunda metade.':''));
   const future=w.date>=TODAY&&!l;
   let btns='';
-  if(l)btns=`<button class="ghost" data-act="dellog" data-id="${w.id}">Apagar registo</button>`;
+  if(l)btns=l.wtype!=='F'&&l.dist>0?'':`<button class="ghost" data-act="dellog" data-id="${w.id}">Apagar registo</button>`;
   else if(s==='skip')btns=`<button class="ghost" data-act="unskip" data-id="${w.id}">Afinal vou fazer</button>`;
   else if(F)btns=`${(w.hx||w.gym)&&(w.date===TODAY||s==='next'||s==='today')?`<button class="primary" data-act="guide" data-id="${w.id}">▶ ${L('Começar treino','Start workout')}</button>`:''}<button class="${(w.hx||w.gym)&&(w.date===TODAY||s==='next')?'':'primary'}" data-act="fdone" data-id="${w.id}">Marcar como feito</button>`;
   else btns=`${w.date===TODAY||s==='next'?`<button class="primary go" data-act="guide" data-id="${w.id}">▶ ${L('Começar treino','Start workout')}</button><button data-act="log" data-id="${w.id}">${L('Já fiz · registar','Done it · log')}</button>`:`<button class="primary" data-act="log" data-id="${w.id}">Registar treino</button>`}`;
@@ -2333,7 +2333,7 @@ function workoutCard(w,hero){
   return `<section class="card ${hero?'hero':''}" style="--zc:var(--z${z})">
     <div class="row between"><span class="eyebrow">${DOW[dow(w.date)]} ${fmtDate(w.date)}</span><div class="row">${stPill}${zonePill(z)}</div></div>
     <h2 class="wtitle">${esc(w.title)}</h2>
-    <div class="metrics">${F?'':`<div class="metric"><b>${nf(w.km)}</b><span>km</span></div>`}<div class="metric"><b>~${mins}</b><span>min</span></div>${F?'':`<div class="metric"><b>${w.type==='E'||w.type==='L'?fmtPace(pz().E[0]):(w.extraRace&&w.km?fmtPace(predict(st.vdot,w.km*1000)/w.km):fmtPace(target(pz(),w.focus.z)))}</b><span>${w.type==='E'||w.type==='L'?'ritmo fácil':'ritmo alvo'}</span></div>`}</div>
+    ${l&&!F&&l.dist>0?`<div class="metrics done"><div class="metric"><b>${nf(Math.round(l.dist*100)/100)}</b><span>km</span></div><div class="metric"><b>${fmtTime(l.time)}</b><span>${L('tempo','time')}</span></div><div class="metric"><b>${fmtPace(l.time/l.dist)}</b><span>${L('ritmo médio','avg pace')}</span></div></div><div class="tiny muted">${L('Planeado','Planned')}: ${nf(w.km)} km · ~${mins} min · ${w.type==='E'||w.type==='L'?fmtPace(pz().E[0]):fmtPace(target(pz(),w.focus.z))}/km</div>`:`<div class="metrics">${F?'':`<div class="metric"><b>${nf(w.km)}</b><span>km</span></div>`}<div class="metric"><b>~${mins}</b><span>min</span></div>${F?'':`<div class="metric"><b>${w.type==='E'||w.type==='L'?fmtPace(pz().E[0]):(w.extraRace&&w.km?fmtPace(predict(st.vdot,w.km*1000)/w.km):fmtPace(target(pz(),w.focus.z)))}</b><span>${w.type==='E'||w.type==='L'?'ritmo fácil':'ritmo alvo'}</span></div>`}</div>`}
     ${l||F&&!w.hx&&!w.gym?'':profileHtml(w)}
     ${w.light&&!l?`<div class="note info">🪶 ${L('Versão leve de hoje, pelo teu check-in.','Today’s light version, from your check-in.')} <button class="link small" data-act="unlight" data-id="${w.id}">${L('Repor original','Restore original')}</button></div>`:''}
     ${w.date===TODAY&&!l&&!w.race&&!ciToday()?`<button class="link small cantlink" data-act="checkin" data-id="${w.id}">🙂 ${L('Como te sentes hoje?','How are you feeling today?')} ›</button>`:''}
@@ -2343,14 +2343,16 @@ function workoutCard(w,hero){
     ${w.race?(w.hx?hxRaceHtml(w):racePlanHtml(w)):''}
     ${l?'':`<ul class="steps">${w.steps.map((x,i)=>stepHtml(x,w,i)).join('')}</ul>`}
     ${w.strength?'<div class="small muted">Força (opcional, 20 min): agachamentos, lunges, ponte de glúteos, gémeos e prancha.</div>':''}
-    ${l?logSummary(l):''}
+    ${l?logSummary(l,!F):''}
     <div class="btns">${btns}</div>
   </section>`;
 }
-function logSummary(l){
-  const sb=`<button class="ghost chip shbtn" data-act="share-img" data-v="${st.logs.indexOf(l)}">↗ ${L('Partilhar','Share')}</button>`+(l.wtype!=='F'&&l.dist>0?`<button class="ghost chip shbtn" data-act="editlog" data-v="${st.logs.indexOf(l)}">✎ ${L('Editar','Edit')}</button>`:'');
+function logSummary(l,inCard){
+  const sb=`<div class="row" style="gap:8px">`+`<button class="ghost chip shbtn" data-act="share-img" data-v="${st.logs.indexOf(l)}">↗ ${L('Partilhar','Share')}</button>`+(l.wtype!=='F'&&l.dist>0?`<button class="ghost chip shbtn" data-act="editlog" data-v="${st.logs.indexOf(l)}">✎ ${L('Editar','Edit')}</button>`:'')+`</div>`;
   if(l.wtype==='F'&&l.sets){const i=st.logs.indexOf(l);return `<div class="note up"><div class="num"><b>${l.time?fmtTime(l.time)+' · ':''}${nf(l.vol||0)} kg · ${l.sets} ${L('séries','sets')}</b></div>${l.prs?.length?`<div>🏆 ${l.prs.map(p=>`${esc(tr(p.n))} ${fmtKg(p.kg)} kg × ${p.reps}`).join(' · ')}</div>`:''}</div><div class="row" style="gap:8px">${l.gym?.length?`<button class="ghost chip shbtn" data-act="gym-detail" data-v="${i}">${L('Ver detalhe','See details')}</button>`:''}${sb}</div>`;}
   if(l.wtype==='F')return `<div class="note up">${L('Sessão feita.','Session done.')}</div>${sb}`;
+  const ex=[l.avgHr?`${l.avgHr} bpm`:'',l.rpe?`${L('esforço','effort')} ${l.rpe}/10`:'',l.source==='strava'?'Strava':''].filter(Boolean).join(' · ');
+  if(inCard)return `<div class="note ${l.eval?.cls||'info'}">${ex?`<div class="num small muted">${ex}</div>`:''}<div>${esc(l.eval?.msg||'')}</div></div>${l.ai?`<div class="note info"><span class="tiny muted">Treinador IA</span><br>${esc(l.ai)}</div>`:''}${sb}`;
   return `<div class="note ${l.eval?.cls||'info'}"><div class="num"><b>${nf(Math.round(l.dist*100)/100)} km</b> · ${fmtTime(l.time)} · ${fmtPace(l.time/l.dist)}/km${l.avgHr?` · ${l.avgHr} bpm`:''} ${l.rpe?` · esforço ${l.rpe}/10`:''}${l.source==='strava'?' · Strava':''}</div><div>${esc(l.eval?.msg||'')}</div></div>${l.ai?`<div class="note info"><span class="tiny muted">Treinador IA</span><br>${esc(l.ai)}</div>`:''}${sb}`;
 }
 
