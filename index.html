@@ -185,6 +185,10 @@ details.why>summary{display:inline-flex;align-items:center;gap:4px;font-size:14p
 .avwrap{position:relative;border:none;background:none;padding:0;min-height:0;border-radius:50%}.avwrap .cam{position:absolute;right:-2px;bottom:-2px;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;border:3px solid var(--bg)}.avwrap .cam .ico{width:15px;height:15px}
 .navav.img{background:none;overflow:hidden}.navav.img img{width:100%;height:100%;object-fit:cover}
 .gav{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;overflow:hidden;background:var(--surface2);border:1px solid var(--line);font-size:12px;font-weight:800;color:var(--muted)}.gav img{width:100%;height:100%;object-fit:cover}
+.bignums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.bignums>div{display:flex;flex-direction:column;gap:2px}.bignums b{font-family:var(--display);font-stretch:112%;font-size:30px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}.bignums span{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}.bignums i{font-style:normal;font-size:12.5px;font-weight:700}.bignums i.up{color:var(--good)}.bignums i.dn{color:var(--muted)}
+.heat{display:flex;gap:6px}.hdays{display:grid;grid-template-rows:repeat(7,1fr);font-size:10px;color:var(--muted);font-weight:700;width:10px}.hdays span{display:flex;align-items:center}.hgrid{flex:1;display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(7,1fr);gap:4px}.hgrid i{aspect-ratio:1;border-radius:4px;background:var(--soft)}.hgrid i.on{background:var(--accent)}.hgrid i.miss{background:color-mix(in srgb,var(--bad) 35%,var(--soft))}.hgrid i.fut{background:transparent;border:1.5px dashed var(--line)}.hgrid i.td{outline:2px solid var(--ink);outline-offset:1px}
+.bigt{font-family:var(--display);font-stretch:112%;font-size:34px;font-weight:800;line-height:1.1}
+.hlist{display:flex;flex-direction:column}.hrow{display:flex;align-items:center;gap:12px;padding:10px 0;border:none;border-bottom:1px solid var(--line);border-radius:0;background:none;text-align:left;font-weight:400;min-height:60px;width:100%}.hrow:last-child{border-bottom:none}.hic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:19px;flex:none;background:var(--soft)}.hic.k-run{background:color-mix(in srgb,var(--zE) 18%,var(--soft))}.hic.k-gym{background:color-mix(in srgb,var(--zG) 20%,var(--soft))}.hic.k-hyrox{background:color-mix(in srgb,var(--zX) 20%,var(--soft))}.hmid{flex:1;min-width:0;display:flex;flex-direction:column}.hmid .small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hth{width:46px;height:46px;border-radius:10px;overflow:hidden;flex:none;background:var(--soft)}.hth img{width:100%;height:100%;object-fit:cover}.hrow .chev{color:var(--muted);font-size:20px}
 .hitem{display:flex;flex-direction:column;gap:8px}
 @media (min-width:381px){.stats>.stat:last-child:nth-child(3n+2){grid-column:span 2}.stats>.stat:last-child:nth-child(3n+1):not(:first-child){grid-column:span 3}}
 .stat .l{line-height:1.25}
@@ -1699,7 +1703,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251806';
+const APP_VER='202611251817';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2495,13 +2499,88 @@ function planoHtml(){
   }).join('')+'</div>';
 }
 
+let progPer='month',histN=15;
+function logKind(l){const w=l.wid?allW().find(x=>x.id===l.wid):null;return l.dist>0?'run':w?.gym||l.gym?'gym':w?.hx?'hyrox':'other';}
+const KIC={run:'🏃',gym:'💪',hyrox:'🔥',other:'✅'};
 function progHtml(){
-  if(st.profile.goalType==='gym'){const ls=st.logs.filter(l=>l.wtype==='F'&&l.wid).slice(-12).reverse();return `<h2>Progresso</h2>${gymWeekHtml()}${recordsHtml(true)}${weightHtml()}<section class="card"><h3>${L('Últimos treinos','Recent workouts')}</h3>${ls.length?`<div class="card" style="padding:0;gap:0">${ls.map(l=>{const w=allW().find(x=>x.id===l.wid);return `<div class="wrow" style="cursor:default"><span class="d">${fmtDate(l.date)}</span><span><b>${esc(tr(w?.title||L('Treino','Workout')))}</b></span><span class="pill st-done">✓</span></div>`;}).join('')}</div>`:`<div class="small muted">${L('Ainda sem treinos feitos. Marca o primeiro como feito ou usa o treino guiado.','No workouts yet. Mark your first one as done or use the guided workout.')}</div>`}</section>`;}
-  let h=progHtml2();
-  if(!st.logs.some(l=>l.dist>0||l.wtype==='F'))h=h.replace(/<h2>Progresso<\/h2>/,`<h2>Progresso</h2><section class="card empty"><div style="font-size:34px">📈</div><b>${L('A tua evolução aparece aqui','Your progress shows up here')}</b><div class="small muted">${L('Regista o primeiro treino e começas a ver os quilómetros, os recordes e a previsão a mudar.','Log your first workout to start seeing your distance, records and prediction change.')}</div><button class="primary" data-act="log-extra">${L('Registar um treino','Log a workout')}</button></section>`);
-  if(st.profile.goalType!=='hyrox')return h;
-  return h.replace('<h2>Progresso</h2>','<h2>Progresso</h2>'+hxProgHtml());
+  const p=st.profile,logs=st.logs.filter(l=>l.dist>0||l.wtype==='F'),gymOnly=p.goalType==='gym'&&!logs.some(l=>l.dist>0);
+  const H=`<h2>${L('Progresso','Progress')}</h2>`;
+  if(!logs.length)return `${H}<section class="card emptyst"><div class="eic">${ico('run')}</div><h3>${L('A tua evolução aparece aqui','Your progress shows up here')}</h3><div class="small muted">${L('Regista o primeiro treino e começas a ver números, gráficos e recordes.','Log your first workout to start seeing numbers, charts and records.')}</div></section>${p.goalType==='hyrox'?hxProgHtml():''}`;
+  return H+progSummaryHtml(logs,gymOnly)+progConsistHtml()+progVolumeHtml(gymOnly)+(p.goalType==='hyrox'?hxProgHtml():'')+(p.goalType!=='gym'||st.vdotHist.length>1?progPredHtml():'')+progRecordsHtml()+(p.goalType==='gym'||(st.weights||[]).length?weightHtml():'')+progHistHtml(logs);
 }
+function progSummaryHtml(logs,gymOnly){
+  const d=new Date(TODAY+'T12:00:00');let a,b,lab;
+  if(progPer==='week'){a=mondayOf(TODAY);b=addDays(a,-7);lab=L('semana passada','last week');}
+  else if(progPer==='month'){a=TODAY.slice(0,8)+'01';const pm=new Date(d.getFullYear(),d.getMonth()-1,1);b=`${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}-01`;lab=L('mês passado','last month');}
+  else if(progPer==='year'){a=TODAY.slice(0,4)+'-01-01';b=(+TODAY.slice(0,4)-1)+'-01-01';lab=L('ano passado','last year');}
+  else{a='0000';b=null;}
+  const sum=(from,to)=>{const xs=logs.filter(l=>l.date>=from&&l.date<to);return{n:xs.length,km:xs.reduce((s,l)=>s+(l.dist||0),0),t:xs.reduce((s,l)=>s+(l.time||0),0),vol:xs.reduce((s,l)=>s+(l.vol||0),0)};};
+  const cur=sum(a,'9999'),prev=b?sum(b,a):null;
+  // compara com o mesmo ponto do período anterior
+  let prevPart=null;if(b){const el=daysBetween(a,TODAY);prevPart=sum(b,addDays(b,el+1)<a?addDays(b,el+1):a);}
+  const delta=(x,y)=>{if(!prevPart||!y)return'';const pc=Math.round((x-y)/y*100);return `<i class="${pc>=0?'up':'dn'}">${pc>=0?'▲':'▼'} ${Math.abs(pc)}%</i>`;};
+  const hm=t=>{const h=Math.floor(t/3600),m=Math.round(t%3600/60);return h?`${h}h${String(m).padStart(2,'0')}`:`${m} min`;};
+  const seg=[['week',L('Semana','Week')],['month',L('Mês','Month')],['year',L('Ano','Year')],['all',L('Tudo','All')]].map(([k,l])=>`<button data-act="prog-per" data-v="${k}" aria-pressed="${progPer===k}">${l}</button>`).join('');
+  return `<section class="card"><div class="seg">${seg}</div>
+  <div class="bignums"><div><b>${cur.n}</b><span>${L('treinos','workouts')}</span>${delta(cur.n,prevPart?.n)}</div>${gymOnly?`<div><b>${nf(Math.round(cur.vol/100)/10)}</b><span>${L('toneladas','tonnes')}</span>${delta(cur.vol,prevPart?.vol)}</div>`:`<div><b>${nf(Math.round(cur.km*10)/10)}</b><span>km</span>${delta(cur.km,prevPart?.km)}</div>`}<div><b>${hm(cur.t)}</b><span>${L('tempo','time')}</span>${delta(cur.t,prevPart?.t)}</div></div>
+  ${prevPart?`<div class="tiny muted">${L('Comparado com o mesmo ponto do','Compared with the same point')} ${lab}.</div>`:''}</section>`;
+}
+function progConsistHtml(){
+  const start=addDays(mondayOf(TODAY),-7*11),ws=allW(),byDay={};
+  for(const l of st.logs)if(l.date>=start&&(l.dist>0||l.wtype==='F'))(byDay[l.date]=byDay[l.date]||[]).push(l);
+  const cells=[];for(let w=0;w<12;w++)for(let d=0;d<7;d++){const day=addDays(start,w*7+d);const ls=byDay[day]||[];const pl=ws.find(x=>x.date===day&&!x.free);
+    const cls=ls.length?'on':day>=TODAY?(pl?'fut':''):pl&&!st.skipped?.includes(pl.id)?'miss':'';cells.push(`<i class="${cls}${day===TODAY?' td':''}" style="grid-column:${w+1};grid-row:${d+1}" title="${fmtDate(day)}"></i>`);}
+  const past=ws.filter(w=>!w.free&&w.date<=TODAY&&w.date>=(st.plan.weeks[0]?.start||TODAY)),done=past.filter(w=>logFor(w)).length,pc=past.length?Math.round(done/past.length*100):0;
+  const r=records2();
+  return `<section class="card"><div class="row between"><h3>${L('Consistência','Consistency')}</h3><span class="small muted">${L('últimas 12 semanas','last 12 weeks')}</span></div>
+  <div class="heat"><div class="hdays">${[0,2,4,6].map(i=>`<span style="grid-row:${i+1}">${DOW[i].slice(0,1)}</span>`).join('')}</div><div class="hgrid">${cells.join('')}</div></div>
+  <div class="legend"><span><i style="background:var(--accent)"></i>${L('treino feito','done')}</span><span><i style="background:color-mix(in srgb,var(--bad) 35%,var(--soft))"></i>${L('falhado','missed')}</span><span><i style="background:transparent;border:1.5px dashed var(--line)"></i>${L('planeado','planned')}</span></div>
+  <div class="kv kv2"><div><b>${pc}%</b><span>${L('do plano cumprido','of plan done')} (${done}/${past.length})</span></div><div><b>${r.streak}</b><span>${L('semanas seguidas','weeks in a row')}${r.bestStreak>r.streak?` · ${L('melhor','best')} ${r.bestStreak}`:''}</span></div></div></section>`;
+}
+function progVolumeHtml(gymOnly){
+  const cur=mondayOf(TODAY),N=12,data=[];
+  for(let i=N-1;i>=0;i--){const a=addDays(cur,-7*i),b=addDays(a,7);const ls=st.logs.filter(l=>l.date>=a&&l.date<b&&(l.dist>0||l.wtype==='F'));const pw=allW().filter(w=>w.date>=a&&w.date<b&&!w.free);
+    data.push({a,done:gymOnly?ls.length:ls.reduce((s,l)=>s+(l.dist||0),0),plan:gymOnly?pw.length:pw.reduce((s,w)=>s+(w.km||0),0)});}
+  if(!data.some(d=>d.done||d.plan))return'';
+  const W=560,Ht=200,pb=30,pt=28,mx=Math.max(...data.map(d=>Math.max(d.done,d.plan)),gymOnly?3:10),bw=(W-10)/N;
+  const bars=data.map((d,i)=>{const x=5+i*bw,h1=d.plan/mx*(Ht-pb-pt),h2=d.done/mx*(Ht-pb-pt),isCur=i===N-1;
+    return `<rect x="${x+bw*.16}" y="${Ht-pb-h1}" width="${bw*.68}" height="${h1}" rx="6" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="${isCur?'0':'5 4'}"/><rect x="${x+bw*.16}" y="${Ht-pb-h2}" width="${bw*.68}" height="${h2}" rx="6" fill="${isCur?'var(--accent)':'color-mix(in srgb,var(--accent) 55%,var(--soft))'}"/>${d.done?`<text x="${x+bw/2}" y="${Ht-pb-Math.max(h1,h2)-7}" text-anchor="middle" style="font-size:16px">${gymOnly?d.done:Math.round(d.done)}</text>`:''}${i%3===2||isCur?`<text x="${x+bw/2}" y="${Ht-6}" text-anchor="middle" style="font-size:16px">${isCur?L('esta','this'):fmtDate(d.a).replace(/\s.*/,'')+'/'+(+d.a.slice(5,7))}</text>`:''}`;}).join('');
+  const last=data[N-1],avg=data.slice(0,-1).filter(d=>d.done).reduce((s,d,_,arr)=>s+d.done/arr.length,0);
+  return `<section class="card"><div class="row between"><h3>${gymOnly?L('Treinos por semana','Workouts per week'):L('Quilómetros por semana','Distance per week')}</h3><span class="small muted num">${L('média','avg')} ${gymOnly?nf(Math.round(avg*10)/10):nf(Math.round(avg))+' km'}</span></div>
+  <svg class="chart" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="${L('Volume por semana','Weekly volume')}">${bars}</svg>
+  <div class="legend"><span><i style="background:var(--accent)"></i>${L('feito','done')}</span><span><i style="background:transparent;border:1.5px dashed var(--line)"></i>${L('planeado','planned')}</span>${last.plan?`<span style="margin-left:auto" class="num">${L('esta semana','this week')}: <b style="color:var(--ink)">${gymOnly?last.done+'/'+last.plan:nf(Math.round(last.done*10)/10)+'/'+nf(Math.round(last.plan))+' km'}</b></span>`:''}</div></section>`;
+}
+function progPredHtml(){
+  const p=st.profile,g={km:gKm(),label:p.goalType==='hyrox'?'5 km':gLabel()};const Hs=st.vdotHist.slice(-20);if(!Hs.length)return'';
+  const preds=Hs.map(h=>predict(h.v,g.km*1000)),now=predict(st.vdot,g.km*1000),first=preds[0],dlt=Math.round(first-now);
+  let chart='';if(Hs.length>1){const W=560,Ht=170,pl=70,pr=14,pt=14,pb=30;const mn=Math.min(...preds),mx=Math.max(...preds),pad=Math.max((mx-mn)*.25,15),lo=mn-pad,hi=mx+pad;
+    const X=i=>pl+i*(W-pl-pr)/(Hs.length-1),Y=v=>pt+(v-lo)/(hi-lo)*(Ht-pt-pb),pts=preds.map((v,i)=>`${X(i)},${Y(v)}`).join(' ');
+    chart=`<svg class="chart" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="${L('Evolução da previsão','Forecast trend')}">${[mn,mx].map(v=>`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-dasharray="4 5"/><text x="0" y="${Y(v)+6}">${fmtTime(v)}</text>`).join('')}<polygon points="${X(0)},${Ht-pb} ${pts} ${X(Hs.length-1)},${Ht-pb}" fill="var(--accent)" opacity=".12"/><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round"/>${preds.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="${i===preds.length-1?6:3.5}" fill="var(--accent)"/>`).join('')}<text x="${pl}" y="${Ht-6}">${fmtDate(Hs[0].d)}</text><text x="${W-pr}" y="${Ht-6}" text-anchor="end">${fmtDate(Hs[Hs.length-1].d)}</text></svg>`;}
+  return `<section class="card"><div class="row between" style="align-items:flex-end"><div><span class="eyebrow">${L('Previsão','Forecast')} · ${esc(g.label)}</span><div class="bigt num">${fmtTime(now)}</div></div>${Hs.length>1&&dlt?`<span class="pill ${dlt>0?'st-done':'st-miss'}">${dlt>0?'−':'+'}${fmtTime(Math.abs(dlt))} ${L('desde o início','since start')}</span>`:''}</div>
+  ${chart||`<div class="small muted">${L('O gráfico aparece quando a previsão mudar.','The chart appears once your forecast changes.')}</div>`}
+  <div class="tiny muted">${L('Atualiza quando registas uma prova ou um teste, ou quando duas sessões de qualidade seguidas ficam acima ou abaixo do alvo.','Updates when you log a race or test, or when two quality sessions in a row come in above or below target.')}</div></section>`;
+}
+function progRecordsHtml(){
+  const r=records2(),lab={1:'1 km',5:'5 km',10:'10 km',21.0975:L('Meia maratona','Half marathon')};
+  const rows=[...Object.keys(lab).filter(k=>r.best[k]).map(k=>`<div class="prr"><span>${L('Melhor','Best')} ${lab[k]}<br><span class="tiny muted">${fmtDate(r.best[k].d)} · ${fmtPace(r.best[k].t/k)}/km</span></span><b class="num">${fmtTime(r.best[k].t)}</b></div>`),
+    r.longest?`<div class="prr"><span>${L('Corrida mais longa','Longest run')}<br><span class="tiny muted">${fmtDate(r.longest.date)}</span></span><b class="num">${nf(Math.round(r.longest.dist*10)/10)} km</b></div>`:''].join('');
+  const lifts=r.lifts.slice(0,6).map(x=>`<button type="button" class="prr" data-act="lift-hist" data-v="${esc(x.n)}"><span>${esc(tr(x.n))}<br><span class="tiny muted">${fmtDate(x.d)}</span></span><b class="num">${fmtKg(x.kg)} kg × ${x.reps} ›</b></button>`).join('');
+  const got=BADGES.filter(b=>b[3](r)).length;
+  if(!rows&&!lifts)return'';
+  return `<section class="card"><div class="row between"><h3>${L('Recordes','Records')}</h3><button class="mini" style="flex:none" data-act="go-perfil">🏅 ${got}/${BADGES.length}</button></div>
+  ${rows?`<div class="prl">${rows}</div>`:''}${lifts?`<div class="small"><b>${L('Ginásio','Gym')}</b></div><div class="prl">${lifts}</div>`:''}</section>`;
+}
+function progHistHtml(logs){
+  const xs=[...logs].sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0),M=LANG==='pt'?['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']:['January','February','March','April','May','June','July','August','September','October','November','December'];
+  let out='',lastM='';
+  for(const l of xs.slice(0,histN)){const m=l.date.slice(0,7);if(m!==lastM){lastM=m;out+=`<div class="mhead">${M[+m.slice(5)-1]} ${m.slice(0,4)}</div>`;}
+    const w=l.wid?allW().find(x=>x.id===l.wid):null,k=logKind(l),i=st.logs.indexOf(l);
+    const line=l.dist>0?`${nf(Math.round(l.dist*100)/100)} km · ${fmtTime(l.time)} · ${fmtPace(l.time/l.dist)}/km`:[l.time?fmtTime(l.time):'',l.vol?nf(Math.round(l.vol))+' kg':'',l.sets?l.sets+' '+L('séries','sets'):''].filter(Boolean).join(' · ')||L('Sessão feita','Session done');
+    out+=`<button class="hrow" data-act="log-detail" data-v="${i}"><span class="hic k-${k}">${KIC[k]}</span><span class="hmid"><b>${esc(l.extra?L('Corrida extra','Extra run'):tr(w?.title||(l.dist>0?L('Corrida','Run'):L('Treino','Workout'))))}</b><span class="small muted num">${DOW[dow(l.date)]} ${fmtDate(l.date)} · ${line}</span></span>${l.photo?`<span class="hth"><img data-ph="${l.photo}" alt=""></span>`:`<span class="chev">›</span>`}</button>`;}
+  return `<section class="card"><div class="row between"><h3>${L('Histórico','History')}</h3><span class="small muted">${xs.length} ${L('treinos','workouts')}</span></div><div class="hlist">${out}</div>${xs.length>histN?`<button class="ghost" data-act="hist-more">${L('Ver mais','Load more')}</button>`:''}</section>`;
+}
+function openLogDetail(i){const l=st.logs[i];if(!l)return;const w=l.wid?allW().find(x=>x.id===l.wid):null;
+  openSheet(`<div class="row between"><span class="eyebrow">${DOW[dow(l.date)]} ${fmtDate(l.date)}${l.source==='gpx'?' · GPX':l.source==='strava'?' · Strava':''}</span><button class="link" data-act="close">${L('Fechar','Close')}</button></div><h2>${esc(l.extra?L('Corrida extra','Extra run'):tr(w?.title||(l.dist>0?L('Corrida','Run'):L('Treino','Workout'))))}</h2>${l.dist>0?`<div class="metrics"><div class="metric"><b>${nf(Math.round(l.dist*100)/100)}</b><span>km</span></div><div class="metric"><b>${fmtTime(l.time)}</b><span>${L('tempo','time')}</span></div><div class="metric"><b>${fmtPace(l.time/l.dist)}</b><span>${L('ritmo médio','avg pace')}</span></div></div>`:''}${logSummary(l,l.dist>0)}${l.splits&&l.splits.length>1?splitsHtml(l.splits):''}${logActs(l)}`);}
 function progHtml2(){
   const p=st.profile,g={km:gKm(),label:p.goalType==='hyrox'?'5 km':gLabel()};
   const H=st.vdotHist.slice(-20);
@@ -3350,6 +3429,10 @@ document.addEventListener('click',e=>{
   else if(a.startsWith('ob-'))obNav(a,b.dataset.v);
   else if(a==='ps-open')openPlanSettings();
   else if(a==='me-back')location.hash='#perfil';
+  else if(a==='prog-per'){progPer=b.dataset.v;render();}
+  else if(a==='hist-more'){histN+=20;render();}
+  else if(a==='log-detail')openLogDetail(+b.dataset.v);
+  else if(a==='go-perfil')location.hash='#perfil';
   else if(a==='ph-add'){closeSheet();addLogPhoto(+b.dataset.v);}
   else if(a==='ph-view')openPhoto(+b.dataset.v);
   else if(a==='log-vis'){if(draft){draft.phVis=b.dataset.v;$('#phBox').innerHTML=logPhHtml();}}
