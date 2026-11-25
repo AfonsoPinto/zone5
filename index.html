@@ -1886,7 +1886,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611252020';
+const APP_VER='202611252227';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2105,7 +2105,7 @@ async function loadCloud(){
     else{const demo=(()=>{try{return JSON.parse(localStorage.getItem('zone5.v1.demo'));}catch(e){return null;}})();st=demo||null;}
     try{if(st)localStorage.setItem(lsKey(),JSON.stringify(st));}catch(e){}
     if(st&&(!remote||(st.updated||0)>(remote.updated||0)))await persist();
-    setSync('ok');
+    setSync('ok');if(st?.profile)setTimeout(()=>{try{pushPublic();}catch(e){}},1500);
   }catch(e){st=local;setSync('local');toast('Sem ligação: estás a ver a última cópia guardada neste dispositivo.');}
 }
 async function boot(){
