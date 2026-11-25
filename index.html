@@ -152,6 +152,27 @@ details.setc>summary::-webkit-details-marker{display:none}details.setc>summary b
 details.setc>summary .chev{color:var(--muted);font-size:22px;transition:transform .15s}details.setc[open]>summary .chev{transform:rotate(90deg)}
 details.setc .setbody{display:flex;flex-direction:column;gap:12px;padding:0 16px 16px}
 .shbtn{align-self:flex-start}
+.ico{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.acts{display:flex;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--soft)}
+.act{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:8px 10px;border:none;border-radius:0;background:none;color:var(--ink);font-size:14.5px;font-weight:700;box-shadow:none}
+.act+.act{border-left:1px solid var(--line)}.act .ico{color:var(--muted)}
+.card>.acts:last-child{margin:2px -18px -18px;border:none;border-top:1px solid var(--line);border-radius:0 0 var(--r) var(--r);background:color-mix(in srgb,var(--ink) 3%,transparent)}
+.card.hero>.acts:last-child{margin:2px -20px -20px}
+.minis{display:flex;gap:8px;flex-wrap:wrap}
+.mini{flex:1 1 0;justify-content:center;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:6px 10px;font-size:13.5px;font-weight:700;border-radius:999px;background:color-mix(in srgb,var(--ink) 6%,transparent);border:1px solid var(--line);color:var(--ink);width:auto}
+.mini .ico{width:16px;height:16px;color:var(--muted)}
+details.why>summary{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:var(--muted);font-weight:600}details.why>summary::after{content:"›";transition:transform .15s}details.why[open]>summary::after{transform:rotate(90deg)}details.why>div{margin-top:6px}
+.plan-ref{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qa{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;padding:14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);min-height:96px;font-weight:400}
+.qa .qi{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 16%,var(--soft));color:var(--accent)}.qa .qi .ico{width:20px;height:20px}
+.qa b{font-size:15px;line-height:1.2}.qa small{font-size:12.5px;color:var(--muted);line-height:1.25}
+.emptyst{align-items:center;text-align:center;padding:28px 20px;gap:10px}.emptyst .eic{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 14%,var(--soft));color:var(--accent)}.emptyst .eic .ico{width:30px;height:30px}.emptyst .primary{align-self:stretch}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--muted)}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.addbtn{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:1.5px dashed var(--line);color:var(--muted)}.addbtn .ico{color:var(--accent)}
+.hitem{display:flex;flex-direction:column;gap:8px}
+@media (min-width:381px){.stats>.stat:last-child:nth-child(3n+2){grid-column:span 2}.stats>.stat:last-child:nth-child(3n+1):not(:first-child){grid-column:span 3}}
+.stat .l{line-height:1.25}
 #app.vin{animation:vin .22s ease-out}@keyframes vin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .sheet-bg.open{animation:bgin .18s ease-out}.sheet-bg.open .sheet{animation:shin .26s cubic-bezier(.2,.9,.3,1)}
 @keyframes bgin{from{opacity:0}to{opacity:1}}@keyframes shin{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
@@ -188,7 +209,7 @@ nav.tabs a[aria-current="page"]{color:var(--bg);background:var(--ink)}
 .drop{border:2px dashed var(--line);border-radius:18px;padding:22px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center;cursor:pointer}
 .drop input{display:none}
 .chart{width:100%;height:auto;display:block}
-.chart text{fill:var(--muted);font-size:11px;font-family:var(--body)}
+.chart text{fill:var(--muted);font-size:19px;font-weight:600;font-family:var(--body)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:110px;background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:999px;font-size:14px;font-weight:600;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%}
 .toast.show{opacity:1}
 .split{display:flex;align-items:flex-end;gap:3px;height:56px}
@@ -988,7 +1009,7 @@ function openPlanSettings(){
   </div>
   <div class="small"><b>${L('Outras provas','Other races')}</b></div>
   ${xs.length?`<div class="slist">${xs.map(r=>`<div class="srow"><span class="ic">${r.hx?'🏋️':'🏁'}</span><span><b>${esc(r.name)}</b><span class="small muted">${fmtDate(r.date)}${r.km?' · '+nf(Math.round(r.km*10)/10)+' km':''}</span></span><button class="ghost chip" data-act="xr-del" data-id="${r.id}" aria-label="${L('Remover','Remove')}">✕</button></div>`).join('')}</div>`:`<div class="small muted">${L('Ainda não juntaste outras provas ao plano.','You haven’t added other races yet.')}</div>`}
-  <button data-act="xr-add">+ ${L('Adicionar modalidade ou prova','Add a sport or race')}</button>`);
+  <button class="addbtn" data-act="xr-add">${ico('plus')}${L('Adicionar modalidade ou prova','Add a sport or race')}</button>`);
 }
 function psOpen(k){
   if(k==='gymx'){geDraft=null;openGymExtra();return;}
@@ -1662,7 +1683,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251423';
+const APP_VER='202611251532';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2220,7 +2241,7 @@ async function loadGroup(){
   grp.loaded=true;if(tab==='grupo')render();
 }
 function grupoHtml(){
-  if(mode!=='cloud')return `<h2>Grupo</h2><section class="card"><div class="small">Os grupos precisam de uma conta: cria uma para treinares com amigos e veres o ranking semanal.</div>${sb?'<button class="primary" data-act="logout">Criar conta ou entrar</button>':''}</section>`;
+  if(mode!=='cloud')return `<h2>Grupo</h2><section class="card emptyst"><div class="eic">${ico('users')}</div><h3>${L('Treina com amigos','Train with friends')}</h3><div class="small muted">Os grupos precisam de uma conta: cria uma para treinares com amigos e veres o ranking semanal.</div>${sb?'<button class="primary" data-act="logout">Criar conta ou entrar</button>':''}</section>`;
   if(!grp.loaded){loadGroup();return `<h2>Grupo</h2><section class="card"><div class="small muted">A carregar…</div></section>`;}
   const inv=new URLSearchParams(location.search).get('g')||'';
   const joinCard=`<section class="card"><h3>${grp.groups.length?'Juntar-me a outro grupo':'Juntar-me a um grupo'}</h3><div class="row" style="flex-wrap:nowrap"><input id="gCode" placeholder="Código" value="${esc(inv)}" style="text-transform:uppercase;letter-spacing:.15em" maxlength="6"><button data-act="g-join">${L("Entrar","Join")}</button></div></section>
@@ -2316,6 +2337,8 @@ function racePlanHtml(w){
   <div class="num small muted">${marks.map(k=>`${k} km · ${fmtTime(pace*k)}`).join(' &nbsp;·&nbsp; ')}</div>
   <div class="small muted">${fuel}</div></div>`;
 }
+const IC={share:'<path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',edit:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>',list:'<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".8"/><circle cx="4" cy="12" r=".8"/><circle cx="4" cy="18" r=".8"/>',smile:'<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4 4 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>',cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M9 15l6 0"/>',run:'<circle cx="15" cy="4.5" r="2"/><path d="M8 21l3-6 3 2v5M6 12l3-4 4 1 2 4 3 1"/>',dumb:'<path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/>',users:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3.3 2.7-5 6-5s6 1.7 6 5M15 14.5c3 0 6 1.3 6 4.5"/>',plus:'<path d="M12 5v14M5 12h14"/>'};
+const ico=k=>`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${IC[k]}</svg>`;
 function workoutCard(w,hero){
   const s=status(w),l=logFor(w);
   const stPill=s==='done'?'<span class="pill st-done">Feito</span>':s==='miss'?'<span class="pill st-miss">Falhado</span>':s==='skip'?'<span class="pill">Saltado</span>':s==='today'?'<span class="pill st-next">Hoje</span>':'';
@@ -2333,23 +2356,24 @@ function workoutCard(w,hero){
   return `<section class="card ${hero?'hero':''}" style="--zc:var(--z${z})">
     <div class="row between"><span class="eyebrow">${DOW[dow(w.date)]} ${fmtDate(w.date)}</span><div class="row">${stPill}${zonePill(z)}</div></div>
     <h2 class="wtitle">${esc(w.title)}</h2>
-    ${l&&!F&&l.dist>0?`<div class="metrics done"><div class="metric"><b>${nf(Math.round(l.dist*100)/100)}</b><span>km</span></div><div class="metric"><b>${fmtTime(l.time)}</b><span>${L('tempo','time')}</span></div><div class="metric"><b>${fmtPace(l.time/l.dist)}</b><span>${L('ritmo médio','avg pace')}</span></div></div><div class="tiny muted">${L('Planeado','Planned')}: ${nf(w.km)} km · ~${mins} min · ${w.type==='E'||w.type==='L'?fmtPace(pz().E[0]):fmtPace(target(pz(),w.focus.z))}/km</div>`:`<div class="metrics">${F?'':`<div class="metric"><b>${nf(w.km)}</b><span>km</span></div>`}<div class="metric"><b>~${mins}</b><span>min</span></div>${F?'':`<div class="metric"><b>${w.type==='E'||w.type==='L'?fmtPace(pz().E[0]):(w.extraRace&&w.km?fmtPace(predict(st.vdot,w.km*1000)/w.km):fmtPace(target(pz(),w.focus.z)))}</b><span>${w.type==='E'||w.type==='L'?'ritmo fácil':'ritmo alvo'}</span></div>`}</div>`}
+    ${l&&!F&&l.dist>0?`<div class="metrics done"><div class="metric"><b>${nf(Math.round(l.dist*100)/100)}</b><span>km</span></div><div class="metric"><b>${fmtTime(l.time)}</b><span>${L('tempo','time')}</span></div><div class="metric"><b>${fmtPace(l.time/l.dist)}</b><span>${L('ritmo médio','avg pace')}</span></div></div><div class="plan-ref">${L('Plano','Plan')}: ${nf(w.km)} km · ~${mins} min · ${w.type==='E'||w.type==='L'?fmtPace(pz().E[0]):fmtPace(target(pz(),w.focus.z))}/km</div>`:`<div class="metrics">${F?'':`<div class="metric"><b>${nf(w.km)}</b><span>km</span></div>`}<div class="metric"><b>~${mins}</b><span>min</span></div>${F?'':`<div class="metric"><b>${w.type==='E'||w.type==='L'?fmtPace(pz().E[0]):(w.extraRace&&w.km?fmtPace(predict(st.vdot,w.km*1000)/w.km):fmtPace(target(pz(),w.focus.z)))}</b><span>${w.type==='E'||w.type==='L'?'ritmo fácil':'ritmo alvo'}</span></div>`}</div>`}
     ${l||F&&!w.hx&&!w.gym?'':profileHtml(w)}
     ${w.light&&!l?`<div class="note info">🪶 ${L('Versão leve de hoje, pelo teu check-in.','Today’s light version, from your check-in.')} <button class="link small" data-act="unlight" data-id="${w.id}">${L('Repor original','Restore original')}</button></div>`:''}
-    ${w.date===TODAY&&!l&&!w.race&&!ciToday()?`<button class="link small cantlink" data-act="checkin" data-id="${w.id}">🙂 ${L('Como te sentes hoje?','How are you feeling today?')} ›</button>`:''}
-    ${future&&status(w)!=='skip'?`<button class="link small cantlink" data-act="cant" data-id="${w.id}">Não posso fazer este treino ›</button>`:''}
     ${future&&WX&&WX[w.date]?`<div class="small" style="${badWx(WX[w.date])?'color:var(--warn)':''}">${wxLine(WX[w.date])}</div>`:''}
     ${l?'':why?(hero?`<details class="why"><summary class="small">${L('Porquê este treino?','Why this workout?')}</summary><div class="small muted">${esc(why)}</div></details>`:`<div class="small muted">${esc(why)}</div>`):''}
     ${w.race?(w.hx?hxRaceHtml(w):racePlanHtml(w)):''}
     ${l?'':`<ul class="steps">${w.steps.map((x,i)=>stepHtml(x,w,i)).join('')}</ul>`}
     ${w.strength?'<div class="small muted">Força (opcional, 20 min): agachamentos, lunges, ponte de glúteos, gémeos e prancha.</div>':''}
-    ${l?logSummary(l,!F):''}
-    <div class="btns">${btns}</div>
+    ${l?logSummary(l,true):''}
+    ${(()=>{const m=[w.date===TODAY&&!l&&!w.race&&!ciToday()?`<button class="mini" data-act="checkin" data-id="${w.id}">${ico('smile')}${L('Como te sentes?','How do you feel?')}</button>`:'',future&&status(w)!=='skip'?`<button class="mini" data-act="cant" data-id="${w.id}">${ico('cal')}${L('Não posso fazer','I can’t make it')}</button>`:''].join('');return m?`<div class="minis">${m}</div>`:'';})()}
+    ${btns?`<div class="btns">${btns}</div>`:''}
+    ${l?logActs(l):''}
   </section>`;
 }
+function logActs(l){const i=st.logs.indexOf(l);return `<div class="acts">${l.wtype==='F'&&l.gym?.length?`<button class="act" data-act="gym-detail" data-v="${i}">${ico('list')}${L('Detalhe','Details')}</button>`:''}<button class="act" data-act="share-img" data-v="${i}">${ico('share')}${L('Partilhar','Share')}</button>${l.wtype!=='F'&&l.dist>0?`<button class="act" data-act="editlog" data-v="${i}">${ico('edit')}${L('Editar','Edit')}</button>`:''}</div>`;}
 function logSummary(l,inCard){
-  const sb=`<div class="row" style="gap:8px">`+`<button class="ghost chip shbtn" data-act="share-img" data-v="${st.logs.indexOf(l)}">↗ ${L('Partilhar','Share')}</button>`+(l.wtype!=='F'&&l.dist>0?`<button class="ghost chip shbtn" data-act="editlog" data-v="${st.logs.indexOf(l)}">✎ ${L('Editar','Edit')}</button>`:'')+`</div>`;
-  if(l.wtype==='F'&&l.sets){const i=st.logs.indexOf(l);return `<div class="note up"><div class="num"><b>${l.time?fmtTime(l.time)+' · ':''}${nf(l.vol||0)} kg · ${l.sets} ${L('séries','sets')}</b></div>${l.prs?.length?`<div>🏆 ${l.prs.map(p=>`${esc(tr(p.n))} ${fmtKg(p.kg)} kg × ${p.reps}`).join(' · ')}</div>`:''}</div><div class="row" style="gap:8px">${l.gym?.length?`<button class="ghost chip shbtn" data-act="gym-detail" data-v="${i}">${L('Ver detalhe','See details')}</button>`:''}${sb}</div>`;}
+  const sb=inCard?'':logActs(l);
+  if(l.wtype==='F'&&l.sets){const i=st.logs.indexOf(l);return `<div class="note up"><div class="num"><b>${l.time?fmtTime(l.time)+' · ':''}${nf(l.vol||0)} kg · ${l.sets} ${L('séries','sets')}</b></div>${l.prs?.length?`<div>🏆 ${l.prs.map(p=>`${esc(tr(p.n))} ${fmtKg(p.kg)} kg × ${p.reps}`).join(' · ')}</div>`:''}</div>${sb}`;}
   if(l.wtype==='F')return `<div class="note up">${L('Sessão feita.','Session done.')}</div>${sb}`;
   const ex=[l.avgHr?`${l.avgHr} bpm`:'',l.rpe?`${L('esforço','effort')} ${l.rpe}/10`:'',l.source==='strava'?'Strava':''].filter(Boolean).join(' · ');
   if(inCard)return `<div class="note ${l.eval?.cls||'info'}">${ex?`<div class="num small muted">${ex}</div>`:''}<div>${esc(l.eval?.msg||'')}</div></div>${l.ai?`<div class="note info"><span class="tiny muted">Treinador IA</span><br>${esc(l.ai)}</div>`:''}${sb}`;
@@ -2438,12 +2462,11 @@ function hojeHtml(){
   const fresh=nLogs()===0;
   out+=`<section class="card"><div class="row between"><span class="eyebrow">Semana ${wk?wk.n:''} · ${wk?PH[wk.phase]+(wk.recovery?' (recuperação)':''):''}</span><span class="num small muted">${p.goalType==='gym'?(wk?wk.workouts.filter(w=>logFor(w)).length+' / '+wk.workouts.length+' '+L('treinos','workouts'):''):nf(Math.round(done*10)/10)+' / '+nf(Math.round(plan))+' km'}</span></div><div class="week">${strip}</div></section>`;
   if(fresh){}else if(p.goalType==='gym')out+=gymWeekHtml();else out+=`<section class="card"><div class="stats">
-    <div class="stat"><span class="v">${fmtTime(pred)}</span><span class="l">Previsão ${esc(gLabel())}</span></div>${p.goalTime?`<div class="stat"><span class="v">${fmtTime(p.goalTime)}</span><span class="l">Objetivo · ${goalVerdict()}</span></div>`:''}
-    <div class="stat"><span class="v">${st.vdot.toFixed(1)}</span><span class="l">Índice de forma</span></div>
+    <div class="stat"><span class="v">${fmtTime(pred)}</span><span class="l">${L('Previsão','Forecast')} · ${p.goalType==='hyrox'?'HYROX':nf(gKm())+' km'}</span></div>${p.goalTime?`<div class="stat"><span class="v">${fmtTime(p.goalTime)}</span><span class="l">Objetivo · ${goalVerdict()}</span></div>`:''}
+    <div class="stat"><span class="v">${nf(st.vdot.toFixed(1))}</span><span class="l">Índice de forma</span></div>
     ${p.goalTime?'':`<div class="stat"><span class="v">${days!==null&&days>=0?days:'–'}</span><span class="l">${days!==null&&days>=0?'Dias para a prova':'Sem prova marcada'}</span></div>`}
   </div></section>`;
-  if(p.goalType!=='gym')out+=`<button class="ghost" data-act="log-extra">Registar corrida fora do plano</button>`;
-  out+=`<button class="ghost" data-act="free-workout">＋ ${L('Treino livre de ginásio','Free gym workout')}</button>`;
+  out+=`<div class="quick">${p.goalType!=='gym'?`<button class="qa" data-act="log-extra"><span class="qi">${ico('run')}</span><span><b>${L('Corrida extra','Extra run')}</b><br><small>${L('Registar fora do plano','Log outside the plan')}</small></span></button>`:''}<button class="qa" data-act="free-workout"><span class="qi">${ico('dumb')}</span><span><b>${L('Treino livre','Free workout')}</b><br><small>${L('Ginásio, à tua escolha','Gym, your choice')}</small></span></button></div>`;
   if(st.notes.length&&!fresh)out+=`<section class="card"><h3>Ajustes do treinador</h3>${st.notes.slice(0,3).map(n=>`<div class="note ${n.kind}"><span class="tiny muted">${fmtDate(n.d)}</span><br>${esc(n.text)}</div>`).join('')}</section>`;
   return out;
 }
@@ -2453,10 +2476,10 @@ function planoHtml(){
   const p=st.profile,goalTxt=p.goalType==='gym'?'💪 '+GYM_GOALS[p.gymGoal||'muscle'][1]:p.goalType==='hyrox'?(p.raceName||'HYROX'):p.goalType==='race'?(p.raceName||gLabel()):({start:'Começar a correr',back:'Voltar a correr',maintain:'Manter a forma'})[p.goalType]||'';
   const xs=(st.extraRaces||[]).filter(r=>r.date>=TODAY).sort((a,b)=>a.date<b.date?-1:1);
   return `<div class="row between"><h2>O teu plano</h2><span class="small muted">${st.plan.weeks.length} semanas</span></div>
-  <section class="card"><div class="row between"><div><span class="eyebrow">${L('Objetivo','Goal')}</span><div><b>${esc(tr(goalTxt))}</b>${p.raceDate?` · <span class="small muted">${fmtDate(p.raceDate)}</span>`:''}</div></div><button class="ghost chip" data-act="ps-open">✎ ${L('Editar','Edit')}</button></div>
+  <section class="card"><div class="row between" style="flex-wrap:nowrap;align-items:flex-start"><div><span class="eyebrow">${L('Objetivo','Goal')}</span><div><b>${esc(tr(goalTxt))}</b>${p.raceDate?`<div class="small muted">${fmtDate(p.raceDate)}</div>`:''}</div></div><button class="mini" style="flex:none" data-act="ps-open">${ico('edit')}${L('Editar','Edit')}</button></div>
   ${xs.length?`<div class="small muted">${L('Outras provas','Other races')}: ${xs.map(r=>esc(r.name)+' ('+fmtDate(r.date)+')').join(', ')}</div>`:''}
   ${p.gymExtra?.days?.length?`<div class="small muted">💪 ${L('Ginásio','Gym')}: ${p.gymExtra.days.map(d=>DOW[d]).join(', ')} · ${p.gymExtra.min} min</div>`:''}
-  <button data-act="xr-add">+ ${L('Adicionar modalidade ou prova','Add a sport or race')}</button></section>
+  <button class="addbtn" data-act="xr-add">${ico('plus')}${L('Adicionar modalidade ou prova','Add a sport or race')}</button></section>
   <div class="wknav"><button class="ghost chip" id="wkPrev" aria-label="${L('Semana anterior','Previous week')}">‹</button><span id="wkLbl" class="small"></span><button class="ghost chip" id="wkNext" aria-label="${L('Semana seguinte','Next week')}">›</button></div>
   <div class="wkscroll" id="wkScroll">`+st.plan.weeks.map(wk=>{
     const tot=wk.workouts.reduce((a,w)=>a+w.km,0);
@@ -2479,7 +2502,7 @@ function progHtml2(){
   const preds=H.map(h=>predict(h.v,g.km*1000));
   let chart='';
   if(H.length>=1){
-    const W=560,Ht=170,pl=46,pr=12,pt=14,pb=26;
+    const W=560,Ht=190,pl=64,pr=12,pt=14,pb=32;
     const mn=Math.min(...preds),mx=Math.max(...preds);const pad=Math.max((mx-mn)*0.2,20);
     const lo=mn-pad,hi=mx+pad;
     const X=i=>pl+(H.length===1?(W-pl-pr)/2:i*(W-pl-pr)/(H.length-1));
@@ -2493,18 +2516,18 @@ function progHtml2(){
   const wks=st.plan.weeks.filter(w=>w.start<=TODAY).slice(-8);
   let bars='';
   if(wks.length){
-    const W=560,Ht=150,pb=24,pt=10;
+    const W=560,Ht=180,pb=30,pt=26;
     const data=wks.map(w=>({n:w.n,plan:w.workouts.reduce((a,x)=>a+x.km,0),done:w.workouts.reduce((a,x)=>a+(logFor(x)?.dist||0),0)+st.logs.filter(l=>l.extra&&l.date>=w.start&&l.date<addDays(w.start,7)).reduce((a,l)=>a+l.dist,0)}));
     const mx=Math.max(...data.map(d=>Math.max(d.plan,d.done)),10);
-    const bw=(W-20)/data.length;
-    bars=`<svg class="chart" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="Quilómetros por semana, previsto e feito">${data.map((d,i)=>{const x=10+i*bw,h1=(d.plan/mx)*(Ht-pb-pt),h2=(d.done/mx)*(Ht-pb-pt);return `<rect x="${x+bw*0.15}" y="${Ht-pb-h1}" width="${bw*0.7}" height="${h1}" rx="3" fill="var(--line)"/><rect x="${x+bw*0.3}" y="${Ht-pb-h2}" width="${bw*0.4}" height="${h2}" rx="3" fill="var(--accent)"/><text x="${x+bw/2}" y="${Ht-8}" text-anchor="middle">S${d.n}</text><text x="${x+bw/2}" y="${Ht-pb-Math.max(h1,h2)-4}" text-anchor="middle">${Math.round(d.done)}</text>`;}).join('')}</svg><div class="row small muted"><span class="pill" style="background:var(--line)">previsto</span><span class="pill" style="background:var(--accent);color:var(--accent-ink);border:none">feito</span></div>`;
+    const bw=(W-20)/Math.max(data.length,6);
+    bars=`<svg class="chart" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="Quilómetros por semana, previsto e feito">${data.map((d,i)=>{const x=10+i*bw,h1=(d.plan/mx)*(Ht-pb-pt),h2=(d.done/mx)*(Ht-pb-pt);return `<rect x="${x+bw*0.15}" y="${Ht-pb-h1}" width="${bw*0.7}" height="${h1}" rx="3" fill="var(--line)"/><rect x="${x+bw*0.3}" y="${Ht-pb-h2}" width="${bw*0.4}" height="${h2}" rx="3" fill="var(--accent)"/><text x="${x+bw/2}" y="${Ht-6}" text-anchor="middle">S${d.n}</text><text x="${x+bw/2}" y="${Ht-pb-Math.max(h1,h2)-4}" text-anchor="middle">${Math.round(d.done)}</text>`;}).join('')}</svg><div class="legend"><span><i style="background:var(--line)"></i>${L('previsto','planned')}</span><span><i style="background:var(--accent)"></i>${L('feito','done')}</span></div>`;
   }
   const logs=[...st.logs].sort((a,b)=>a.date<b.date?1:-1);
   return `<h2>Progresso</h2>
   ${recordsHtml()}
   <section class="card"><div class="row between"><h3>Previsão para ${g.label}</h3><span class="num">${fmtTime(predict(st.vdot,g.km*1000))}</span></div>${chart}<div class="small muted">Atualiza quando registas uma prova ou um teste, ou quando duas sessões de qualidade seguidas ficam acima ou abaixo do alvo.</div></section>
   <section class="card"><h3>Quilómetros por semana</h3>${bars||'<div class="small muted">Ainda sem semanas concluídas.</div>'}</section>
-  <section class="card"><h3>Histórico</h3>${logs.length?logs.map(l=>{const w=allW().find(x=>x.id===l.wid)||allW().find(x=>x.date===l.date);return `<div><div class="row between"><b>${l.extra?'Corrida extra':esc(w?w.title:'Treino')}</b><span class="small muted">${fmtDate(l.date)}${l.source==='gpx'?' · GPX':l.source==='gps'?' · GPS':''}</span></div>${logSummary(l)}${l.splits&&l.splits.length>1?splitsHtml(l.splits):''}</div>`;}).join('<hr style="border:none;border-top:1px solid var(--line);width:100%">'):'<div class="small muted">Ainda não registaste treinos. Depois de cada corrida, exporta o GPX no Strava ou regista à mão.</div>'}</section>`;
+  <section class="card"><h3>Histórico</h3>${logs.length?logs.map(l=>{const w=allW().find(x=>x.id===l.wid)||allW().find(x=>x.date===l.date);return `<div class="hitem"><div class="row between"><b>${l.extra?'Corrida extra':esc(w?w.title:'Treino')}</b><span class="small muted">${fmtDate(l.date)}${l.source==='gpx'?' · GPX':l.source==='gps'?' · GPS':''}</span></div>${logSummary(l)}${l.splits&&l.splits.length>1?splitsHtml(l.splits):''}</div>`;}).join('<hr style="border:none;border-top:1px solid var(--line);width:100%">'):'<div class="small muted">Ainda não registaste treinos. Depois de cada corrida, exporta o GPX no Strava ou regista à mão.</div>'}</section>`;
 }
 function splitsHtml(sp){const mx=Math.max(...sp),mn=Math.min(...sp);return `<div class="tiny muted" style="margin-top:6px">Parciais por km</div><div class="split" aria-label="Parciais: ${sp.map(fmtPace).join(', ')}">${sp.map(s=>`<div title="${fmtPace(s)}" style="height:${20+80*(mx-s)/Math.max(mx-mn,1)}%"></div>`).join('')}</div><div class="tiny muted num">mais rápido ${fmtPace(mn)} · mais lento ${fmtPace(mx)}</div>`;}
 

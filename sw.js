@@ -1,5 +1,5 @@
 // Zone5: guarda a app para abrir sem rede. Dados e APIs vão sempre à rede.
-const CACHE='zone5-202611251423';
+const CACHE='zone5-202611251532';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icon-v2.svg','./apple-touch-icon-v2.png','./icon-192-v2.png','./icon-512-v2.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
