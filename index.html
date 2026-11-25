@@ -1875,7 +1875,7 @@ function evaluate(log,w,vdot,goal,opt){
 
 <script>
 /* ===================== Configuração (preenchida no deploy) ===================== */
-const APP_VER='202611251931';
+const APP_VER='202611251932';
 const CONFIG={
   SUPABASE_URL:'https://trnsidilnktcoeppnwhe.supabase.co',
   SUPABASE_ANON_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRybnNpZGlsbmt0Y29lcHBud2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzMzUxMDAsImV4cCI6MjEwOTkxMTEwMH0.cC964oQarxpfL_M-tW-F92UYV4dbbY9m9YMZTnn0GQk',
@@ -2130,7 +2130,7 @@ function authHtml(){
   </section>
   <div class="small" style="text-align:center">${authMode==='in'?'Ainda não tens conta?':'Já tens conta?'} <button class="link" data-act="auth-switch">${authMode==='in'?'Criar conta':'Entrar'}</button></div>`:`<section class="card"><div class="small">Esta é a pré-visualização: as contas, a comunidade e o Google Calendar ficam ativos no site final. Podes experimentar o resto da app já.</div></section>`}
   <div class="authfoot"><button class="ghost" data-act="demo">Experimentar sem conta</button>
-  <div class="row between tiny muted"><span class="langmini"><button type="button" data-act="lang" data-v="en" aria-pressed="${LANG==='en'}">EN</button><button type="button" data-act="lang" data-v="pt" aria-pressed="${LANG==='pt'}">PT</button></span><a href="privacy.html" style="color:inherit">${L('Política de privacidade','Privacy policy')}</a></div></div></div>`;
+  <div class="row between tiny muted"><span class="langmini"><button type="button" data-act="lang" data-v="en" aria-pressed="${LANG==='en'}">EN</button><button type="button" data-act="lang" data-v="pt" aria-pressed="${LANG==='pt'}">PT</button></span><a href="privacy.html" style="color:inherit">${L('Política de privacidade','Privacy policy')}</a> · v${APP_VER.slice(4,8)}.${APP_VER.slice(8)}</div></div></div>`;
 }
 
 async function authGo(){
